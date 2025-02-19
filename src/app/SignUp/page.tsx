@@ -1,27 +1,38 @@
-"use client"
+"use client";
 
-import Navbar from "./components/Navbar";
+import { useState } from "react";
 import { FaUser, FaEnvelope, FaLock, FaRegSmileBeam } from "react-icons/fa";
 import { BiMessageCheck, BiSolidChat , BiMessageRounded, 
-        BiMessageSquareCheck, BiSolidMessageRoundedDetail,
-        BiSolidMessageAltAdd, BiMessageRoundedDots } from "react-icons/bi";
-import { useState } from "react";
+    BiMessageSquareCheck, BiSolidMessageRoundedDetail, BiSolidMessageAltAdd, BiMessageRoundedDots } from "react-icons/bi";
+import Navbar from "../components/Navbar";
 import Link from 'next/link';
 
-export default function Home() {
-  const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState({
-      nickName: '',
-      email: '',
-      password: '',
-  });
-  const handleSubmit = (e: React.FormEvent) => {
-      e.preventDefault();
-      console.log(formData);  
-  }
 
-  return (
-    <div className="w-full h-screen flex flex-col">
+const SignUpPage = () => {
+
+    const [showPassword, setShowPassword] = useState(false);
+    const [formData, setFormData] = useState({
+        nickName: '',
+        email: '',
+        password: '',
+    });
+
+    const validateForm = () => {
+        if (formData.nickName === '') {
+            alert('Nickname is required');
+            return false;
+        }
+
+    }
+
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        console.log(formData);  
+    }
+
+    return (
+        <div className="w-full h-screen flex flex-col">
             {/* Navbar */}
             <Navbar />
 
@@ -32,11 +43,29 @@ export default function Home() {
                     <div className="w-full max-w-md space-y-8">
                         {/* Logo / Image */}
                         <div className="flex justify-center">
-                            <FaUser className="text-4xl" />
+                            <BiMessageCheck className="text-4xl" />
                         </div>
 
-                        <h1 className="text-3xl font-bold text-center">Welcome Back!</h1>
+                        <h1 className="text-3xl font-bold text-center">Create Account</h1>
                         <form onSubmit={handleSubmit} className="space-y-4">
+                            {/* Nickname Field */}
+                            <div>
+                                <label htmlFor="nickName" className="block text-sm font-medium">Nickname</label>
+                                <div className="relative">
+                                    <FaUser className="absolute left-3 top-1/2 transform -translate-y-1/2" />
+                                    <input
+                                        type="text"
+                                        id="nickName"
+                                        name="nickName"
+                                        value={formData.nickName}
+                                        onChange={(e) => setFormData({ ...formData, nickName: e.target.value })}
+                                        className="input input-bordered w-full mt-1 px-4 py-2 pl-10 sm:text-sm"
+                                        placeholder="Enter your nickname"
+                                        required
+                                    />
+                                </div>
+                            </div>
+
                             {/* Email Field */}
                             <div>
                                 <label htmlFor="email" className="block text-sm font-medium">Email</label>
@@ -75,15 +104,15 @@ export default function Home() {
 
                             {/* Submit Button */}
                             <button type="submit" className="btn btn-primary w-full">
-                                Login
+                                Sign Up
                             </button>
                         </form>
 
                         {/* Already have an account? */}
                         <p className="text-sm text-center text-gray-400">
-                            No account? Join the conversation today!&nbsp;
-                            <Link href="/SignUp" className="text-primary hover:text-primary-focus font-medium transition-all duration-300 ease-in-out">
-                              Sign Up
+                            Already have an account? &nbsp;
+                            <Link href="/" className="text-primary hover:text-primary-focus font-medium transition-all duration-300 ease-in-out">
+                            Login
                             </Link>
                         </p>
                     </div>
@@ -120,11 +149,13 @@ export default function Home() {
 
                     {/* Motivational Text */}
                     <div className="relative text-center p-8 ">
-                        <h2 className="text-5xl font-bold">Stay Connected!</h2>
-                        <p className="mt-4 text-lg ">It's time to keep up with your friends and family</p>
+                        <h2 className="text-5xl font-bold">Connect & Communicate</h2>
+                        <p className="mt-4 text-lg ">Join our secure and fast messaging platform today.</p>
                     </div>
                 </div>
             </div>
         </div>
-  );
+    );
 }
+
+export default SignUpPage;
