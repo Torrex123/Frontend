@@ -11,8 +11,9 @@
   align-items: center;
   width: 100%;
   padding: 20px 7%;
+  position: relative;
+  z-index: 50;         
 }
-
 .navList {
   list-style: none;
   display: flex;

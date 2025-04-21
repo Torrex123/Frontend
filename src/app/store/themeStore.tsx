@@ -1,9 +1,27 @@
+"use client";
+
 import { create } from 'zustand';
 
-export const useThemeStore = create((set) => ({
-  theme: localStorage.getItem("chat-theme") || "light",
-  setTheme: (theme: string) => {
-    localStorage.setItem("chat-theme", theme);
+type ThemeStore = {
+  theme: string;
+  initialized: boolean;
+  setTheme: (theme: string) => void;
+  initializeTheme: () => void;
+};
+
+export const useThemeStore = create<ThemeStore>((set) => ({
+  theme: "light",
+  initialized: false,
+  setTheme: (theme) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem("chat-theme", theme);
+    }
     set({ theme });
   },
+  initializeTheme: () => {
+    if (typeof window !== 'undefined') {
+      const savedTheme = localStorage.getItem("chat-theme") || "light";
+      set({ theme: savedTheme, initialized: true });
+    }
+  }
 }));

@@ -99,7 +99,7 @@ export default function Navbar() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.2, ease: "easeOut" }}
-                className="absolute right-0 mt-2 w-56 bg-base-200 shadow-lg rounded-lg p-3 top-15"
+                className="absolute right-0 mt-2 w-56 bg-base-200 shadow-lg rounded-lg p-3 top-15 z-50"
               >
                 <div className="max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200 space-y-2 overflow-x-hidden">
                   {themes.map((t) => (
