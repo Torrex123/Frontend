@@ -62,7 +62,7 @@ export default function ConfirmDialog({ isOpen, title, description, onConfirm, o
                                         onClick={onConfirm}
                                         className="px-4 py-2 rounded bg-red-500 text-white hover:bg-red-600 text-sm"
                                     >
-                                        Yes, change it
+                                        Yes, I'm sure
                                     </button>
                                 </div>
                             </Dialog.Panel>

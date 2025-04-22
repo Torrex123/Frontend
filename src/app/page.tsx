@@ -27,7 +27,7 @@ export default function Home() {
 
 
     return (
-        <div className={`w-full h-screen flex flex-col`}>
+        <div className={`w-full min-h-screen flex flex-col overflow-x-hidden`}>
             <Navbar />
             {/* Main Content */}
             <div className="flex-grow grid lg:grid-cols-2 min-h-0">
@@ -137,7 +137,7 @@ export default function Home() {
 
 
                 {/* Right Side - Abstract Design */}
-                <div className="hidden lg:flex items-center justify-center p-10 relative overflow-hidden">
+                <div className="hidden lg:flex items-center justify-center p-6 relative overflow-hidden">
                     {/* Abstract Floating Elements - Staggered Pulse Animations */}
                     <div className="absolute top-5 left-10 w-32 h-32 bg-primary/30 backdrop-blur-xl rounded-full shadow-lg animate-pulse [animation-delay:0.2s]"></div>
                     <div className="absolute bottom-10 right-10 w-20 h-20 bg-secondary/40 backdrop-blur-md rounded-lg shadow-md animate-pulse [animation-delay:0.4s]"></div>

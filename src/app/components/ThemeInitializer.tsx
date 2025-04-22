@@ -1,15 +1,18 @@
 "use client";
 
 import { useEffect } from 'react';
-import { useThemeStore } from '../store/themeStore';
+import { hydrateThemeStore, useThemeStore } from '../store/themeStore';
 
 export default function ThemeInitializer() {
-    const { initialized, initializeTheme } = useThemeStore();
     useEffect(() => {
-        if (!initialized) {
-            initializeTheme();
-        }
-    }, [initialized, initializeTheme]);
+        // Hydrate the store as soon as possible on client side
+        hydrateThemeStore();
+        
+        // Apply the theme immediately to prevent flash
+        const theme = useThemeStore.getState().theme;
+        document.documentElement.setAttribute("data-theme", theme);
+        document.documentElement.className = theme;
+    }, []);
 
     return null;
 }

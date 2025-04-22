@@ -3,11 +3,11 @@ import { motion } from "framer-motion";
 import CodeEditor from "../components/code.editor";
 import Navbar from "../components/navbar";
 
-export default function ChallengePage() {
+export default function Playground() {
     return (
         <div className="min-h-screen flex flex-col bg-gradient-to-br from-base-300 to-base-200">
             <Navbar />
-            <motion.div 
+            <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
