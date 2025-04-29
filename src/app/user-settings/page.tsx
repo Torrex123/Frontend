@@ -212,15 +212,15 @@ export default function UserSettings() {
     return (
         <div className="min-h-screen flex flex-col bg-gradient-to-br from-base-300 to-base-200">
             <Navbar />
-
+    
             <div className="container mx-auto px-4 py-8 flex-grow">
                 <div className="max-w-5xl mx-auto">
-                    <h1 className="text-3xl font-bold mb-2">Account Settings</h1>
-                    <p className="text-base-content/70 mb-8">Manage your account information and preferences</p>
-
+                    <h1 className="text-2xl sm:text-3xl font-bold mb-2">Account Settings</h1>
+                    <p className="text-sm sm:text-base text-base-content/70 mb-8">Manage your account information and preferences</p>
+    
                     {/* Status Message */}
                     <StatusMessage />
-
+    
                     <div className="flex flex-col md:flex-row gap-6">
                         {/* Sidebar Navigation */}
                         <div className="md:w-64 flex-shrink-0">
@@ -249,7 +249,7 @@ export default function UserSettings() {
                                 </div>
                             </div>
                         </div>
-
+    
                         {/* Main Content */}
                         <div className="flex-grow">
                             <div className="card bg-base-100 shadow-xl">
@@ -257,12 +257,12 @@ export default function UserSettings() {
                                     {/* Profile Tab */}
                                     {activeTab === "profile" && (
                                         <div>
-                                            <h2 className="card-title text-2xl mb-6">Profile Information</h2>
-
+                                            <h2 className="card-title text-xl sm:text-2xl mb-6">Profile Information</h2>
+    
                                             {/* Avatar Section */}
                                             <div className="flex flex-col items-center mb-8">
                                                 <div className="avatar mb-4 relative">
-                                                    <div className="w-24 h-24 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2 overflow-hidden">
+                                                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2 overflow-hidden">
                                                         <img
                                                             src={previewImage || user.avatar || "https://www.w3schools.com/w3images/avatar2.png"}
                                                             alt="User avatar"
@@ -283,7 +283,7 @@ export default function UserSettings() {
                                                     accept="image/*"
                                                     className="hidden"
                                                 />
-
+    
                                                 <div className="flex gap-2">
                                                     <button
                                                         className="btn btn-sm btn-outline"
@@ -301,12 +301,12 @@ export default function UserSettings() {
                                                     )}
                                                 </div>
                                             </div>
-
+    
                                             {/* Profile Form */}
                                             <form onSubmit={handleProfileUpdate}>
                                                 <div className="form-control mb-5">
                                                     <label className="label cursor-pointer">
-                                                        <span className="label-text text-sm font-medium text-base-content/80">Full Name</span>
+                                                        <span className="label-text text-xs sm:text-sm font-medium text-base-content/80">Full Name</span>
                                                     </label>
                                                     <div className="relative">
                                                         <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none z-50">
@@ -317,17 +317,17 @@ export default function UserSettings() {
                                                             name="name"
                                                             value={formData.name}
                                                             onChange={handleInputChange}
-                                                            className={`input w-full pl-10 py-3 bg-base-200 focus:bg-base-200/80 rounded-md shadow-sm transition-all duration-300 border-0 outline-none focus:ring-2 focus:ring-primary/30 ${!isEditing ? 'opacity-80 cursor-not-allowed' : 'hover:bg-base-200/90'}`}
+                                                            className={`input w-full pl-10 py-2 sm:py-3 bg-base-200 focus:bg-base-200/80 rounded-md shadow-sm transition-all duration-300 border-0 outline-none focus:ring-2 focus:ring-primary/30 ${!isEditing ? 'opacity-80 cursor-not-allowed' : 'hover:bg-base-200/90'}`}
                                                             disabled={!isEditing}
                                                             placeholder="Enter your full name"
                                                             required
                                                         />
                                                     </div>
                                                 </div>
-
+    
                                                 <div className="form-control mb-6">
                                                     <label className="label cursor-pointer">
-                                                        <span className="label-text text-sm font-medium text-base-content/80">Email Address</span>
+                                                        <span className="label-text text-xs sm:text-sm font-medium text-base-content/80">Email Address</span>
                                                     </label>
                                                     <div className="relative">
                                                         <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none z-50">
@@ -338,14 +338,14 @@ export default function UserSettings() {
                                                             name="email"
                                                             value={formData.email}
                                                             onChange={handleInputChange}
-                                                            className={`input w-full pl-10 py-3 bg-base-200 focus:bg-base-200/80 rounded-md shadow-sm transition-all duration-300 border-0 outline-none focus:ring-2 focus:ring-primary/30 ${!isEditing ? 'opacity-80 cursor-not-allowed' : 'hover:bg-base-200/90'}`}
+                                                            className={`input w-full pl-10 py-2 sm:py-3 bg-base-200 focus:bg-base-200/80 rounded-md shadow-sm transition-all duration-300 border-0 outline-none focus:ring-2 focus:ring-primary/30 ${!isEditing ? 'opacity-80 cursor-not-allowed' : 'hover:bg-base-200/90'}`}
                                                             disabled={!isEditing}
                                                             placeholder="Enter your email address"
                                                             required
                                                         />
                                                     </div>
                                                 </div>
-
+    
                                                 <div className="card-actions justify-end">
                                                     {isEditing ? (
                                                         <>
@@ -382,17 +382,17 @@ export default function UserSettings() {
                                             </form>
                                         </div>
                                     )}
-
+    
                                     {/* Security Tab */}
                                     {activeTab === "security" && (
                                         <div>
-                                            <h2 className="card-title text-2xl mb-6">Security Settings</h2>
-
+                                            <h2 className="card-title text-xl sm:text-2xl mb-6">Security Settings</h2>
+    
                                             {/* Password Change Form */}
                                             <form onSubmit={handlePasswordUpdate}>
                                                 <div className="form-control mb-5">
                                                     <label className="label cursor-pointer">
-                                                        <span className="label-text text-sm font-medium text-base-content/80">Current Password</span>
+                                                        <span className="label-text text-xs sm:text-sm font-medium text-base-content/80">Current Password</span>
                                                     </label>
                                                     <div className="relative">
                                                         <div className="absolute inset-y-0 left-0 flex items-center pl-3 z-50">
@@ -403,7 +403,7 @@ export default function UserSettings() {
                                                             name="currentPassword"
                                                             value={passwordData.currentPassword}
                                                             onChange={handlePasswordChange}
-                                                            className="input w-full pl-10 pr-12 py-3 bg-base-200 focus:bg-base-200/80 rounded-md shadow-sm transition-all duration-300 border-0 outline-none focus:ring-2 focus:ring-primary/30 hover:bg-base-200/90"
+                                                            className="input w-full pl-10 pr-12 py-2 sm:py-3 bg-base-200 focus:bg-base-200/80 rounded-md shadow-sm transition-all duration-300 border-0 outline-none focus:ring-2 focus:ring-primary/30 hover:bg-base-200/90"
                                                             placeholder="Enter current password"
                                                             required
                                                         />
@@ -416,10 +416,10 @@ export default function UserSettings() {
                                                         </button>
                                                     </div>
                                                 </div>
-
+    
                                                 <div className="form-control mb-5">
                                                     <label className="label cursor-pointer">
-                                                        <span className="label-text text-sm font-medium text-base-content/80">New Password</span>
+                                                        <span className="label-text text-xs sm:text-sm font-medium text-base-content/80">New Password</span>
                                                     </label>
                                                     <div className="relative">
                                                         <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none z-50">
@@ -430,7 +430,7 @@ export default function UserSettings() {
                                                             name="newPassword"
                                                             value={passwordData.newPassword}
                                                             onChange={handlePasswordChange}
-                                                            className="input w-full pl-10 pr-12 py-3 bg-base-200 focus:bg-base-200/80 rounded-md shadow-sm transition-all duration-300 border-0 outline-none focus:ring-2 focus:ring-primary/30 hover:bg-base-200/90"
+                                                            className="input w-full pl-10 pr-12 py-2 sm:py-3 bg-base-200 focus:bg-base-200/80 rounded-md shadow-sm transition-all duration-300 border-0 outline-none focus:ring-2 focus:ring-primary/30 hover:bg-base-200/90"
                                                             placeholder="Enter new password"
                                                             required
                                                             minLength={8}
@@ -447,10 +447,10 @@ export default function UserSettings() {
                                                         <span className="label-text-alt text-xs text-base-content/70">Password must be at least 8 characters long</span>
                                                     </label>
                                                 </div>
-
+    
                                                 <div className="form-control mb-6">
                                                     <label className="label cursor-pointer">
-                                                        <span className="label-text text-sm font-medium text-base-content/80">Confirm New Password</span>
+                                                        <span className="label-text text-xs sm:text-sm font-medium text-base-content/80">Confirm New Password</span>
                                                     </label>
                                                     <div className="relative">
                                                         <div className="absolute inset-y-0 left-0 flex items-center pl-3 z-50">
@@ -461,7 +461,7 @@ export default function UserSettings() {
                                                             name="confirmPassword"
                                                             value={passwordData.confirmPassword}
                                                             onChange={handlePasswordChange}
-                                                            className="input w-full pl-10 pr-12 py-3 bg-base-200 focus:bg-base-200/80 rounded-md shadow-sm transition-all duration-300 border-0 outline-none focus:ring-2 focus:ring-primary/30 hover:bg-base-200/90"
+                                                            className="input w-full pl-10 pr-12 py-2 sm:py-3 bg-base-200 focus:bg-base-200/80 rounded-md shadow-sm transition-all duration-300 border-0 outline-none focus:ring-2 focus:ring-primary/30 hover:bg-base-200/90"
                                                             placeholder="Confirm your new password"
                                                             required
                                                         />
@@ -474,7 +474,7 @@ export default function UserSettings() {
                                                         </button>
                                                     </div>
                                                 </div>
-
+    
                                                 <div className="card-actions justify-end">
                                                     <button
                                                         type="submit"
@@ -488,16 +488,16 @@ export default function UserSettings() {
                                     )}
                                 </div>
                             </div>
-
+    
                             {/* Danger Zone */}
                             <div className="card bg-base-100 shadow-xl mt-6">
                                 <div className="card-body">
-                                    <h3 className="text-xl font-bold text-error mb-4">Danger Zone</h3>
-
+                                    <h3 className="text-lg sm:text-xl font-bold text-error mb-4">Danger Zone</h3>
+    
                                     <div className="flex flex-col sm:flex-row justify-between items-center p-4 border border-error/30 rounded-lg bg-error/5">
                                         <div>
                                             <h4 className="font-medium">Delete Account</h4>
-                                            <p className="text-sm text-base-content/70">
+                                            <p className="text-xs sm:text-sm text-base-content/70">
                                                 Once deleted, your account cannot be recovered
                                             </p>
                                         </div>
@@ -510,11 +510,11 @@ export default function UserSettings() {
                                             Delete Account
                                         </button>
                                     </div>
-
+    
                                     <div className="flex flex-col sm:flex-row justify-between items-center p-4 border border-warning/30 rounded-lg bg-warning/5 mt-4">
                                         <div>
                                             <h4 className="font-medium">Export Data</h4>
-                                            <p className="text-sm text-base-content/70">
+                                            <p className="text-xs sm:text-sm text-base-content/70">
                                                 Download all your personal data
                                             </p>
                                         </div>
@@ -528,7 +528,7 @@ export default function UserSettings() {
                     </div>
                 </div>
             </div>
-
+    
             {/* Confirm Dialog */}
             <ConfirmDialog
                 isOpen={showConfirmDialog}
@@ -537,7 +537,7 @@ export default function UserSettings() {
                 onConfirm={handleConfirmDelete}
                 onCancel={() => setShowConfirmDialog(false)}
             />
-
+    
             {/* Footer with version info */}
             <footer className="footer footer-center p-4 bg-base-300 text-base-content mt-auto">
                 <div>

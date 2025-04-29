@@ -13,7 +13,7 @@ export default function Playground() {
                 transition={{ duration: 0.5 }}
                 className="flex-grow flex items-center justify-center"
             >
-                <div className="bg-base-100 w-full max-w-[1450px] rounded-xl shadow-lg border border-base-300 mx-auto p-1 md:p-4 h-[calc(100vh-8rem)]">
+                <div className="bg-base-100 w-full max-w-full sm:max-w-[600px] md:max-w-[800px] lg:max-w-[1000px] xl:max-w-[1200px] 2xl:max-w-[1450px] rounded-xl shadow-lg border border-base-300 mx-auto p-2 sm:p-3 md:p-4 h-[calc(100vh-8rem)]">
                     <CodeEditor />
                 </div>
             </motion.div>

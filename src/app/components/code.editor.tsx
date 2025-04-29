@@ -175,17 +175,17 @@ export default function CodeEditor() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
             >
-                <div className={`flex flex-col sm:flex-row justify-between items-center px-4 py-3 rounded-t-xl border-b ${
+                <div className={`flex flex-col sm:flex-row justify-between items-center px-3 sm:px-4 py-2 sm:py-3 rounded-t-xl border-b ${
                     theme === 'dark'
                         ? 'bg-gray-800 border-gray-700'
                         : 'bg-gray-100 border-gray-200'
                 }`}>
-                    <div className="flex items-center w-full sm:w-auto mb-3 sm:mb-0">
+                    <div className="flex items-center w-full sm:w-auto mb-2 sm:mb-0">
                         <LanguageSelector language={language} selectLanguage={selectLanguage} />
                     </div>
-                    <div className="flex flex-wrap gap-2 w-full sm:w-auto justify-end">
+                    <div className="flex flex-wrap gap-1 sm:gap-2 w-full sm:w-auto justify-end">
                         <motion.button 
-                            className={`btn btn-sm flex items-center gap-1 px-3 ${
+                            className={`btn btn-sm flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm ${
                                 theme === 'dark'
                                     ? 'bg-gray-700 text-gray-200 hover:bg-gray-600'
                                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -200,7 +200,7 @@ export default function CodeEditor() {
                         </motion.button>
                         
                         <motion.button 
-                            className={`btn btn-sm flex items-center gap-1 px-3 ${
+                            className={`btn btn-sm flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm ${
                                 theme === 'dark'
                                     ? 'bg-gray-700 text-gray-200 hover:bg-gray-600'
                                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -215,7 +215,7 @@ export default function CodeEditor() {
                         </motion.button>
                         
                         <motion.button 
-                            className={`btn btn-sm flex items-center gap-1 px-3 ${
+                            className={`btn btn-sm flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm ${
                                 theme === 'dark'
                                     ? 'bg-gray-700 text-gray-200 hover:bg-gray-600'
                                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -233,7 +233,7 @@ export default function CodeEditor() {
                         </motion.button>
                         
                         <motion.button 
-                            className={`btn btn-sm text-white flex items-center gap-1 px-4 ${
+                            className={`btn btn-sm text-white flex items-center gap-1 px-3 sm:px-4 text-xs sm:text-sm ${
                                 isRunning 
                                     ? 'opacity-80 cursor-not-allowed' 
                                     : ''
@@ -275,10 +275,10 @@ export default function CodeEditor() {
                         onChange={(code) => setCode(code || '')}
                         options={{
                             minimap: { enabled: false },
-                            fontSize: 15,
+                            fontSize: 14, // Smaller font size for better fit on smaller screens
                             scrollBeyondLastLine: false,
                             automaticLayout: true,
-                            padding: { top: 16 },
+                            padding: { top: 12 },
                             fontLigatures: true,
                             lineNumbers: "on",
                             renderLineHighlight: "all",
@@ -313,7 +313,7 @@ export default function CodeEditor() {
                     </div>
                 </div>
             </motion.div>
-
+    
             <AnimatePresence>
                 {!isFullScreen && (
                     <motion.div 
@@ -330,7 +330,7 @@ export default function CodeEditor() {
                         <div className={getOutputHeaderClass()}>
                             <div className="flex items-center gap-2">
                                 {getOutputStatusIcon()}
-                                <h3 className={`font-bold ${
+                                <h3 className={`font-bold text-sm sm:text-base ${
                                     outputType === 'success' 
                                         ? theme === 'dark' ? 'text-green-400' : 'text-green-600'
                                         : outputType === 'error'
@@ -344,7 +344,7 @@ export default function CodeEditor() {
                                             : 'Output'}
                                 </h3>
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex gap-1 sm:gap-2">
                                 <motion.button 
                                     className={`text-xs flex items-center gap-1 px-2 py-1 rounded ${
                                         theme === 'dark'
@@ -381,7 +381,7 @@ export default function CodeEditor() {
                         </div>
                         <div 
                             ref={outputRef}
-                            className={`p-4 h-[calc(30vh-40px)] overflow-y-auto custom-scrollbar font-mono text-sm ${
+                            className={`p-3 sm:p-4 h-[calc(30vh-40px)] overflow-y-auto custom-scrollbar font-mono text-xs sm:text-sm ${
                                 theme === 'dark' ? 'text-gray-300' : 'text-gray-800'
                             } ${
                                 outputType === 'error' 

@@ -27,24 +27,24 @@ export default function Home() {
 
 
     return (
-        <div className={`w-full min-h-screen flex flex-col overflow-x-hidden`}>
+        <div className="w-full min-h-screen flex flex-col overflow-x-hidden">
             <Navbar />
             {/* Main Content */}
             <div className="flex-grow grid lg:grid-cols-2 min-h-0">
                 {/* Left side */}
-                <div className="flex flex-col justify-center items-center p-6 sm:p-12">
-                    <div className="w-full max-w-md space-y-8 transition-all duration-300">
+                <div className="flex flex-col justify-center items-center p-4 sm:p-8 md:p-12">
+                    <div className="w-full max-w-md space-y-6 transition-all duration-300">
                         {/* Logo / Image */}
                         <div className="flex justify-center">
-                            <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center shadow-sm">
-                                <FaUser className="text-3xl text-primary" />
+                            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-primary/20 flex items-center justify-center shadow-sm">
+                                <FaUser className="text-2xl sm:text-3xl text-primary" />
                             </div>
                         </div>
-
-                        <h1 className="text-3xl font-bold text-center mt-6">Welcome Back!</h1>
-                        <p className="text-center text-base-content/70 -mt-2">Sign in to continue learning</p>
-
-                        <form onSubmit={handleSubmit} className="space-y-5 mt-8">
+    
+                        <h1 className="text-2xl sm:text-3xl font-bold text-center mt-4 sm:mt-6">Welcome Back!</h1>
+                        <p className="text-center text-base-content/70 -mt-1 sm:-mt-2">Sign in to continue learning</p>
+    
+                        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5 mt-6 sm:mt-8">
                             {/* Email Field */}
                             <div className="form-control">
                                 <label htmlFor="email" className="block text-sm font-medium mb-1.5">Email</label>
@@ -64,7 +64,7 @@ export default function Home() {
                                     />
                                 </div>
                             </div>
-
+    
                             {/* Password Field */}
                             <div className="form-control">
                                 <div className="flex justify-between items-center mb-1.5">
@@ -93,21 +93,21 @@ export default function Home() {
                                     </button>
                                 </div>
                             </div>
-
+    
                             {/* Submit Button */}
                             <button
                                 type="submit"
-                                className="btn btn-primary w-full mt-6 shadow-md hover:shadow-lg transition-all duration-300"
+                                className="btn btn-primary w-full mt-4 sm:mt-6 shadow-md hover:shadow-lg transition-all duration-300"
                             >
                                 Login
                             </button>
                         </form>
-
+    
                         {/* Sign Up Link */}
-                        <div className="divider text-xs text-base-content/50 my-6">OR CONTINUE WITH</div>
-
+                        <div className="divider text-xs text-base-content/50 my-4 sm:my-6">OR CONTINUE WITH</div>
+    
                         {/* Social Login Buttons */}
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-2 gap-2 sm:gap-3">
                             <button className="btn btn-outline btn-sm">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 24 24">
                                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -124,9 +124,9 @@ export default function Home() {
                                 Facebook
                             </button>
                         </div>
-
+    
                         {/* Sign Up Link */}
-                        <p className="text-sm text-center text-base-content/70 mt-6">
+                        <p className="text-sm text-center text-base-content/70 mt-4 sm:mt-6">
                             No Account? No Problem!&nbsp;
                             <Link href="/SignUp" className="text-primary hover:text-primary-focus font-medium transition-all duration-300 ease-in-out">
                                 Sign Up
@@ -134,42 +134,41 @@ export default function Home() {
                         </p>
                     </div>
                 </div>
-
-
+    
                 {/* Right Side - Abstract Design */}
                 <div className="hidden lg:flex items-center justify-center p-6 relative overflow-hidden">
                     {/* Abstract Floating Elements - Staggered Pulse Animations */}
-                    <div className="absolute top-5 left-10 w-32 h-32 bg-primary/30 backdrop-blur-xl rounded-full shadow-lg animate-pulse [animation-delay:0.2s]"></div>
-                    <div className="absolute bottom-10 right-10 w-20 h-20 bg-secondary/40 backdrop-blur-md rounded-lg shadow-md animate-pulse [animation-delay:0.4s]"></div>
-                    <div className="absolute top-1/4 right-1/4 w-48 h-48 bg-accent/30 backdrop-blur-2xl rounded-full shadow-xl animate-pulse [animation-delay:0.6s]"></div>
-                    <div className="absolute bottom-10 left-16 w-24 h-24 bg-neutral/20 backdrop-blur-xl rounded-full opacity-50 animate-pulse [animation-delay:0.8s]"></div>
-                    <div className="absolute top-3/4 right-1/4 w-48 h-48 bg-primary/20 backdrop-blur-2xl rounded-full shadow-xl animate-pulse [animation-delay:0.1s]"></div>
-
+                    <div className="absolute top-5 left-10 w-24 h-24 sm:w-32 sm:h-32 bg-primary/30 backdrop-blur-xl rounded-full shadow-lg animate-pulse [animation-delay:0.2s]"></div>
+                    <div className="absolute bottom-10 right-10 w-16 h-16 sm:w-20 sm:h-20 bg-secondary/40 backdrop-blur-md rounded-lg shadow-md animate-pulse [animation-delay:0.4s]"></div>
+                    <div className="absolute top-1/4 right-1/4 w-36 h-36 sm:w-48 sm:h-48 bg-accent/30 backdrop-blur-2xl rounded-full shadow-xl animate-pulse [animation-delay:0.6s]"></div>
+                    <div className="absolute bottom-10 left-16 w-20 h-20 sm:w-24 sm:h-24 bg-neutral/20 backdrop-blur-xl rounded-full opacity-50 animate-pulse [animation-delay:0.8s]"></div>
+                    <div className="absolute top-3/4 right-1/4 w-36 h-36 sm:w-48 sm:h-48 bg-primary/20 backdrop-blur-2xl rounded-full shadow-xl animate-pulse [animation-delay:0.1s]"></div>
+    
                     {/* Additional Shapes with Delayed Pulses */}
-                    <div className="absolute top-16 right-28 w-28 h-28 border border-primary/50 rounded-full animate-pulse [animation-delay:1s]"></div>
-                    <div className="absolute bottom-24 left-24 w-40 h-40 border border-primary rounded-lg rotate-12 animate-pulse [animation-delay:1.2s]"></div>
-                    <div className="absolute top-3/4 left-1/3 w-14 h-14 bg-base-200/50 backdrop-blur-md rounded-full opacity-70 animate-pulse [animation-delay:1.4s]"></div>
-                    <div className="absolute top-24 right-1/3 w-40 h-40 border border-secondary rounded-lg rotate-12 animate-pulse [animation-delay:1.2s]"></div>
-
+                    <div className="absolute top-16 right-28 w-20 h-20 sm:w-28 sm:h-28 border border-primary/50 rounded-full animate-pulse [animation-delay:1s]"></div>
+                    <div className="absolute bottom-24 left-24 w-32 h-32 sm:w-40 sm:h-40 border border-primary rounded-lg rotate-12 animate-pulse [animation-delay:1.2s]"></div>
+                    <div className="absolute top-3/4 left-1/3 w-10 h-10 sm:w-14 sm:h-14 bg-base-200/50 backdrop-blur-md rounded-full opacity-70 animate-pulse [animation-delay:1.4s]"></div>
+                    <div className="absolute top-24 right-1/3 w-32 h-32 sm:w-40 sm:h-40 border border-secondary rounded-lg rotate-12 animate-pulse [animation-delay:1.2s]"></div>
+    
                     {/* New Extra Floating Figures */}
-                    <div className="absolute top-1/3 left-1/4 w-16 h-16 bg-error/40 backdrop-blur-xl rounded-full shadow-md animate-pulse [animation-delay:1.6s]"></div>
-                    <div className="absolute bottom-5 right-3/2 w-12 h-12 bg-success/40 backdrop-blur-md rounded-lg shadow-md animate-pulse [animation-delay:1.8s]"></div>
-
+                    <div className="absolute top-1/3 left-1/4 w-12 h-12 sm:w-16 sm:h-16 bg-error/40 backdrop-blur-xl rounded-full shadow-md animate-pulse [animation-delay:1.6s]"></div>
+                    <div className="absolute bottom-5 right-3/2 w-10 h-10 sm:w-12 sm:h-12 bg-success/40 backdrop-blur-md rounded-lg shadow-md animate-pulse [animation-delay:1.8s]"></div>
+    
                     {/* React Icons for Extra Detail */}
-                    <BiMessageRounded className="absolute top-3/4 left-1/3 text-[56px] text-primary opacity-20 animate-pulse [animation-delay:2s]" />
-                    <FaRegSmileBeam className="absolute top-20 right-10 text-[48px] text-secondary opacity-30 animate-pulse [animation-delay:2.2s]" />
-                    <BiMessageSquareCheck className="absolute bottom-16 left-20 text-[52px] text-accent opacity-25 animate-pulse [animation-delay:2.5s]" />
-                    <BiSolidMessageRoundedDetail className="absolute bottom-1/4 left-55 text-[152px] text-accent opacity-25 animate-pulse [animation-delay:2.5s]" />
-                    <BiSolidChat className="absolute bottom-1/4 right-12 text-[72px] text-primary/50 opacity-25 animate-pulse [animation-delay:2.5s]" />
-                    <BiSolidMessageAltAdd className="absolute bottom-2/4 right-8 text-[72px] text-secondary/50 opacity-25 animate-pulse [animation-delay:2.5s]" />
-                    <BiMessageRoundedDots className="absolute bottom-2/4 left-8 text-[72px] text-accent/80 opacity-25 animate-pulse [animation-delay:2.5s]" />
-                    <FaLockOpen className="absolute bottom-2/4 left-45 top-32 text-[72px] text-accent/80 opacity-25 animate-pulse [animation-delay:2.5s]" />
-                    <RiLock2Fill className="absolute bottom-1/4 right-53 text-[72px] text-secondary/50 opacity-25 animate-pulse [animation-delay:1.5s]" />
-                    <MdLockOutline className="absolute bottom-1/3 left-16 text-[72px] text-secondary/50 opacity-25 animate-pulse [animation-delay:1.5s]" />
+                    <BiMessageRounded className="absolute top-3/4 left-1/3 text-[40px] sm:text-[56px] text-primary opacity-20 animate-pulse [animation-delay:2s]" />
+                    <FaRegSmileBeam className="absolute top-20 right-10 text-[36px] sm:text-[48px] text-secondary opacity-30 animate-pulse [animation-delay:2.2s]" />
+                    <BiMessageSquareCheck className="absolute bottom-16 left-20 text-[40px] sm:text-[52px] text-accent opacity-25 animate-pulse [animation-delay:2.5s]" />
+                    <BiSolidMessageRoundedDetail className="absolute bottom-1/4 left-55 text-[120px] sm:text-[152px] text-accent opacity-25 animate-pulse [animation-delay:2.5s]" />
+                    <BiSolidChat className="absolute bottom-1/4 right-12 text-[56px] sm:text-[72px] text-primary/50 opacity-25 animate-pulse [animation-delay:2.5s]" />
+                    <BiSolidMessageAltAdd className="absolute bottom-2/4 right-8 text-[56px] sm:text-[72px] text-secondary/50 opacity-25 animate-pulse [animation-delay:2.5s]" />
+                    <BiMessageRoundedDots className="absolute bottom-2/4 left-8 text-[56px] sm:text-[72px] text-accent/80 opacity-25 animate-pulse [animation-delay:2.5s]" />
+                    <FaLockOpen className="absolute bottom-2/4 left-45 top-32 text-[56px] sm:text-[72px] text-accent/80 opacity-25 animate-pulse [animation-delay:2.5s]" />
+                    <RiLock2Fill className="absolute bottom-1/4 right-53 text-[56px] sm:text-[72px] text-secondary/50 opacity-25 animate-pulse [animation-delay:1.5s]" />
+                    <MdLockOutline className="absolute bottom-1/3 left-16 text-[56px] sm:text-[72px] text-secondary/50 opacity-25 animate-pulse [animation-delay:1.5s]" />
                     {/* Motivational Text */}
-                    <div className="relative text-center p-8 ">
-                        <h2 className="text-5xl font-bold">Decode the Future of Security!</h2>
-                        <p className="mt-4 text-lg ">Master cryptography in a fun, interactive way—one puzzle at a time!</p>
+                    <div className="relative text-center p-6 sm:p-8">
+                        <h2 className="text-3xl sm:text-5xl font-bold">Decode the Future of Security!</h2>
+                        <p className="mt-2 sm:mt-4 text-base sm:text-lg">Master cryptography in a fun, interactive way—one puzzle at a time!</p>
                     </div>
                 </div>
             </div>
