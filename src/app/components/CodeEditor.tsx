@@ -1,11 +1,9 @@
 import Editor from '@monaco-editor/react';
 import { useRef, useState, useEffect } from 'react';
-import LanguageSelector from './language.selector';
+import LanguageSelector from './LanguageSelector';
 import { runCode } from "../../../api/api";
 import { motion, AnimatePresence } from "framer-motion";
 import ConfirmDialog from './alertDialog';
-
-// Import icons (using heroicons as an example)
 import { 
     PlayIcon, 
     ArrowsPointingOutIcon, 
@@ -27,7 +25,7 @@ export default function CodeEditor() {
     const [code, setCode] = useState('');
     const [language, setLanguage] = useState('javascript');
     const [output, setOutput] = useState('');
-    const [outputType, setOutputType] = useState('info'); // 'info', 'success', 'error'
+    const [outputType, setOutputType] = useState('info'); 
     const [isRunning, setIsRunning] = useState(false);
     const [isFullScreen, setIsFullScreen] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
@@ -93,14 +91,14 @@ export default function CodeEditor() {
             setOutput(response.run.output);
 
             if (response.run.stderr === "") {
-                setOutputType('success');
+                setOutputType('Éxito');
             }
             else { 
-                setOutputType('error');
+                setOutputType('Error');
             }
         }
         catch (error) {
-            const errorMessage = error instanceof Error ? error.message : "Failed to execute code";
+            const errorMessage = error instanceof Error ? error.message : "Error al ejecutar el código";
             setOutput(`Error: ${errorMessage}`);
             setOutputType('error');
             console.error(error);
@@ -138,9 +136,9 @@ export default function CodeEditor() {
     // Get output status icon based on output type
     const getOutputStatusIcon = () => {
         switch(outputType) {
-            case 'success':
+            case 'Éxito':
                 return <CheckCircleIcon className={`h-5 w-5 ${theme === 'dark' ? 'text-green-400' : 'text-green-500'}`} />;
-            case 'error':
+            case 'Error':
                 return <ExclamationCircleIcon className={`h-5 w-5 ${theme === 'dark' ? 'text-red-400' : 'text-red-500'}`} />;
             default:
                 return <InformationCircleIcon className={`h-5 w-5 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-500'}`} />;
@@ -154,9 +152,9 @@ export default function CodeEditor() {
         }`;
 
         switch(outputType) {
-            case 'success':
+            case 'Éxito':
                 return `${baseClass} ${theme === 'dark' ? 'bg-green-900/20' : 'bg-green-50'}`;
-            case 'error':
+            case 'Error':
                 return `${baseClass} ${theme === 'dark' ? 'bg-red-900/20' : 'bg-red-50'}`;
             default:
                 return `${baseClass} ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-100'}`;
@@ -193,10 +191,10 @@ export default function CodeEditor() {
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             onClick={copyToClipboard}
-                            title="Copy code"
+                            title="Coiar código"
                         >
                             {isCopied ? <DocumentDuplicateIcon className="h-4 w-4" /> : <ClipboardIcon className="h-4 w-4" />}
-                            {isCopied ? 'Copied!' : 'Copy'}
+                            {isCopied ? 'Copiado!' : 'Copiar'}
                         </motion.button>
                         
                         <motion.button 
@@ -211,7 +209,7 @@ export default function CodeEditor() {
                             title="Clear code"
                         >
                             <TrashIcon className="h-4 w-4" />
-                            Clear
+                            Borrar
                         </motion.button>
                         
                         <motion.button 
@@ -229,7 +227,7 @@ export default function CodeEditor() {
                                 <ArrowsPointingInIcon className="h-4 w-4" /> : 
                                 <ArrowsPointingOutIcon className="h-4 w-4" />
                             }
-                            {isFullScreen ? 'Split' : 'Expand'}
+                            {isFullScreen ? 'Dividir' : 'Expandir'}
                         </motion.button>
                         
                         <motion.button 
@@ -253,12 +251,12 @@ export default function CodeEditor() {
                                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                     </svg>
-                                    Running
+                                    Ejecutando
                                 </>
                             ) : (
                                 <>
                                     <PlayIcon className="h-4 w-4" />
-                                    Run Code
+                                    Ejecutar código
                                 </>
                             )}
                         </motion.button>
@@ -331,17 +329,17 @@ export default function CodeEditor() {
                             <div className="flex items-center gap-2">
                                 {getOutputStatusIcon()}
                                 <h3 className={`font-bold text-sm sm:text-base ${
-                                    outputType === 'success' 
+                                    outputType === 'Éxito' 
                                         ? theme === 'dark' ? 'text-green-400' : 'text-green-600'
                                         : outputType === 'error'
                                             ? theme === 'dark' ? 'text-red-400' : 'text-red-600'
                                             : theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
                                 }`}>
-                                    {outputType === 'success' 
-                                        ? 'Success' 
-                                        : outputType === 'error' 
+                                    {outputType === 'Éxito' 
+                                        ? 'Éxito' 
+                                        : outputType === 'Error' 
                                             ? 'Error' 
-                                            : 'Output'}
+                                            : 'Salida'}
                                 </h3>
                             </div>
                             <div className="flex gap-1 sm:gap-2">
@@ -357,7 +355,7 @@ export default function CodeEditor() {
                                     disabled={!output}
                                 >
                                     <XCircleIcon className="h-3 w-3" />
-                                    Clear
+                                    Borrar
                                 </motion.button>
                                 <motion.button 
                                     className={`text-xs flex items-center gap-1 px-2 py-1 rounded ${
@@ -375,7 +373,7 @@ export default function CodeEditor() {
                                     ) : (
                                         <ClipboardIcon className="h-3 w-3" />
                                     )}
-                                    {isOutputCopied ? 'Copied!' : 'Copy'}
+                                    {isOutputCopied ? 'Copiado!' : 'Copiar'}
                                 </motion.button>
                             </div>
                         </div>
@@ -384,9 +382,9 @@ export default function CodeEditor() {
                             className={`p-3 sm:p-4 h-[calc(30vh-40px)] overflow-y-auto custom-scrollbar font-mono text-xs sm:text-sm ${
                                 theme === 'dark' ? 'text-gray-300' : 'text-gray-800'
                             } ${
-                                outputType === 'error' 
+                                outputType === 'Error' 
                                     ? theme === 'dark' ? 'bg-red-900/10' : 'bg-red-50/50' 
-                                    : outputType === 'success'
+                                    : outputType === 'Éxito'
                                         ? theme === 'dark' ? 'bg-green-900/10' : 'bg-green-50/50'
                                         : ''
                             }`}
@@ -397,7 +395,7 @@ export default function CodeEditor() {
                                 <div className={`italic flex items-center justify-center h-full ${
                                     theme === 'dark' ? 'text-gray-500' : 'text-gray-400'
                                 }`}>
-                                    Click 'Run Code' to see the output here
+                                    Clickea 'Ejecutar código' para ver la salida
                                 </div>
                             )}
                         </div>
@@ -406,8 +404,8 @@ export default function CodeEditor() {
             </AnimatePresence>
             <ConfirmDialog
                 isOpen={showConfirmDialog}
-                title="Change Language?"
-                description="Changing the language will reset your code. Are you sure you want to continue?"
+                title="Cambiar lenguaje?"
+                description="Cambiar el lenguaje reiniciará su código. ¿Estás seguro de que quieres continuar?"
                 onConfirm={confirmLanguageChange}
                 onCancel={cancelLanguageChange}
             />

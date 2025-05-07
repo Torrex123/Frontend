@@ -1,13 +1,13 @@
 "use client"
 import styles from "./page.module.css";
 import Link from "next/link";
-import Navbar from "./components/navbar";
+import Navbar from "./components/Navbar";
 import {
     BiSolidChat, BiMessageRounded,
     BiMessageSquareCheck, BiSolidMessageRoundedDetail,
     BiSolidMessageAltAdd, BiMessageRoundedDots
 } from "react-icons/bi";
-import { FaUser, FaEnvelope, FaLock, FaRegSmileBeam, FaLockOpen} from "react-icons/fa";
+import { FaUser, FaEnvelope, FaLock, FaRegSmileBeam, FaLockOpen } from "react-icons/fa";
 import { RiLock2Fill } from "react-icons/ri";
 import { MdLockOutline } from "react-icons/md";
 import { useState } from "react";
@@ -40,38 +40,38 @@ export default function Home() {
                                 <FaUser className="text-2xl sm:text-3xl text-primary" />
                             </div>
                         </div>
-    
-                        <h1 className="text-2xl sm:text-3xl font-bold text-center mt-4 sm:mt-6">Welcome Back!</h1>
-                        <p className="text-center text-base-content/70 -mt-1 sm:-mt-2">Sign in to continue learning</p>
-    
+
+                        <h1 className="text-2xl sm:text-3xl font-bold text-center mt-4 sm:mt-6">¡Bienvenido de nuevo!</h1>
+                        <p className="text-center text-base-content/70 -mt-1 sm:-mt-2">Inicia sesión para seguir aprendiendo</p>
+
                         <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5 mt-6 sm:mt-8">
                             {/* Email Field */}
                             <div className="form-control">
                                 <label htmlFor="email" className="block text-sm font-medium mb-1.5">Email</label>
                                 <div className="relative">
-                                    <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-base-content/60">
+                                    <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-base-content/60 z-10">
                                         <FaEnvelope />
                                     </div>
-                                    <input
+                                    <input 
                                         type="email"
                                         id="email"
                                         name="email"
                                         value={formData.email}
                                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                         className="input input-bordered w-full pl-10 bg-base-200/50 focus:bg-base-200 focus:border-primary transition-all duration-300"
-                                        placeholder="Enter your email"
+                                        placeholder="Ingresa tu email"
                                         required
                                     />
                                 </div>
                             </div>
-    
+
                             {/* Password Field */}
                             <div className="form-control">
                                 <div className="flex justify-between items-center mb-1.5">
-                                    <label htmlFor="password" className="block text-sm font-medium">Password</label>
+                                    <label htmlFor="password" className="block text-sm font-medium">Contraseña</label>
                                 </div>
                                 <div className="relative">
-                                    <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-base-content/60">
+                                    <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-base-content/60 z-10">
                                         <FaLock />
                                     </div>
                                     <input
@@ -81,7 +81,7 @@ export default function Home() {
                                         value={formData.password}
                                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                         className="input input-bordered w-full pl-10 pr-12 bg-base-200/50 focus:bg-base-200 focus:border-primary transition-all duration-300"
-                                        placeholder="Enter your password"
+                                        placeholder="Ingresa tu contraseña"
                                         required
                                     />
                                     <button
@@ -89,23 +89,23 @@ export default function Home() {
                                         className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs font-medium text-base-content/60 hover:text-primary transition-colors"
                                         onClick={() => setShowPassword(!showPassword)}
                                     >
-                                        {showPassword ? "HIDE" : "SHOW"}
+                                        {showPassword ? "Esconder" : "Mostrar"}
                                     </button>
                                 </div>
                             </div>
-    
+
                             {/* Submit Button */}
                             <button
                                 type="submit"
                                 className="btn btn-primary w-full mt-4 sm:mt-6 shadow-md hover:shadow-lg transition-all duration-300"
                             >
-                                Login
+                                Ingresar
                             </button>
                         </form>
-    
+
                         {/* Sign Up Link */}
-                        <div className="divider text-xs text-base-content/50 my-4 sm:my-6">OR CONTINUE WITH</div>
-    
+                        <div className="divider text-xs text-base-content/50 my-4 sm:my-6">O CONTINUA CON</div>
+
                         {/* Social Login Buttons */}
                         <div className="grid grid-cols-2 gap-2 sm:gap-3">
                             <button className="btn btn-outline btn-sm">
@@ -124,17 +124,17 @@ export default function Home() {
                                 Facebook
                             </button>
                         </div>
-    
+
                         {/* Sign Up Link */}
                         <p className="text-sm text-center text-base-content/70 mt-4 sm:mt-6">
-                            No Account? No Problem!&nbsp;
+                            ¿Sin cuenta? ¡No hay Problema!&nbsp;
                             <Link href="/SignUp" className="text-primary hover:text-primary-focus font-medium transition-all duration-300 ease-in-out">
-                                Sign Up
+                                registrate
                             </Link>
                         </p>
                     </div>
                 </div>
-    
+
                 {/* Right Side - Abstract Design */}
                 <div className="hidden lg:flex items-center justify-center p-6 relative overflow-hidden">
                     {/* Abstract Floating Elements - Staggered Pulse Animations */}
@@ -143,17 +143,17 @@ export default function Home() {
                     <div className="absolute top-1/4 right-1/4 w-36 h-36 sm:w-48 sm:h-48 bg-accent/30 backdrop-blur-2xl rounded-full shadow-xl animate-pulse [animation-delay:0.6s]"></div>
                     <div className="absolute bottom-10 left-16 w-20 h-20 sm:w-24 sm:h-24 bg-neutral/20 backdrop-blur-xl rounded-full opacity-50 animate-pulse [animation-delay:0.8s]"></div>
                     <div className="absolute top-3/4 right-1/4 w-36 h-36 sm:w-48 sm:h-48 bg-primary/20 backdrop-blur-2xl rounded-full shadow-xl animate-pulse [animation-delay:0.1s]"></div>
-    
+
                     {/* Additional Shapes with Delayed Pulses */}
                     <div className="absolute top-16 right-28 w-20 h-20 sm:w-28 sm:h-28 border border-primary/50 rounded-full animate-pulse [animation-delay:1s]"></div>
                     <div className="absolute bottom-24 left-24 w-32 h-32 sm:w-40 sm:h-40 border border-primary rounded-lg rotate-12 animate-pulse [animation-delay:1.2s]"></div>
                     <div className="absolute top-3/4 left-1/3 w-10 h-10 sm:w-14 sm:h-14 bg-base-200/50 backdrop-blur-md rounded-full opacity-70 animate-pulse [animation-delay:1.4s]"></div>
                     <div className="absolute top-24 right-1/3 w-32 h-32 sm:w-40 sm:h-40 border border-secondary rounded-lg rotate-12 animate-pulse [animation-delay:1.2s]"></div>
-    
+
                     {/* New Extra Floating Figures */}
                     <div className="absolute top-1/3 left-1/4 w-12 h-12 sm:w-16 sm:h-16 bg-error/40 backdrop-blur-xl rounded-full shadow-md animate-pulse [animation-delay:1.6s]"></div>
                     <div className="absolute bottom-5 right-3/2 w-10 h-10 sm:w-12 sm:h-12 bg-success/40 backdrop-blur-md rounded-lg shadow-md animate-pulse [animation-delay:1.8s]"></div>
-    
+
                     {/* React Icons for Extra Detail */}
                     <BiMessageRounded className="absolute top-3/4 left-1/3 text-[40px] sm:text-[56px] text-primary opacity-20 animate-pulse [animation-delay:2s]" />
                     <FaRegSmileBeam className="absolute top-20 right-10 text-[36px] sm:text-[48px] text-secondary opacity-30 animate-pulse [animation-delay:2.2s]" />
@@ -167,8 +167,8 @@ export default function Home() {
                     <MdLockOutline className="absolute bottom-1/3 left-16 text-[56px] sm:text-[72px] text-secondary/50 opacity-25 animate-pulse [animation-delay:1.5s]" />
                     {/* Motivational Text */}
                     <div className="relative text-center p-6 sm:p-8">
-                        <h2 className="text-3xl sm:text-5xl font-bold">Decode the Future of Security!</h2>
-                        <p className="mt-2 sm:mt-4 text-base sm:text-lg">Master cryptography in a fun, interactive way—one puzzle at a time!</p>
+                        <h2 className="text-3xl sm:text-5xl font-bold">Descifra el futuro de la seguridad!</h2>
+                        <p className="mt-2 sm:mt-4 text-base sm:text-lg">Domina la criptografía de forma divertida e interactiva, ¡un acertijo a la vez!</p>
                     </div>
                 </div>
             </div>

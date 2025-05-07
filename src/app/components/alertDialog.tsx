@@ -11,7 +11,6 @@ interface ConfirmDialogProps {
     onCancel: () => void;
 }
 
-
 export default function ConfirmDialog({ isOpen, title, description, onConfirm, onCancel }: ConfirmDialogProps) {
     return (
         <Transition appear show={isOpen} as={Fragment}>

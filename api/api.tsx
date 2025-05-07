@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { LANGUAGES } from '@/app/components/language.selector';
+import { LANGUAGES } from '@/app/components/LanguageSelector';
 
 const pixonApi = axios.create({
     baseURL:  'https://emkc.org/api/v2/piston',

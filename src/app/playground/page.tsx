@@ -1,7 +1,7 @@
 'use client';
 import { motion } from "framer-motion";
-import CodeEditor from "../components/code.editor";
-import Navbar from "../components/navbar";
+import CodeEditor from "../components/CodeEditor";
+import Navbar from "../components/Navbar";
 
 export default function Playground() {
     return (

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import Navbar from "../components/navbar";
+import Navbar from "../components/Navbar";
 import { useThemeStore } from "../store/themeStore";
 import { FiUser, FiLock, FiMail, FiSettings, FiBell, FiEye, FiEyeOff, FiUpload, FiTrash2 } from "react-icons/fi";
 import ConfirmDialog from "../components/alertDialog";
