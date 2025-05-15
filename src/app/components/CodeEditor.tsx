@@ -1,14 +1,18 @@
-import Editor from '@monaco-editor/react';
+import * as monaco from 'monaco-editor';
 import { useRef, useState, useEffect } from 'react';
 import LanguageSelector from './LanguageSelector';
 import { runCode } from "../../../api/api";
 import { motion, AnimatePresence } from "framer-motion";
 import ConfirmDialog from './alertDialog';
-import { 
-    PlayIcon, 
-    ArrowsPointingOutIcon, 
-    ArrowsPointingInIcon, 
-    ClipboardIcon, 
+import { Resizable, ResizeDirection } from 're-resizable';
+import 'react-resizable/css/styles.css';
+import { Editor } from '@monaco-editor/react';
+
+import {
+    PlayIcon,
+    ArrowsPointingOutIcon,
+    ArrowsPointingInIcon,
+    ClipboardIcon,
     TrashIcon,
     SunIcon,
     MoonIcon,
@@ -18,53 +22,147 @@ import {
     CheckCircleIcon,
     InformationCircleIcon
 } from '@heroicons/react/24/solid';
+import { usePathname } from 'next/navigation';
+import { IoMdArrowRoundBack } from 'react-icons/io';
 
-export default function CodeEditor() {
-    const editorRef = useRef<{ focus: () => void } | null>(null);
+interface CodeEditorProps {
+    onCodeChange?: (code: string) => void;
+    onOutputChange?: (output: string, outputType: string) => void;
+    onLanguageChange?: (language: string) => void;
+    initialCode?: string;
+    initialLanguage?: string;
+}
+
+export default function CodeEditor({
+    onCodeChange,
+    onOutputChange,
+    onLanguageChange,
+    initialCode = '',
+    initialLanguage = 'javascript'
+}: CodeEditorProps) {
+    const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
     const outputRef = useRef<HTMLDivElement>(null);
-    const [code, setCode] = useState('');
-    const [language, setLanguage] = useState('javascript');
+    const [code, setCode] = useState(initialCode || '');
+    const [language, setLanguage] = useState<keyof typeof CODE_SNIPPETS>(initialLanguage as keyof typeof CODE_SNIPPETS);
     const [output, setOutput] = useState('');
-    const [outputType, setOutputType] = useState('info'); 
+    const [outputType, setOutputType] = useState('info');
     const [isRunning, setIsRunning] = useState(false);
     const [isFullScreen, setIsFullScreen] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
     const [isOutputCopied, setIsOutputCopied] = useState(false);
     const [theme, setTheme] = useState('light');
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-    const [pendingLanguage, setPendingLanguage] = useState<string | null>(null);
-    
-    // Set editor theme based on app theme
+    const [pendingLanguage, setPendingLanguage] = useState(null);
+    const [editorHeight, setEditorHeight] = useState(500);
+    const [outputHeight, setOutputHeight] = useState(200);
+    const [isResizing, setIsResizing] = useState(false);
+    const [isOnPlaygrounRoute, setIsOnPlaygroundRoute] = useState(false);
     const editorTheme = theme === 'dark' ? 'vs-dark' : 'light';
+    const pathname = usePathname();
 
     useEffect(() => {
-        setCode(CODE_SNIPPETS[language]);
+        if (!initialCode) {
+            setCode(CODE_SNIPPETS[language as keyof typeof CODE_SNIPPETS]);
+        }
+
+        setEditorHeight(window.innerHeight * 0.6);
+        setOutputHeight(window.innerHeight * 0.25);
+
     }, []);
+
+    useEffect(() => {
+        if (pathname === '/playground') {
+            setIsOnPlaygroundRoute(true);
+        } else {
+            setIsOnPlaygroundRoute(false);
+        }
+    }, [pathname]);
 
     // Auto-scroll output when it changes
     useEffect(() => {
         if (outputRef.current) {
             outputRef.current.scrollTop = outputRef.current.scrollHeight;
         }
-    }, [output]);
 
-    const onMount = (editor: { focus: () => void; } | null) => {
-        editorRef.current = editor;
-        editor?.focus();
+        if (onOutputChange) {
+            onOutputChange(output, outputType);
+        }
+    }, [output, outputType]);
+
+    // Communicate code changes to external components
+    useEffect(() => {
+        if (onCodeChange) {
+            onCodeChange(code);
+        }
+    }, [code]);
+
+    // Communicate language changes to external components
+    useEffect(() => {
+        if (onLanguageChange) {
+            onLanguageChange(language);
+        }
+    }, [language]);
+
+    // callback to parent component when editor is resized
+    useEffect(() => {
+        if (!isResizing && editorRef.current) {
+            setTimeout(() => {
+                editorRef.current?.layout();
+            }, 100);
+        }
+    }, [isResizing]);
+
+    const handleBackHome = () => {
+        window.location.href = '/home';
     }
 
-    const selectLanguage = (newLang: string) => {
-        if (code.trim()) {
+    const onMount = (editor: monaco.editor.IStandaloneCodeEditor) => {
+        editorRef.current = editor;
+        editor?.focus();
+    };
+
+    const handleResizeStart = () => {
+        setIsResizing(true);
+    };
+
+    const handleEditorResizeStop = (
+        e: MouseEvent | TouchEvent,
+        direction: ResizeDirection,
+        ref: HTMLElement,
+        d: { width: number; height: number }
+    ) => {
+        setIsResizing(false);
+        const newHeight = ref.offsetHeight || parseInt(ref.style.height, 10);
+        setEditorHeight(newHeight);
+
+        if (editorRef.current) {
+            editorRef.current.layout();
+        }
+    };
+
+    const handleOutputResizeStop = (
+        e: MouseEvent | TouchEvent,
+        direction: ResizeDirection,
+        ref: HTMLElement,
+        d: { width: number; height: number }
+    ) => {
+        setIsResizing(false);
+        const newHeight = ref.offsetHeight || parseInt(ref.style.height, 10);
+        setOutputHeight(newHeight);
+    };
+
+    const selectLanguage = (newLang: any) => {
+        if (code.trim() && code !== CODE_SNIPPETS[language]) {
             setPendingLanguage(newLang);
             setShowConfirmDialog(true);
         } else {
             setLanguage(newLang);
-            setCode(CODE_SNIPPETS[newLang]);
+            setCode(CODE_SNIPPETS[newLang as keyof typeof CODE_SNIPPETS]);
             setOutput('');
             setOutputType('info');
         }
     };
-    
+
     const confirmLanguageChange = () => {
         if (pendingLanguage) {
             setLanguage(pendingLanguage);
@@ -75,7 +173,7 @@ export default function CodeEditor() {
         }
         setShowConfirmDialog(false);
     };
-    
+
     const cancelLanguageChange = () => {
         setPendingLanguage(null);
         setShowConfirmDialog(false);
@@ -86,14 +184,14 @@ export default function CodeEditor() {
             setIsRunning(true);
             setOutput("Running code...");
             setOutputType('info');
-            
+
             const response = await runCode(language, code);
             setOutput(response.run.output);
 
             if (response.run.stderr === "") {
                 setOutputType('Éxito');
             }
-            else { 
+            else {
                 setOutputType('Error');
             }
         }
@@ -106,36 +204,36 @@ export default function CodeEditor() {
         finally {
             setIsRunning(false);
         }
-    }
+    };
 
     const copyToClipboard = () => {
         navigator.clipboard.writeText(code);
         setIsCopied(true);
         setTimeout(() => setIsCopied(false), 2000);
-    }
+    };
 
     const copyOutputToClipboard = () => {
         navigator.clipboard.writeText(output);
         setIsOutputCopied(true);
         setTimeout(() => setIsOutputCopied(false), 2000);
-    }
+    };
 
     const clearCode = () => {
         setCode('');
-    }
+    };
 
     const clearOutput = () => {
         setOutput('');
         setOutputType('info');
-    }
+    };
 
     const toggleTheme = () => {
         setTheme(theme === 'dark' ? 'light' : 'dark');
-    }
+    };
 
     // Get output status icon based on output type
     const getOutputStatusIcon = () => {
-        switch(outputType) {
+        switch (outputType) {
             case 'Éxito':
                 return <CheckCircleIcon className={`h-5 w-5 ${theme === 'dark' ? 'text-green-400' : 'text-green-500'}`} />;
             case 'Error':
@@ -147,11 +245,10 @@ export default function CodeEditor() {
 
     // Get output panel background color based on output type
     const getOutputHeaderClass = () => {
-        const baseClass = `flex justify-between items-center px-4 py-2 border-b ${
-            theme === 'dark' ? 'border-gray-700' : 'border-gray-200'
-        }`;
+        const baseClass = `flex justify-between items-center px-4 py-2 border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'
+            }`;
 
-        switch(outputType) {
+        switch (outputType) {
             case 'Éxito':
                 return `${baseClass} ${theme === 'dark' ? 'bg-green-900/20' : 'bg-green-50'}`;
             case 'Error':
@@ -161,48 +258,80 @@ export default function CodeEditor() {
         }
     };
 
+    const resizeHandleStyles = {
+        bottom: {
+            width: '100%',
+            height: '8px',
+            bottom: '0px',
+            cursor: 'ns-resize',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
+        }
+    };
+
+    const CustomHandle = ({ className = '' }: { className?: string }) => (
+        <div className={`${className} flex justify-center items-center`}>
+            <div className="w-16 h-1 rounded-full bg-gray-300 opacity-50 hover:opacity-80 transition-opacity"></div>
+        </div>
+    );
+
     return (
         <div className="flex flex-col h-full gap-4">
-            <motion.div 
-                className={`flex flex-col rounded-xl shadow-xl transition-all duration-300 flex-grow overflow-hidden ${
-                    theme === 'dark'
-                        ? 'bg-gray-900 border border-gray-700/50'
-                        : 'bg-gray-50 border border-gray-200'
-                }`}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
+            <Resizable
+                className={`editor-container flex flex-col rounded-xl shadow-xl transition-all duration-300 overflow-hidden ${theme === 'dark'
+                    ? 'bg-gray-900 border border-gray-700/50'
+                    : 'bg-gray-50 border border-gray-200'
+                    }`}
+                size={{ width: '100%', height: editorHeight }}
+                minHeight={200}
+                maxHeight={800}
+                enable={{ bottom: true }}
+                handleComponent={{ bottom: <CustomHandle /> }}
+                handleStyles={resizeHandleStyles}
+                onResizeStart={handleResizeStart}
+                onResizeStop={handleEditorResizeStop}
+                style={{
+                    opacity: isResizing ? 0.85 : 1,
+                    transition: isResizing ? 'none' : 'opacity 0.2s'
+                }}
             >
-                <div className={`flex flex-col sm:flex-row justify-between items-center px-3 sm:px-4 py-2 sm:py-3 rounded-t-xl border-b ${
-                    theme === 'dark'
-                        ? 'bg-gray-800 border-gray-700'
-                        : 'bg-gray-100 border-gray-200'
-                }`}>
+                <div className={`flex flex-col sm:flex-row justify-between items-center px-3 sm:px-4 py-2 sm:py-3 rounded-t-xl border-b ${theme === 'dark'
+                    ? 'bg-gray-800 border-gray-700'
+                    : 'bg-gray-100 border-gray-200'
+                    }`}>
                     <div className="flex items-center w-full sm:w-auto mb-2 sm:mb-0">
+                        {isOnPlaygrounRoute && (
+                            <button
+                                onClick={handleBackHome}
+                                className="flex gap-2 btn btn-primary btn-outline m-1 shadow-md text-left px-4 font-medium"
+                            >
+                                <IoMdArrowRoundBack className="h-5 w-5" />
+                                <span>Volver</span>
+                            </button>
+                        )}
                         <LanguageSelector language={language} selectLanguage={selectLanguage} />
                     </div>
                     <div className="flex flex-wrap gap-1 sm:gap-2 w-full sm:w-auto justify-end">
-                        <motion.button 
-                            className={`btn btn-sm flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm ${
-                                theme === 'dark'
-                                    ? 'bg-gray-700 text-gray-200 hover:bg-gray-600'
-                                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                            }`}
+                        <motion.button
+                            className={`btn btn-sm flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm ${theme === 'dark'
+                                ? 'bg-gray-700 text-gray-200 hover:bg-gray-600'
+                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                }`}
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             onClick={copyToClipboard}
-                            title="Coiar código"
+                            title="Copiar código"
                         >
                             {isCopied ? <DocumentDuplicateIcon className="h-4 w-4" /> : <ClipboardIcon className="h-4 w-4" />}
                             {isCopied ? 'Copiado!' : 'Copiar'}
                         </motion.button>
-                        
-                        <motion.button 
-                            className={`btn btn-sm flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm ${
-                                theme === 'dark'
-                                    ? 'bg-gray-700 text-gray-200 hover:bg-gray-600'
-                                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                            }`}
+
+                        <motion.button
+                            className={`btn btn-sm flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm ${theme === 'dark'
+                                ? 'bg-gray-700 text-gray-200 hover:bg-gray-600'
+                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                }`}
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             onClick={clearCode}
@@ -211,35 +340,32 @@ export default function CodeEditor() {
                             <TrashIcon className="h-4 w-4" />
                             Borrar
                         </motion.button>
-                        
-                        <motion.button 
-                            className={`btn btn-sm flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm ${
-                                theme === 'dark'
-                                    ? 'bg-gray-700 text-gray-200 hover:bg-gray-600'
-                                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                            }`}
+
+                        <motion.button
+                            className={`btn btn-sm flex items-center gap-1 px-2 sm:px-3 text-xs sm:text-sm ${theme === 'dark'
+                                ? 'bg-gray-700 text-gray-200 hover:bg-gray-600'
+                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                }`}
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             onClick={() => setIsFullScreen(!isFullScreen)}
                             title={isFullScreen ? "Split view" : "Full screen"}
                         >
-                            {isFullScreen ? 
-                                <ArrowsPointingInIcon className="h-4 w-4" /> : 
+                            {isFullScreen ?
+                                <ArrowsPointingInIcon className="h-4 w-4" /> :
                                 <ArrowsPointingOutIcon className="h-4 w-4" />
                             }
                             {isFullScreen ? 'Dividir' : 'Expandir'}
                         </motion.button>
-                        
-                        <motion.button 
-                            className={`btn btn-sm text-white flex items-center gap-1 px-3 sm:px-4 text-xs sm:text-sm ${
-                                isRunning 
-                                    ? 'opacity-80 cursor-not-allowed' 
-                                    : ''
-                            } ${
-                                theme === 'dark'
+
+                        <motion.button
+                            className={`btn btn-sm text-white flex items-center gap-1 px-3 sm:px-4 text-xs sm:text-sm ${isRunning
+                                ? 'opacity-80 cursor-not-allowed'
+                                : ''
+                                } ${theme === 'dark'
                                     ? 'bg-emerald-600 hover:bg-emerald-500'
                                     : 'bg-emerald-500 hover:bg-emerald-400'
-                            }`}
+                                }`}
                             whileHover={!isRunning ? { scale: 1.05 } : {}}
                             whileTap={!isRunning ? { scale: 0.95 } : {}}
                             onClick={executeCode}
@@ -262,18 +388,18 @@ export default function CodeEditor() {
                         </motion.button>
                     </div>
                 </div>
-                
-                <div className="editor-container relative flex-grow">
+
+                <div className="relative flex-grow h-full">
                     <Editor
                         height="100%"
                         language={language}
                         value={code}
                         theme={editorTheme}
                         onMount={onMount}
-                        onChange={(code) => setCode(code || '')}
+                        onChange={(code: any) => setCode(code || '')}
                         options={{
                             minimap: { enabled: false },
-                            fontSize: 14, // Smaller font size for better fit on smaller screens
+                            fontSize: 14,
                             scrollBeyondLastLine: false,
                             automaticLayout: true,
                             padding: { top: 12 },
@@ -290,16 +416,15 @@ export default function CodeEditor() {
                         }}
                         className="rounded-b-xl overflow-hidden"
                     />
-                    
+
                     {/* Theme toggle */}
                     <div className="absolute top-3 right-3 z-10">
-                        <button 
+                        <button
                             onClick={toggleTheme}
-                            className={`p-1.5 rounded-full ${
-                                theme === 'dark'
-                                    ? 'bg-gray-700/50 hover:bg-gray-600/70 text-gray-300'
-                                    : 'bg-gray-200/70 hover:bg-gray-300/80 text-gray-700'
-                            }`}
+                            className={`p-1.5 rounded-full ${theme === 'dark'
+                                ? 'bg-gray-700/50 hover:bg-gray-600/70 text-gray-300'
+                                : 'bg-gray-200/70 hover:bg-gray-300/80 text-gray-700'
+                                }`}
                             title={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
                         >
                             {theme === 'dark' ? (
@@ -310,45 +435,50 @@ export default function CodeEditor() {
                         </button>
                     </div>
                 </div>
-            </motion.div>
-    
+            </Resizable>
+
             <AnimatePresence>
                 {!isFullScreen && (
-                    <motion.div 
-                        className={`rounded-xl shadow-xl overflow-hidden ${
-                            theme === 'dark'
-                                ? 'bg-gray-800 border border-gray-700/50'
-                                : 'bg-gray-100 border border-gray-200'
-                        }`}
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "30vh" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.3 }}
+                    <Resizable
+                        className={`output-container rounded-xl shadow-xl overflow-hidden ${theme === 'dark'
+                            ? 'bg-gray-800 border border-gray-700/50'
+                            : 'bg-gray-100 border border-gray-200'
+                            }`}
+                        size={{ width: '100%', height: outputHeight }}
+                        minHeight={100}
+                        maxHeight={500}
+                        enable={{ bottom: true }}
+                        handleComponent={{ bottom: <CustomHandle /> }}
+                        handleStyles={resizeHandleStyles}
+                        onResizeStart={handleResizeStart}
+                        onResizeStop={handleOutputResizeStop}
+                        style={{
+                            opacity: isResizing ? 0.85 : 1,
+                            transition: isResizing ? 'none' : 'opacity 0.2s'
+                        }}
                     >
                         <div className={getOutputHeaderClass()}>
                             <div className="flex items-center gap-2">
                                 {getOutputStatusIcon()}
-                                <h3 className={`font-bold text-sm sm:text-base ${
-                                    outputType === 'Éxito' 
-                                        ? theme === 'dark' ? 'text-green-400' : 'text-green-600'
-                                        : outputType === 'error'
-                                            ? theme === 'dark' ? 'text-red-400' : 'text-red-600'
-                                            : theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
-                                }`}>
-                                    {outputType === 'Éxito' 
-                                        ? 'Éxito' 
-                                        : outputType === 'Error' 
-                                            ? 'Error' 
+                                <h3 className={`font-bold text-sm sm:text-base ${outputType === 'Éxito'
+                                    ? theme === 'dark' ? 'text-green-400' : 'text-green-600'
+                                    : outputType === 'Error'
+                                        ? theme === 'dark' ? 'text-red-400' : 'text-red-600'
+                                        : theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
+                                    }`}>
+                                    {outputType === 'Éxito'
+                                        ? 'Éxito'
+                                        : outputType === 'Error'
+                                            ? 'Error'
                                             : 'Salida'}
                                 </h3>
                             </div>
                             <div className="flex gap-1 sm:gap-2">
-                                <motion.button 
-                                    className={`text-xs flex items-center gap-1 px-2 py-1 rounded ${
-                                        theme === 'dark'
-                                            ? 'text-gray-400 hover:text-white hover:bg-gray-700'
-                                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
-                                    } transition-colors ${!output ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                <motion.button
+                                    className={`text-xs flex items-center gap-1 px-2 py-1 rounded ${theme === 'dark'
+                                        ? 'text-gray-400 hover:text-white hover:bg-gray-700'
+                                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
+                                        } transition-colors ${!output ? 'opacity-50 cursor-not-allowed' : ''}`}
                                     whileHover={output ? { scale: 1.05 } : {}}
                                     whileTap={output ? { scale: 0.95 } : {}}
                                     onClick={clearOutput}
@@ -357,12 +487,11 @@ export default function CodeEditor() {
                                     <XCircleIcon className="h-3 w-3" />
                                     Borrar
                                 </motion.button>
-                                <motion.button 
-                                    className={`text-xs flex items-center gap-1 px-2 py-1 rounded ${
-                                        theme === 'dark'
-                                            ? 'text-gray-400 hover:text-white hover:bg-gray-700'
-                                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
-                                    } transition-colors ${!output ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                <motion.button
+                                    className={`text-xs flex items-center gap-1 px-2 py-1 rounded ${theme === 'dark'
+                                        ? 'text-gray-400 hover:text-white hover:bg-gray-700'
+                                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
+                                        } transition-colors ${!output ? 'opacity-50 cursor-not-allowed' : ''}`}
                                     whileHover={output ? { scale: 1.05 } : {}}
                                     whileTap={output ? { scale: 0.95 } : {}}
                                     onClick={copyOutputToClipboard}
@@ -377,29 +506,26 @@ export default function CodeEditor() {
                                 </motion.button>
                             </div>
                         </div>
-                        <div 
+                        <div
                             ref={outputRef}
-                            className={`p-3 sm:p-4 h-[calc(30vh-40px)] overflow-y-auto custom-scrollbar font-mono text-xs sm:text-sm ${
-                                theme === 'dark' ? 'text-gray-300' : 'text-gray-800'
-                            } ${
-                                outputType === 'Error' 
-                                    ? theme === 'dark' ? 'bg-red-900/10' : 'bg-red-50/50' 
+                            className={`p-3 sm:p-4 h-[calc(100%-40px)] overflow-y-auto custom-scrollbar font-mono text-xs sm:text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-800'
+                                } ${outputType === 'Error'
+                                    ? theme === 'dark' ? 'bg-red-900/10' : 'bg-red-50/50'
                                     : outputType === 'Éxito'
                                         ? theme === 'dark' ? 'bg-green-900/10' : 'bg-green-50/50'
                                         : ''
-                            }`}
+                                }`}
                         >
                             {output ? (
                                 <pre className="whitespace-pre-wrap break-words overflow-x-hidden">{output}</pre>
                             ) : (
-                                <div className={`italic flex items-center justify-center h-full ${
-                                    theme === 'dark' ? 'text-gray-500' : 'text-gray-400'
-                                }`}>
+                                <div className={`italic flex items-center justify-center h-full ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'
+                                    }`}>
                                     Clickea 'Ejecutar código' para ver la salida
                                 </div>
                             )}
                         </div>
-                    </motion.div>
+                    </Resizable>
                 )}
             </AnimatePresence>
             <ConfirmDialog
@@ -413,7 +539,7 @@ export default function CodeEditor() {
     );
 }
 
-const CODE_SNIPPETS: Record<string, string> = {
+const CODE_SNIPPETS = {
     python: `\ndef greet():\n\tprint("Welcome to CryptoPlayground")\n\ngreet()\n`,
     javascript: `\nfunction greet() {\n\tconsole.log("Welcome to CryptoPlayground");\n}\n\ngreet();\n`,
     java: `\npublic class HelloWorld {\n\tpublic static void main(String[] args) {\n\t\tSystem.out.println("Welcome to CryptoPlayground");\n\t}\n}\n`,

@@ -23,6 +23,7 @@ import {
 } from 'react-icons/fi';
 import { FaFingerprint } from 'react-icons/fa';
 import confetti from 'canvas-confetti';
+import CodeEditor from '../components/CodeEditor';
 
 // Types for our application
 type HashType = 'sha1' | 'sha2';
@@ -46,6 +47,8 @@ export default function HashFunctions() {
     const [activeTab, setActiveTab] = useState<string>('info');
     const [questionsAnswered, setQuestionsAnswered] = useState<number[]>([]);
     const [practicalCompleted, setPracticalCompleted] = useState<boolean>(false);
+    const [testsPassed, setTestsPassed] = useState(false);
+    const [testResults, setTestResults] = useState(null);
 
     // Quiz state
     const [questions, setQuestions] = useState<Question[]>([
@@ -183,7 +186,7 @@ export default function HashFunctions() {
 
     // Navigate to the quiz when all hash functions are reviewed
     const handleStartQuiz = () => {
-        setStage('quiz');
+        setStage('practical');
     };
 
     // Return to the main dashboard (this would be linked to your routing system)
@@ -191,6 +194,9 @@ export default function HashFunctions() {
         // Implement navigation to the dashboard
         console.log("Return to dashboard");
     };
+
+    const runTests = async () => { }
+
 
     return (
         <div className="min-h-screen flex flex-col bg-base-100">
@@ -1030,26 +1036,26 @@ digest = h0 concatenate h1 concatenate h2 concatenate h3 concatenate h4`}
                                                                 <FiCpu className="mr-2 text-primary" />
                                                                 Optimización de Rendimiento
                                                             </h4>
-                                                            <p className="text-sm">
-                                                                <ul className="list-disc list-inside text-sm">
-                                                                    <li>En CPUs de 64 bits, SHA-512 puede ser más rápido que SHA-256</li>
-                                                                    <li>Muchos procesadores modernos tienen instrucciones específicas para SHA-256</li>
-                                                                    <li>La implementación en hardware puede ser órdenes de magnitud más rápida</li>
-                                                                </ul>
-                                                            </p>
+
+                                                            <ul className="list-disc list-inside text-sm">
+                                                                <li>En CPUs de 64 bits, SHA-512 puede ser más rápido que SHA-256</li>
+                                                                <li>Muchos procesadores modernos tienen instrucciones específicas para SHA-256</li>
+                                                                <li>La implementación en hardware puede ser órdenes de magnitud más rápida</li>
+                                                            </ul>
+
                                                         </div>
                                                         <div>
                                                             <h4 className="font-bold flex items-center">
                                                                 <FiShield className="mr-2 text-secondary" />
                                                                 Consideraciones de Seguridad
                                                             </h4>
-                                                            <p className="text-sm">
-                                                                <ul className="list-disc list-inside text-sm">
-                                                                    <li>SHA-256 es suficiente para la mayoría de aplicaciones</li>
-                                                                    <li>Para seguridad a largo plazo (10+ años), considerar SHA-512</li>
-                                                                    <li>Para contraseñas, siempre combinar con sal y una función de derivación</li>
-                                                                </ul>
-                                                            </p>
+
+                                                            <ul className="list-disc list-inside text-sm">
+                                                                <li>SHA-256 es suficiente para la mayoría de aplicaciones</li>
+                                                                <li>Para seguridad a largo plazo (10+ años), considerar SHA-512</li>
+                                                                <li>Para contraseñas, siempre combinar con sal y una función de derivación</li>
+                                                            </ul>
+
                                                         </div>
                                                         <div>
                                                             <h4 className="font-bold flex items-center">
@@ -1241,7 +1247,7 @@ digest = h0 concatenate h1 concatenate h2 concatenate h3 concatenate h4`}
                     <div className="max-w-4xl mx-auto">
                         <div className="card bg-base-200 shadow-xl">
                             <div className="card-body">
-                                <h2 className="card-title text-2xl mb-6">Ejercicio Práctico: Implementación de Funciones Hash</h2>
+                                <h2 className="card-title text-2xl mb-6">Ejercicio Práctico: Verificación de Integridad con SHA-1</h2>
 
                                 {practicalCompleted ? (
                                     <div className="alert alert-success mb-6">
@@ -1249,10 +1255,44 @@ digest = h0 concatenate h1 concatenate h2 concatenate h3 concatenate h4`}
                                         <span>¡Excelente trabajo! Tu implementación ha pasado todas las pruebas.</span>
                                     </div>
                                 ) : (
-                                    <p className="mb-6">
-                                        En este ejercicio, implementarás funciones que utilicen SHA-256 para tareas comunes de seguridad.
-                                        Sigue las instrucciones y completa el código requerido.
-                                    </p>
+                                    <>
+                                        <div className="mb-6 space-y-4">
+                                            <p>
+                                                En este ejercicio implementarás un sistema de verificación de integridad utilizando SHA-1. Aunque
+                                                SHA-1 se considera obsoleto para aplicaciones de seguridad modernas, es útil para comprender
+                                                los conceptos fundamentales de las funciones hash.
+                                            </p>
+
+                                            <div className="alert alert-info">
+                                                <div>
+                                                    <h3 className="font-bold">Objetivo:</h3>
+                                                    <p>Crear un sistema que verifique la integridad de un mensaje mediante su hash SHA-1.</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="bg-base-300 p-4 rounded-lg">
+                                                <h3 className="font-bold mb-2">Requisitos:</h3>
+                                                <ol className="list-decimal list-inside space-y-2">
+                                                    <li>Implementa una función <code className="bg-base-100 px-1 rounded">calcularSHA1(mensaje)</code> que calcule el hash SHA-1 de un mensaje dado.</li>
+                                                    <li>Implementa una función <code className="bg-base-100 px-1 rounded">verificarIntegridad(mensaje, hashGuardado)</code> que compruebe si el hash calculado del mensaje coincide con el hash guardado.</li>
+                                                    <li>Implementa una función <code className="bg-base-100 px-1 rounded">verificarDatos()</code> que pruebe el sistema con los datos de prueba proporcionados.</li>
+                                                </ol>
+                                            </div>
+
+                                            <div className="alert alert-warning">
+                                                <div>
+                                                    <h3 className="font-bold">Nota:</h3>
+                                                    <p>Las pruebas automáticas verificarán que tu código funcione correctamente con los datos de prueba.
+                                                        No modifiques los nombres de las funciones ni la estructura del código de prueba.</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="mb-6">
+                                            <h3 className="text-lg font-semibold mb-2">Completa el siguiente código:</h3>
+                                            <CodeEditor />
+                                        </div>
+                                    </>
                                 )}
 
                                 <div className="flex justify-between mt-8">
@@ -1263,12 +1303,17 @@ digest = h0 concatenate h1 concatenate h2 concatenate h3 concatenate h4`}
                                     </div>
 
                                     <div className="flex gap-2">
-                                        <button className="btn btn-accent">
+                                        <button
+                                            className="btn btn-accent"
+                                            onClick={runTests}
+                                            disabled={practicalCompleted}
+                                        >
                                             <FiCode className="mr-2" /> Ejecutar pruebas
                                         </button>
                                         <button
                                             className="btn btn-primary"
                                             onClick={handleSubmitPractical}
+                                            disabled={!testsPassed}
                                         >
                                             Enviar solución <FiArrowRight className="ml-2" />
                                         </button>

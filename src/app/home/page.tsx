@@ -21,9 +21,12 @@ import {
     FiTrendingUp
 } from "react-icons/fi";
 import { motion } from "framer-motion";
+import { loadUserHome } from "../../../api/api";
+
+
 
 export default function UserHome() {
-    // Mock user data (replace with actual data fetching)
+
     const [user, setUser] = useState({
         name: "Alex",
         progress: 35,
@@ -98,6 +101,22 @@ export default function UserHome() {
             icon: <FiCpu className="w-6 h-6" />
         }
     ]);
+
+    // Load user data from API
+    useEffect(() => {
+        const fetchUserData = async () => {
+            try {
+                const response = await loadUserHome();
+                if (response) {
+                    console.log("User data loaded successfully:", response);
+                }
+            } catch (error) {
+                console.error("Error loading user data:", error);
+            }
+        };
+
+        fetchUserData();
+    }, []);
 
     // Mock recommended next steps
     const [recommendations, setRecommendations] = useState([

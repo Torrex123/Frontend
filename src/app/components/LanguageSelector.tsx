@@ -16,6 +16,7 @@ import {
 export const LANGUAGES: Record<string, string> = {
     "python": "3.10.0",
     "javascript": "18.15.0",
+    /*
     "java": "15.0.2",
     "ruby": "3.0.1",
     "c": "10.2.0",
@@ -23,6 +24,7 @@ export const LANGUAGES: Record<string, string> = {
     "php": "8.2.3",
     "swift": "5.3.3",
     "go": "1.16.2"
+    */
 };
 
 // Language icons mapping using react-icons

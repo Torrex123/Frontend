@@ -25,10 +25,17 @@ export default function Navbar() {
       return [{ name: "Acerca de", href: "/about" }];
     }
 
+    if (pathname === "/home") {
+      return [
+        { name: "Playground", href: "/playground" },
+        { name: "Challenges", href: "/challenges" },
+        { name: "Settings", href: "/settings" },
+      ];
+    }
+
     return [
       { name: "Playground", href: "/playground" },
       { name: "Challenges", href: "/challenges" },
-      { name: "Literature", href: "/literature" },
     ];
   };
 
