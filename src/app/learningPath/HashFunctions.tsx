@@ -1062,13 +1062,11 @@ digest = h0 concatenate h1 concatenate h2 concatenate h3 concatenate h4`}
                                                                 <FiCode className="mr-2 text-accent" />
                                                                 Estándares y Conformidad
                                                             </h4>
-                                                            <p className="text-sm">
-                                                                <ul className="list-disc list-inside text-sm">
-                                                                    <li>FIPS 180-4 define formalmente SHA-2</li>
-                                                                    <li>NIST SP 800-57 recomienda SHA-256 o superior</li>
-                                                                    <li>PCI DSS requiere SHA-2 para el sector financiero</li>
-                                                                </ul>
-                                                            </p>
+                                                            <ul className="list-disc list-inside text-sm">
+                                                                <li>FIPS 180-4 define formalmente SHA-2</li>
+                                                                <li>NIST SP 800-57 recomienda SHA-256 o superior</li>
+                                                                <li>PCI DSS requiere SHA-2 para el sector financiero</li>
+                                                            </ul>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1258,24 +1256,25 @@ digest = h0 concatenate h1 concatenate h2 concatenate h3 concatenate h4`}
                                     <>
                                         <div className="mb-6 space-y-4">
                                             <p>
-                                                En este ejercicio implementarás un sistema de verificación de integridad utilizando SHA-1. Aunque
-                                                SHA-1 se considera obsoleto para aplicaciones de seguridad modernas, es útil para comprender
-                                                los conceptos fundamentales de las funciones hash.
+                                                En este ejercicio implementarás un sistema de verificación de integridad utilizando SHA-1 en Python.
+                                                Aunque SHA-1 se considera obsoleto para aplicaciones de seguridad modernas, es útil para
+                                                comprender los conceptos fundamentales de las funciones hash.
                                             </p>
 
                                             <div className="alert alert-info">
                                                 <div>
                                                     <h3 className="font-bold">Objetivo:</h3>
-                                                    <p>Crear un sistema que verifique la integridad de un mensaje mediante su hash SHA-1.</p>
+                                                    <p>Crear un sistema en Python que verifique la integridad de un mensaje mediante su hash SHA-1.</p>
                                                 </div>
                                             </div>
 
                                             <div className="bg-base-300 p-4 rounded-lg">
                                                 <h3 className="font-bold mb-2">Requisitos:</h3>
                                                 <ol className="list-decimal list-inside space-y-2">
-                                                    <li>Implementa una función <code className="bg-base-100 px-1 rounded">calcularSHA1(mensaje)</code> que calcule el hash SHA-1 de un mensaje dado.</li>
-                                                    <li>Implementa una función <code className="bg-base-100 px-1 rounded">verificarIntegridad(mensaje, hashGuardado)</code> que compruebe si el hash calculado del mensaje coincide con el hash guardado.</li>
-                                                    <li>Implementa una función <code className="bg-base-100 px-1 rounded">verificarDatos()</code> que pruebe el sistema con los datos de prueba proporcionados.</li>
+                                                    <li>Implementa una función <code className="bg-base-100 px-1 rounded">calcular_sha1(mensaje)</code> que calcule el hash SHA-1 de un mensaje dado y lo devuelva en formato hexadecimal.</li>
+                                                    <li>Implementa una función <code className="bg-base-100 px-1 rounded">verificar_integridad(mensaje, hash_guardado)</code> que compruebe si el hash calculado del mensaje coincide con el hash guardado y devuelva True o False.</li>
+                                                    <li>Utiliza la biblioteca <code className="bg-base-100 px-1 rounded">hashlib</code> de Python para calcular los hashes SHA-1.</li>
+                                                    <li>Asegúrate de manejar correctamente los tipos de datos (strings y bytes).</li>
                                                 </ol>
                                             </div>
 
@@ -1283,14 +1282,43 @@ digest = h0 concatenate h1 concatenate h2 concatenate h3 concatenate h4`}
                                                 <div>
                                                     <h3 className="font-bold">Nota:</h3>
                                                     <p>Las pruebas automáticas verificarán que tu código funcione correctamente con los datos de prueba.
-                                                        No modifiques los nombres de las funciones ni la estructura del código de prueba.</p>
+                                                        No modifiques los nombres de las funciones ni su comportamiento esperado.</p>
                                                 </div>
                                             </div>
                                         </div>
 
                                         <div className="mb-6">
-                                            <h3 className="text-lg font-semibold mb-2">Completa el siguiente código:</h3>
-                                            <CodeEditor />
+                                            <h3 className="text-lg font-semibold mb-2">Código inicial:</h3>
+                                            <CodeEditor
+                                                isModule={true}
+                                                value={`import hashlib
+
+# Implementa la función para calcular el hash SHA-1 de un mensaje
+def calcular_sha1(mensaje):
+    # Tu código aquí
+    pass
+
+# Implementa la función para verificar la integridad de un mensaje
+def verificar_integridad(mensaje, hash_guardado):
+    # Tu código aquí
+    pass
+
+# Ejemplos de uso (no modificar)
+def prueba_sistema():
+    mensaje1 = "Hola, este es un mensaje de prueba"
+    mensaje2 = "Hola, este es un mensaje de prueba modificado"
+    hash_original = "2a4ad5f607b6594550ccbc9a94349c9f6a222def"
+    
+    print(f"Hash calculado para mensaje1: {calcular_sha1(mensaje1)}")
+    print(f"¿Integridad del mensaje1 verificada?: {verificar_integridad(mensaje1, hash_original)}")
+    print(f"¿Integridad del mensaje2 verificada?: {verificar_integridad(mensaje2, hash_original)}")
+
+# No modifiques esta línea, se usa para las pruebas
+if __name__ == "__main__":
+    prueba_sistema()
+`}
+
+                                            />
                                         </div>
                                     </>
                                 )}

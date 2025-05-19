@@ -13,7 +13,6 @@ import { RiShieldKeyholeLine } from "react-icons/ri";
 import { updateUserProfile, uploadProfileImage, fetchUserProfile, deteleUser } from "../../../api/api";
 import useAuth from "../hooks/UseAuth";
 import ConfirmDialog from "../components/alertDialog";
-import { Router } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { IoMdArrowRoundBack } from "react-icons/io";
 
@@ -368,6 +367,17 @@ export default function UserSettings() {
             </div>
         );
     };
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen flex justify-center items-center bg-base-200">
+                <div className="text-center">
+                    <span className="loading loading-spinner loading-lg text-primary"></span>
+                    <p className="mt-4">Cargando tu Perfil...</p>
+                </div>
+            </div>
+        );
+    }
 
     // Function to render password strength indicator
     const renderPasswordStrengthIndicator = () => {

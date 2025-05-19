@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
 import { useThemeStore } from "../store/themeStore";
+import Link from "next/link";
 import {
     FiBook,
     FiAward,
@@ -18,166 +19,157 @@ import {
     FiArrowRight,
     FiBarChart2,
     FiBookmark,
-    FiTrendingUp
+    FiTrendingUp,
+    FiSettings,
+    FiUser,
+    FiCalendar,
+    FiActivity
 } from "react-icons/fi";
 import { motion } from "framer-motion";
-import { loadUserHome } from "../../../api/api";
-
-
+import { loadUserHome, fetchUserProfile } from "../../../api/api";
+import useAuth from "../hooks/UseAuth";
 
 export default function UserHome() {
-
-    const [user, setUser] = useState({
-        name: "Alex",
-        progress: 35,
-        completedModules: 2,
-        totalModules: 8,
-        lastActivity: "2 days ago",
-        streak: 5,
-        level: "Intermediate",
-        badges: ["Quick Learner", "Consistent", "Problem Solver"]
+    const [modules, setModules] = useState([]);
+    const [userData, setUserData] = useState({
+        username: "",
+        profileImage: "",
+        level: "Principiante",
+        achievements: [],
+        streaks: 0,
+        globalProgress: 0,
+        createdAt: "",
     });
+    const [isLoading, setIsLoading] = useState(true);
+    const isAuthenticated = useAuth();
 
-    // Mock learning modules (replace with data from your DB)
-    const [modules, setModules] = useState([
-        {
-            id: 1,
-            title: "Introduction to Cryptography",
-            description: "Learn the basics of cryptography and its importance in modern security.",
-            level: "Beginner",
-            duration: "2 hours",
-            progress: 100,
-            status: "completed",
-            icon: <FiLock className="w-6 h-6" />
-        },
-        {
-            id: 2,
-            title: "Symmetric Key Cryptography",
-            description: "Explore symmetric encryption algorithms and their applications.",
-            level: "Beginner",
-            duration: "3 hours",
-            progress: 100,
-            status: "completed",
-            icon: <FiKey className="w-6 h-6" />
-        },
-        {
-            id: 3,
-            title: "Asymmetric Key Cryptography",
-            description: "Understand public-key cryptography and its role in secure communications.",
-            level: "Intermediate",
-            duration: "4 hours",
-            progress: 45,
-            status: "in-progress",
-            icon: <FiShield className="w-6 h-6" />
-        },
-        {
-            id: 4,
-            title: "Hash Functions & Digital Signatures",
-            description: "Learn about cryptographic hash functions and how digital signatures work.",
-            level: "Intermediate",
-            duration: "3 hours",
-            progress: 0,
-            status: "locked",
-            icon: <FiCode className="w-6 h-6" />
-        },
-        {
-            id: 5,
-            title: "Cryptographic Protocols",
-            description: "Explore TLS, SSL, and other protocols that secure the internet.",
-            level: "Advanced",
-            duration: "5 hours",
-            progress: 0,
-            status: "locked",
-            icon: <FiServer className="w-6 h-6" />
-        },
-        {
-            id: 6,
-            title: "Blockchain Cryptography",
-            description: "Understand the cryptographic foundations of blockchain technology.",
-            level: "Advanced",
-            duration: "6 hours",
-            progress: 0,
-            status: "locked",
-            icon: <FiCpu className="w-6 h-6" />
-        }
-    ]);
+    // Module icons mapping
+    const moduleIcons = {
+        fundamentals: <FiBook className="w-6 h-6" />,
+        classical: <FiKey className="w-6 h-6" />,
+        symmetric: <FiLock className="w-6 h-6" />,
+        asymmetric: <FiShield className="w-6 h-6" />,
+        hashing: <FiCode className="w-6 h-6" />,
+        protocols: <FiServer className="w-6 h-6" />,
+        blockchain: <FiCpu className="w-6 h-6" />
+    };
 
     // Load user data from API
     useEffect(() => {
+        const fetchModuleData = async () => {
+            setIsLoading(true);
+            try {
+                // Fetch modules
+                const modulesResponse = await loadUserHome();
+                console.log("Modules Response:", modulesResponse);
+                if (modulesResponse) {
+                    const modulesWithIcons = modulesResponse.data.data.map(module => ({
+                        ...module,
+                        icon: moduleIcons[module.id] || <FiBook className="w-6 h-6" />
+                    }));
+                    setModules(modulesWithIcons);
+                }
+            } catch (error) {
+                console.error("Error loading data:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
         const fetchUserData = async () => {
             try {
-                const response = await loadUserHome();
-                if (response) {
-                    console.log("User data loaded successfully:", response);
+                const userResponse = await fetchUserProfile();
+                console.log("User Response:", userResponse);
+                if (userResponse) {
+                    setUserData({
+                        username: userResponse.data.data.username,
+                        profileImage: userResponse.data.data.profileImage,
+                        level: userResponse.data.data.level,
+                        achievements: userResponse.data.data.achievements,
+                        streaks: userResponse.data.data.streaks,
+                        globalProgress: userResponse.data.data.globalProgress,
+                        createdAt: userResponse.data.data.createdAt,
+                    });
                 }
             } catch (error) {
                 console.error("Error loading user data:", error);
             }
-        };
-
-        fetchUserData();
-    }, []);
-
-    // Mock recommended next steps
-    const [recommendations, setRecommendations] = useState([
-        {
-            id: 1,
-            title: "Continue Asymmetric Key Cryptography",
-            description: "You're 45% through this module. Keep going!",
-            type: "module",
-            moduleId: 3
-        },
-        {
-            id: 2,
-            title: "Weekly Challenge: Break the Code",
-            description: "Test your skills with this week's cryptography challenge.",
-            type: "challenge"
-        },
-        {
-            id: 3,
-            title: "Join the Community Discussion",
-            description: "Share your insights on the latest encryption standards.",
-            type: "community"
         }
-    ]);
+
+        fetchModuleData();
+        fetchUserData();
+
+    }, []);
 
     // Time-based greeting
     const [greeting, setGreeting] = useState("");
 
     useEffect(() => {
         const hour = new Date().getHours();
-        if (hour < 12) setGreeting("Good morning");
-        else if (hour < 18) setGreeting("Good afternoon");
-        else setGreeting("Good evening");
+        if (hour < 12) setGreeting("Buenos días");
+        else if (hour < 18) setGreeting("Buenas tardes");
+        else setGreeting("Buenas noches");
     }, []);
+
+    // Format last activity date
+    const formatLastActivity = (dateString) => {
+        if (!dateString) return "N/A";
+
+        const now = new Date();
+        const activityDate = new Date(dateString);
+        const diffInHours = Math.floor((now - activityDate) / (1000 * 60 * 60));
+
+        if (diffInHours < 24) {
+            return `hace ${diffInHours} ${diffInHours === 1 ? 'hora' : 'horas'}`;
+        } else {
+            const diffInDays = Math.floor(diffInHours / 24);
+            return `hace ${diffInDays} ${diffInDays === 1 ? 'día' : 'días'}`;
+        }
+    };
 
     // Function to get status badge
     const getStatusBadge = (status) => {
         switch (status) {
-            case "completed":
-                return <span className="badge badge-success">Completed</span>;
-            case "in-progress":
-                return <span className="badge badge-info">In Progress</span>;
-            case "locked":
-                return <span className="badge badge-outline">Locked</span>;
+            case "completado":
+                return <span className="badge badge-success">Completado</span>;
+            case "en-progreso":
+                return <span className="badge badge-info">En Progreso</span>;
+            case "no-iniciado":
+                return <span className="badge badge-outline">No Iniciado</span>;
+            case "bloqueado":
+                return <span className="badge badge-outline">Bloqueado</span>;
             default:
-                return null;
+                return <span className="badge badge-outline">No Iniciado</span>;
         }
     };
 
     // Function to get level badge
     const getLevelBadge = (level) => {
         switch (level) {
-            case "Beginner":
-                return <span className="badge badge-primary badge-sm">Beginner</span>;
-            case "Intermediate":
-                return <span className="badge badge-secondary badge-sm">Intermediate</span>;
-            case "Advanced":
-                return <span className="badge badge-accent badge-sm">Advanced</span>;
+            case "Principiante":
+                return <span className="badge badge-primary badge-sm">Principiante</span>;
+            case "Intermedio":
+                return <span className="badge badge-secondary badge-sm">Intermedio</span>;
+            case "Avanzado":
+                return <span className="badge badge-accent badge-sm">Avanzado</span>;
             default:
-                return null;
+                return <span className="badge badge-primary badge-sm">{level}</span>;
         }
     };
+
+    // Calculate completed modules
+    const completedModules = modules.filter(module => module.status === "completado").length;
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen flex justify-center items-center bg-base-200">
+                <div className="text-center">
+                    <span className="loading loading-spinner loading-lg text-primary"></span>
+                    <p className="mt-4">Cargando tu dashboard...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen flex flex-col bg-gradient-to-br from-base-300 to-base-200">
@@ -185,126 +177,202 @@ export default function UserHome() {
 
             <div className="container mx-auto px-4 py-8 flex-grow">
                 <div className="max-w-7xl mx-auto">
-                    {/* Welcome Section */}
-                    <div className="card bg-base-100 shadow-xl mb-8">
-                        <div className="card-body">
-                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
-                                <div>
-                                    <h1 className="text-3xl font-bold mb-2">{greeting}, {user.name}!</h1>
-                                    <p className="text-base-content/70">
-                                        Welcome back to your cryptography learning journey. You're making great progress!
-                                    </p>
-                                </div>
-                                <div className="mt-4 md:mt-0">
-                                    <div className="stats shadow">
-                                        <div className="stat">
-                                            <div className="stat-figure text-primary">
-                                                <FiAward className="w-6 h-6" />
+                    {/* Welcome Section with Profile */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="card bg-base-100 shadow-xl mb-8 overflow-hidden"
+                    >
+                        <div className="relative">
+                            <div className="h-28 bg-gradient-to-r from-primary/20 via-secondary/20 to-accent/20"></div>
+                            <div className="absolute top-14 left-8">
+                                <div className="avatar">
+                                    <div className="w-24 h-24 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2 shadow-lg overflow-hidden">
+                                        {userData.profileImage ? (
+                                            <img
+                                                src={userData.profileImage}
+                                                alt={userData.username}
+                                                className="w-24 h-24 object-cover rounded-full"
+                                            />
+                                        ) : (
+                                            <div className="bg-primary/20 w-full h-full flex items-center justify-center">
+                                                <FiUser className="w-10 h-10 text-primary" />
                                             </div>
-                                            <div className="stat-title">Level</div>
-                                            <div className="stat-value text-primary">{user.level}</div>
-                                            <div className="stat-desc">Keep learning to advance</div>
-                                        </div>
-
-                                        <div className="stat">
-                                            <div className="stat-figure text-secondary">
-                                                <FiTrendingUp className="w-6 h-6" />
-                                            </div>
-                                            <div className="stat-title">Streak</div>
-                                            <div className="stat-value text-secondary">{user.streak} days</div>
-                                            <div className="stat-desc">Last active {user.lastActivity}</div>
-                                        </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
+
+                        <div className="card-body pt-14 sm:pt-6">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                                <div className="sm:ml-24 md:ml-28">
+                                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                                        <h1 className="text-3xl font-bold">{greeting}, {userData.username}!</h1>
+                                        {getLevelBadge(userData.level)}
+                                    </div>
+                                    <p className="text-base-content/70 max-w-md">
+                                        Bienvenido de nuevo a tu viaje de aprendizaje en criptografía.
+                                        {userData.streaks > 0 && <span className="font-medium"> ¡Llevas {userData.streaks} días seguidos aprendiendo!</span>}
+                                    </p>
+                                    <div className="mt-2 text-sm text-base-content/60 flex items-center">
+                                        <FiCalendar className="mr-1" />
+                                        Miembro desde {new Date(userData.createdAt).toLocaleDateString('es-ES', {
+                                            year: 'numeric',
+                                            month: 'long',
+                                            day: 'numeric'
+                                        })}
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2 mt-4 sm:mt-0">
+                                    <Link href="/settings" className="btn btn-sm btn-outline gap-2">
+                                        <FiSettings className="w-4 h-4" />
+                                        Perfil
+                                    </Link>
+                                </div>
+                            </div>
+                        </div>
+                        {userData.streaks >= 7 && (
+                            <div className="bg-gradient-to-r from-warning/20 to-warning/10 p-2 px-4 flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <FiTrendingUp className="text-warning" />
+                                    <span className="text-sm font-medium">¡Racha imparable de {userData.streaks} días!</span>
+                                </div>
+                                <div className="badge badge-warning">+ 50 XP diarios</div>
+                            </div>
+                        )}
+                    </motion.div>
+
+                    {/* Stats Section */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: 0.1 }}
+                        className="mb-8"
+                    >
+                        <div className="stats stats-vertical lg:stats-horizontal shadow w-full bg-base-100">
+                            <div className="stat">
+                                <div className="stat-figure text-primary">
+                                    <FiAward className="w-6 h-6" />
+                                </div>
+                                <div className="stat-title">Nivel</div>
+                                <div className="stat-value text-primary">{userData.level}</div>
+                                <div className="stat-desc">Sigue aprendiendo para avanzar</div>
+                            </div>
+
+                            <div className="stat">
+                                <div className="stat-figure text-secondary">
+                                    <FiTrendingUp className="w-6 h-6" />
+                                </div>
+                                <div className="stat-title">Racha</div>
+                                <div className="stat-value text-secondary">{userData.streaks} días</div>
+                                <div className="stat-desc">¡Mantén tu racha diaria!</div>
+                            </div>
+
+                            <div className="stat">
+                                <div className="stat-figure text-accent">
+                                    <FiBarChart2 className="w-6 h-6" />
+                                </div>
+                                <div className="stat-title">Progreso Global</div>
+                                <div className="stat-value text-accent">{userData.globalProgress}%</div>
+                                <div className="stat-desc">
+                                    {completedModules} de {modules.length} módulos completados
+                                </div>
+                            </div>
+                        </div>
+                    </motion.div>
+
+                    {/* Achievements Section */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: 0.2 }}
+                        className="card bg-base-100 shadow-xl mb-8"
+                    >
+                        <div className="card-body">
+                            <h2 className="card-title text-2xl mb-4">
+                                <FiAward className="mr-2" />
+                                Tus Logros
+                            </h2>
+                            <div className="flex flex-wrap gap-3">
+                                {userData.achievements && userData.achievements.length > 0 ? (
+                                    userData.achievements.map((achievement, index) => (
+                                        <div key={index} className="badge badge-lg gap-2 p-3 bg-base-200 shadow-sm hover:bg-primary hover:text-primary-content transition-colors duration-300">
+                                            <FiAward className="h-4 w-4" />
+                                            {achievement}
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className="text-base-content/70">
+                                        Aún no has desbloqueado ningún logro. ¡Completa módulos para ganar insignias!
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    </motion.div>
 
                     {/* Progress Overview */}
-                    <div className="card bg-base-100 shadow-xl mb-8">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: 0.3 }}
+                        className="card bg-base-100 shadow-xl mb-8"
+                    >
                         <div className="card-body">
-                            <h2 className="card-title text-2xl mb-4">Your Learning Progress</h2>
+                            <h2 className="card-title text-2xl mb-4">
+                                <FiBarChart2 className="mr-2" />
+                                Tu Progreso de Aprendizaje
+                            </h2>
 
                             <div className="flex flex-col md:flex-row gap-6">
                                 <div className="flex-1">
                                     <div className="mb-2 flex justify-between items-center">
-                                        <span className="text-sm font-medium">Overall Progress</span>
-                                        <span className="text-sm font-medium">{user.progress}%</span>
+                                        <span className="text-sm font-medium">Progreso Global</span>
+                                        <span className="text-sm font-medium">{userData.globalProgress}%</span>
                                     </div>
-                                    <progress
-                                        className="progress progress-primary w-full"
-                                        value={user.progress}
-                                        max="100"
-                                    ></progress>
+                                    <div className="w-full bg-base-200 rounded-full h-4 mb-2">
+                                        <div
+                                            className="h-4 rounded-full bg-gradient-to-r from-primary to-secondary"
+                                            style={{ width: `${userData.globalProgress}%` }}
+                                        ></div>
+                                    </div>
                                     <p className="mt-2 text-sm text-base-content/70">
-                                        You've completed {user.completedModules} of {user.totalModules} modules
+                                        Has completado {completedModules} de {modules.length} módulos
                                     </p>
-                                </div>
-
-                                <div className="divider md:divider-horizontal"></div>
-
-                                <div className="flex-1">
-                                    <h3 className="font-medium mb-3">Your Achievements</h3>
-                                    <div className="flex flex-wrap gap-2">
-                                        {user.badges.map((badge, index) => (
-                                            <div key={index} className="badge badge-lg gap-2">
-                                                <FiAward className="h-4 w-4" />
-                                                {badge}
-                                            </div>
-                                        ))}
-                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-
-                    {/* Recommended Next Steps */}
-                    <h2 className="text-2xl font-bold mb-4">Recommended Next Steps</h2>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                        {recommendations.map((item) => (
-                            <motion.div
-                                key={item.id}
-                                className="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow"
-                                whileHover={{ y: -5 }}
-                                transition={{ type: "spring", stiffness: 300 }}
-                            >
-                                <div className="card-body">
-                                    <h3 className="card-title text-lg">
-                                        {item.type === "module" && <FiPlayCircle className="text-primary" />}
-                                        {item.type === "challenge" && <FiBarChart2 className="text-secondary" />}
-                                        {item.type === "community" && <FiBookmark className="text-accent" />}
-                                        {item.title}
-                                    </h3>
-                                    <p className="text-base-content/70">{item.description}</p>
-                                    <div className="card-actions justify-end mt-4">
-                                        <button className="btn btn-primary btn-sm">
-                                            {item.type === "module" ? "Continue" : "View"}
-                                            <FiArrowRight className="ml-2" />
-                                        </button>
-                                    </div>
-                                </div>
-                            </motion.div>
-                        ))}
-                    </div>
+                    </motion.div>
 
                     {/* Learning Modules */}
-                    <h2 className="text-2xl font-bold mb-4">Your Learning Path</h2>
+                    <motion.h2
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: 0.4 }}
+                        className="text-2xl font-bold mb-4 flex items-center"
+                    >
+                        <FiBook className="mr-2" />
+                        Tu Ruta de Aprendizaje
+                    </motion.h2>
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                        {modules.map((module) => (
-                            <div
+                        {modules.map((module, index) => (
+                            <motion.div
                                 key={module.id}
-                                className={`card bg-base-100 shadow-xl transition-all ${module.status === "locked" ? "opacity-70" : ""
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.3, delay: 0.4 + (index * 0.1) }}
+                                className={`card bg-base-100 shadow-xl transition-all hover:shadow-2xl ${module.status === "bloqueado" ? "opacity-70" : ""
                                     }`}
                             >
                                 <div className="card-body">
                                     <div className="flex items-start">
-                                        <div className={`p-3 rounded-lg mr-4 ${module.status === "completed"
-                                                ? "bg-success/10 text-success"
-                                                : module.status === "in-progress"
-                                                    ? "bg-info/10 text-info"
-                                                    : "bg-base-200 text-base-content/70"
+                                        <div className={`p-3 rounded-lg mr-4 ${module.status === "completado"
+                                            ? "bg-success/10 text-success"
+                                            : module.status === "en-progreso"
+                                                ? "bg-info/10 text-info"
+                                                : "bg-base-200 text-base-content/70"
                                             }`}>
                                             {module.icon}
                                         </div>
@@ -323,20 +391,20 @@ export default function UserHome() {
                                                 </div>
                                             </div>
 
-                                            {module.status !== "locked" && (
+                                            {module.status !== "bloqueado" && (
                                                 <>
                                                     <div className="w-full bg-base-200 rounded-full h-2.5 mb-2">
                                                         <div
-                                                            className={`h-2.5 rounded-full ${module.status === "completed" ? "bg-success" : "bg-info"
+                                                            className={`h-2.5 rounded-full ${module.status === "completado" ? "bg-success" : "bg-info"
                                                                 }`}
                                                             style={{ width: `${module.progress}%` }}
                                                         ></div>
                                                     </div>
                                                     <div className="flex justify-between text-xs">
-                                                        <span>{module.progress}% complete</span>
-                                                        {module.status === "completed" && (
+                                                        <span>{module.progress}% completado</span>
+                                                        {module.status === "completado" && (
                                                             <span className="flex items-center text-success">
-                                                                <FiCheckCircle className="mr-1" /> Completed
+                                                                <FiCheckCircle className="mr-1" /> Completado
                                                             </span>
                                                         )}
                                                     </div>
@@ -346,22 +414,26 @@ export default function UserHome() {
                                     </div>
 
                                     <div className="card-actions justify-end mt-4">
-                                        {module.status === "locked" ? (
+                                        {module.status === "bloqueado" ? (
                                             <button className="btn btn-outline btn-disabled">
-                                                <FiLock className="mr-2" /> Locked
+                                                <FiLock className="mr-2" /> Bloqueado
                                             </button>
-                                        ) : module.status === "completed" ? (
+                                        ) : module.status === "completado" ? (
                                             <button className="btn btn-outline">
-                                                Review
+                                                <FiBookmark className="mr-2" /> Repasar
                                             </button>
                                         ) : (
                                             <button className="btn btn-primary">
-                                                {module.progress > 0 ? "Continue" : "Start"}
+                                                {module.progress > 0 ? (
+                                                    <><FiPlayCircle className="mr-2" /> Continuar</>
+                                                ) : (
+                                                    <><FiArrowRight className="mr-2" /> Comenzar</>
+                                                )}
                                             </button>
                                         )}
                                     </div>
                                 </div>
-                            </div>
+                            </motion.div>
                         ))}
                     </div>
 
@@ -417,78 +489,6 @@ export default function UserHome() {
                         </div>
                     </div>
 
-                    {/* Upcoming Events */}
-                    <div className="card bg-base-100 shadow-xl mb-8">
-                        <div className="card-body">
-                            <h2 className="card-title text-2xl mb-4">Upcoming Events</h2>
-
-                            <div className="overflow-x-auto">
-                                <table className="table w-full">
-                                    <thead>
-                                        <tr>
-                                            <th>Event</th>
-                                            <th>Date</th>
-                                            <th>Type</th>
-                                            <th>Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>
-                                                <div className="font-bold">Cryptography in Web3</div>
-                                                <div className="text-sm opacity-70">Expert webinar with Dr. Jane Smith</div>
-                                            </td>
-                                            <td>May 15, 2023<br /><span className="badge badge-ghost badge-sm">2:00 PM EST</span></td>
-                                            <td>Webinar</td>
-                                            <td>
-                                                <button className="btn btn-xs btn-primary">Register</button>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>
-                                                <div className="font-bold">Quantum Cryptography Workshop</div>
-                                                <div className="text-sm opacity-70">Hands-on workshop</div>
-                                            </td>
-                                            <td>May 22, 2023<br /><span className="badge badge-ghost badge-sm">All day</span></td>
-                                            <td>Workshop</td>
-                                            <td>
-                                                <button className="btn btn-xs btn-primary">Register</button>
-                                            </td>
-                                        </tr>
-                                        <tr>
-
-                                            <td>
-                                                <div className="font-bold">Quantum Cryptography Workshop</div>
-                                                <div className="text-sm opacity-70">Hands-on workshop</div>
-                                            </td>
-                                            <td>May 22, 2023<br /><span className="badge badge-ghost badge-sm">All day</span></td>
-                                            <td>Workshop</td>
-                                            <td>
-                                                <button className="btn btn-xs btn-primary">Register</button>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>
-                                                <div className="font-bold">Cryptography Hackathon</div>
-                                                <div className="text-sm opacity-70">Build secure applications</div>
-                                            </td>
-                                            <td>June 5-7, 2023<br /><span className="badge badge-ghost badge-sm">Virtual</span></td>
-                                            <td>Hackathon</td>
-                                            <td>
-                                                <button className="btn btn-xs btn-outline">Join Waitlist</button>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            <div className="card-actions justify-center mt-4">
-                                <button className="btn btn-outline btn-sm">
-                                    View All Events
-                                </button>
-                            </div>
-                        </div>
-                    </div>
 
                     {/* Learning Tips */}
                     <div className="alert shadow-lg mb-8">
@@ -497,24 +497,21 @@ export default function UserHome() {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
                             <div>
-                                <h3 className="font-bold">Learning Tip</h3>
+                                <h3 className="font-bold">Tip de aprendizaje</h3>
                                 <div className="text-sm">
-                                    Consistent practice is key to mastering cryptography. Try to dedicate at least 30 minutes daily to your studies.
+                                    La práctica constante es clave para dominar la criptografía. Dedica tiempo cada día a repasar y practicar lo aprendido.
                                 </div>
                             </div>
-                        </div>
-                        <div className="flex-none">
-                            <button className="btn btn-sm btn-ghost">Dismiss</button>
-                            <button className="btn btn-sm btn-primary">More Tips</button>
                         </div>
                     </div>
                 </div>
             </div>
 
+
             {/* Footer */}
             <footer className="footer footer-center p-4 bg-base-300 text-base-content">
                 <div>
-                    <p>© 2023 CryptoLearn - Empowering secure digital futures through education</p>
+                    <p>© 2025 CryptoPlayground - Todos los derechos reservados</p>
                 </div>
             </footer>
         </div>

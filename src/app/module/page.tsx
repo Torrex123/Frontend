@@ -9,7 +9,6 @@ const moduleMap = {
     fundamentals: FundamentalsCryptography,
     symmetric: SymmetricCryptography,
     hash: HashFunctions,
-    asymmetric: AsymmetricCryptography,
 };
 
 export default function Module() {

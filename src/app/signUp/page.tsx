@@ -5,7 +5,7 @@
 import Link from "next/link";
 import Navbar from "../components/Navbar";
 import { FaUser, FaEnvelope, FaLock, FaRegSmileBeam, FaLockOpen } from "react-icons/fa";
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import {
     BiSolidChat, BiMessageRounded,
     BiMessageSquareCheck, BiSolidMessageRoundedDetail,
@@ -18,7 +18,7 @@ import { useRouter } from "next/navigation";
 
 export default function SignUp() {
     const router = useRouter();
-    const { register, isLoading, error, clearError, isAuthenticated } = useUserStore();
+    const { register, isLoading, error, clearError } = useUserStore();
 
     const [showPassword, setShowPassword] = useState(false);
     const [formData, setFormData] = useState({
@@ -94,7 +94,7 @@ export default function SignUp() {
                 // Redirect to the home page or dashboard after successful registration
                 router.push("/home");
             }
-            
+
         } catch (err: any) {
             setRegistrationError(err.message || "Ha ocurrido un error inesperado");
         }
@@ -127,7 +127,7 @@ export default function SignUp() {
                     ></div>
                 </div>
                 <p className={`text-xs mt-1 ${passwordStrength.score < 3 ? 'text-error' :
-                        passwordStrength.score < 6 ? 'text-warning' : 'text-success'
+                    passwordStrength.score < 6 ? 'text-warning' : 'text-success'
                     }`}>
                     {passwordStrength.message}
                 </p>

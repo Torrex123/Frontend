@@ -7,6 +7,8 @@ import { useState, useRef } from "react";
 import { GlobeLock } from "lucide-react";
 import { usePathname } from "next/navigation";
 import ThemeDropdown from "./ThemeDropDown";
+import UseUserStore from "../store/UserStore";
+
 
 interface ThemeStore {
   theme: string;
@@ -14,22 +16,20 @@ interface ThemeStore {
 }
 
 export default function Navbar() {
-  const { theme, setTheme } = useThemeStore() as ThemeStore;
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLLIElement>(null);
+  const { isAuthenticated } = UseUserStore();
   const pathname = usePathname();
 
   // Define navigation items based on routes
   const getNavigationItems = () => {
-    if (pathname === "/") {
+    if (pathname === "/" || pathname === "/signUp") {
       return [{ name: "Acerca de", href: "/about" }];
     }
 
     if (pathname === "/home") {
       return [
         { name: "Playground", href: "/playground" },
-        { name: "Challenges", href: "/challenges" },
-        { name: "Settings", href: "/settings" },
+        { name: "Desafios", href: "/challenges" },
+        { name: "Acerca de", href: "/about" },
       ];
     }
 
@@ -39,14 +39,24 @@ export default function Navbar() {
     ];
   };
 
+  const getHomeRoute = () => {
+    if (isAuthenticated) {
+      return "/home";
+    }
+    return "/";
+  };
+
   const navItems = getNavigationItems();
 
   return (
     <nav className={`${styles.navigation} bg-base-100`}>
       <div className="flex items-center justify-between gap-2">
-        <div className="text-xl sm:text-2xl font-bold cursor-pointer ml-60">
+        <Link
+          href={getHomeRoute()}
+          className="text-xl sm:text-2xl font-bold cursor-pointer ml-60 hover:text-primary transition"
+        >
           CryptoPlayground
-        </div>
+        </Link>
         <GlobeLock size={24} className="text-primary" />
       </div>
       <ul className={`${styles.navList} flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 p-4 mr-30`}>

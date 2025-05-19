@@ -1,5 +1,5 @@
 import * as monaco from 'monaco-editor';
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, use } from 'react';
 import LanguageSelector from './LanguageSelector';
 import { runCode } from "../../../api/api";
 import { motion, AnimatePresence } from "framer-motion";
@@ -29,16 +29,20 @@ interface CodeEditorProps {
     onCodeChange?: (code: string) => void;
     onOutputChange?: (output: string, outputType: string) => void;
     onLanguageChange?: (language: string) => void;
+    value?: string;
     initialCode?: string;
     initialLanguage?: string;
+    isModule?: boolean;
 }
 
 export default function CodeEditor({
     onCodeChange,
     onOutputChange,
     onLanguageChange,
+    value = '',
     initialCode = '',
-    initialLanguage = 'javascript'
+    initialLanguage = 'javascript',
+    isModule = false
 }: CodeEditorProps) {
     const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
     const outputRef = useRef<HTMLDivElement>(null);
@@ -95,6 +99,19 @@ export default function CodeEditor({
             onCodeChange(code);
         }
     }, [code]);
+
+    useEffect(() => {
+        if (isModule) {
+            setLanguage('python');
+        }
+    }, [isModule]);
+
+    useEffect(() => {
+
+        if (value) {
+            setCode(value);
+        }
+    }, [value]);
 
     // Communicate language changes to external components
     useEffect(() => {
@@ -182,7 +199,7 @@ export default function CodeEditor({
     const executeCode = async () => {
         try {
             setIsRunning(true);
-            setOutput("Running code...");
+            setOutput("Ejecutando código...");
             setOutputType('info');
 
             const response = await runCode(language, code);
@@ -310,7 +327,9 @@ export default function CodeEditor({
                                 <span>Volver</span>
                             </button>
                         )}
-                        <LanguageSelector language={language} selectLanguage={selectLanguage} />
+                        {!isModule && (
+                            <LanguageSelector language={language} selectLanguage={selectLanguage} />
+                        )}
                     </div>
                     <div className="flex flex-wrap gap-1 sm:gap-2 w-full sm:w-auto justify-end">
                         <motion.button
