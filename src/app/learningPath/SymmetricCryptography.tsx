@@ -6,7 +6,6 @@ import {
     FiCheck,
     FiArrowRight,
     FiAward,
-    FiBookOpen,
     FiFileText,
     FiKey,
     FiShield,
@@ -14,10 +13,8 @@ import {
     FiHelpCircle,
     FiCheckCircle,
     FiX,
-    FiUser,
     FiServer,
     FiCode,
-    FiClock,
     FiZap,
     FiDatabase,
     FiRefreshCw,
@@ -29,6 +26,7 @@ import {
     FiAlertTriangle
 } from 'react-icons/fi';
 import confetti from 'canvas-confetti';
+import CodeEditor from '../components/CodeEditor';
 
 // Types for our application
 type CipherType = 'aes' | 'chacha' | 'salsa';
@@ -188,7 +186,7 @@ export default function SymmetricCryptography() {
 
     // Navigate to the quiz when all ciphers are reviewed
     const handleStartQuiz = () => {
-        setStage('quiz');
+        setStage('practical');
     };
 
     // Return to the main dashboard (this would be linked to your routing system)
@@ -1414,23 +1412,171 @@ export default function SymmetricCryptography() {
                     </div>
                 )}
 
-                {/* Practical Exercise Stage */}
                 {stage === 'practical' && (
                     <div className="max-w-4xl mx-auto">
                         <div className="card bg-base-200 shadow-xl">
                             <div className="card-body">
-                                <h2 className="card-title text-2xl mb-6">Ejercicio Práctico: Implementación de Cifrado Simétrico</h2>
+                                <h2 className="card-title text-2xl mb-6">Ejercicio Práctico: Implementación de Cifrado Salsa20</h2>
 
                                 {practicalCompleted ? (
                                     <div className="alert alert-success mb-6">
                                         <FiCheckCircle className="w-6 h-6" />
-                                        <span>¡Excelente trabajo! Tu implementación ha pasado todas las pruebas.</span>
+                                        <span>¡Excelente trabajo! Tu implementación del cifrado Salsa20 ha pasado todas las pruebas.</span>
                                     </div>
                                 ) : (
-                                    <p className="mb-6">
-                                        En este ejercicio, implementarás un cifrador simétrico básico utilizando uno de los algoritmos que hemos estudiado.
-                                        Sigue las instrucciones y completa el código requerido.
-                                    </p>
+                                    <>
+                                        <div className="mb-6 space-y-4">
+                                            <p>
+                                                En este ejercicio, implementarás una versión simplificada del cifrado de flujo Salsa20,
+                                                un cifrado moderno diseñado por Daniel J. Bernstein. Salsa20 es un cifrado simétrico
+                                                de alto rendimiento utilizado en aplicaciones que requieren criptografía segura y eficiente.
+                                            </p>
+
+                                            <div className="alert alert-info">
+                                                <div>
+                                                    <h3 className="font-bold">Sobre Salsa20:</h3>
+                                                    <p>
+                                                        Salsa20 es un cifrado de flujo que genera una secuencia pseudoaleatoria que se
+                                                        combina con el texto plano mediante operaciones XOR. Utiliza una clave de 256 bits
+                                                        y un nonce de 64 bits para generar esta secuencia.
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div className="bg-base-300 p-4 rounded-lg">
+                                                <h3 className="font-bold mb-2">Tu tarea:</h3>
+                                                <p>
+                                                    Para este ejercicio, trabajarás con una versión simplificada de Salsa20 que utiliza
+                                                    la biblioteca <code className="bg-base-100 px-1 rounded">nacl</code> (PyNaCl). Deberás:
+                                                </p>
+                                                <ol className="list-decimal list-inside space-y-2 mt-2">
+                                                    <li>Implementar la función <code className="bg-base-100 px-1 rounded">generar_clave()</code> para crear una clave segura.</li>
+                                                    <li>Implementar la función <code className="bg-base-100 px-1 rounded">cifrar_salsa20(mensaje, clave, nonce)</code> para cifrar un mensaje.</li>
+                                                    <li>Implementar la función <code className="bg-base-100 px-1 rounded">descifrar_salsa20(cifrado, clave, nonce)</code> para descifrar el mensaje.</li>
+                                                </ol>
+                                            </div>
+
+                                            <div className="alert alert-warning">
+                                                <div>
+                                                    <h3 className="font-bold">Requisitos:</h3>
+                                                    <ul className="list-disc list-inside mt-1">
+                                                        <li>Utiliza la biblioteca PyNaCl, que ya está importada en el código.</li>
+                                                        <li>Trabaja con datos en formato de bytes para todas las operaciones criptográficas.</li>
+                                                        <li>La clave debe ser de 32 bytes (256 bits) y el nonce de 8 bytes (64 bits).</li>
+                                                        <li>Debes convertir correctamente entre cadenas de texto y bytes cuando sea necesario.</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="mb-6">
+                                            <h3 className="text-lg font-semibold mb-2">Código:</h3>
+                                            <CodeEditor
+                                                value={`import nacl.secret
+import nacl.utils
+import base64
+
+def generar_clave():
+    """
+    Genera una clave segura para Salsa20 (32 bytes)
+    
+    Returns:
+        bytes: Clave aleatoria de 32 bytes
+    """
+    # Tu código aquí
+    pass
+
+def generar_nonce():
+    """
+    Genera un nonce (número usado una sola vez) para Salsa20 (8 bytes)
+    
+    Returns:
+        bytes: Nonce aleatorio de 8 bytes
+    """
+    return nacl.utils.random(8)
+
+def cifrar_salsa20(mensaje, clave, nonce):
+    """
+    Cifra un mensaje usando el algoritmo Salsa20
+    
+    Args:
+        mensaje (str): El mensaje a cifrar
+        clave (bytes): Clave de 32 bytes
+        nonce (bytes): Nonce de 8 bytes
+        
+    Returns:
+        bytes: El mensaje cifrado
+    """
+    # Tu código aquí
+    pass
+
+def descifrar_salsa20(cifrado, clave, nonce):
+    """
+    Descifra un mensaje cifrado con Salsa20
+    
+    Args:
+        cifrado (bytes): El mensaje cifrado
+        clave (bytes): La misma clave usada para cifrar (32 bytes)
+        nonce (bytes): El mismo nonce usado para cifrar (8 bytes)
+        
+    Returns:
+        str: El mensaje original descifrado
+    """
+    # Tu código aquí
+    pass
+
+# Función auxiliar para convertir bytes a formato legible
+def bytes_a_base64(datos_bytes):
+    """Convierte bytes a una cadena Base64"""
+    return base64.b64encode(datos_bytes).decode('utf-8')
+
+# Código de prueba
+def probar_cifrado_salsa20():
+    # Generar clave y nonce
+    clave = generar_clave()
+    nonce = generar_nonce()
+    
+    # Mensaje original
+    mensaje_original = "Este es un mensaje secreto para cifrar con Salsa20"
+    
+    print(f"Mensaje original: {mensaje_original}")
+    print(f"Clave (Base64): {bytes_a_base64(clave)}")
+    print(f"Nonce (Base64): {bytes_a_base64(nonce)}")
+    
+    # Cifrar el mensaje
+    cifrado = cifrar_salsa20(mensaje_original, clave, nonce)
+    print(f"Mensaje cifrado (Base64): {bytes_a_base64(cifrado)}")
+    
+    # Descifrar el mensaje
+    descifrado = descifrar_salsa20(cifrado, clave, nonce)
+    print(f"Mensaje descifrado: {descifrado}")
+    
+    # Verificar que el mensaje descifrado es igual al original
+    if mensaje_original == descifrado:
+        print("Éxito: El cifrado y descifrado funcionan correctamente")
+    else:
+        print("Error: El mensaje descifrado no coincide con el original")
+
+# Ejecutar el código de prueba
+if __name__ == "__main__":
+    probar_cifrado_salsa20()
+`}
+                                                isModule={true}
+                                            />
+                                        </div>
+
+                                        <div className="bg-base-100 p-4 rounded-lg mb-6">
+                                            <h3 className="font-semibold mb-2">Salida esperada (ejemplo):</h3>
+                                            <div className="font-mono text-sm whitespace-pre bg-base-300 p-3 rounded">
+                                                {`Mensaje original: Este es un mensaje secreto para cifrar con Salsa20
+Clave (Base64): 8j/Ru/XWuc3h8dVl9rAh1z5AtXWk/FL3oWy2YiXIYf0=
+Nonce (Base64): VU9VL3XrWt8=
+Mensaje cifrado (Base64): D1R3YMxXFdB6ZzSCHMGZSFbXhZIIChZsQ6Oai3I/pEGi35Pt9hf3ZFSmEFqZuWgaRqOyEg==
+Mensaje descifrado: Este es un mensaje secreto para cifrar con Salsa20
+Éxito: El cifrado y descifrado funcionan correctamente`}
+                                            </div>
+                                        </div>
+                                    </>
                                 )}
 
                                 <div className="flex justify-between mt-8">
@@ -1441,7 +1587,10 @@ export default function SymmetricCryptography() {
                                     </div>
 
                                     <div className="flex gap-2">
-                                        <button className="btn btn-accent">
+                                        <button
+                                            className="btn btn-accent"
+                                            disabled={practicalCompleted}
+                                        >
                                             <FiCode className="mr-2" /> Ejecutar pruebas
                                         </button>
                                         <button

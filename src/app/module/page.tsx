@@ -2,7 +2,6 @@ import ClassicalCryptography from "../learningPath/ClassicalCryptography";
 import FundamentalsCryptography from "../learningPath/FundamentalsCryptography";
 import SymmetricCryptography from "../learningPath/SymmetricCryptography";
 import HashFunctions from "../learningPath/HashFunctions";
-import AsymmetricCryptography from "../learningPath/AsymmetricCryptography";
 
 const moduleMap = {
     classical: ClassicalCryptography,
@@ -12,7 +11,7 @@ const moduleMap = {
 };
 
 export default function Module() {
-    const option = "hash";
+    const option = "hash"; 
     const SelectedModule = moduleMap[option];
 
     return (

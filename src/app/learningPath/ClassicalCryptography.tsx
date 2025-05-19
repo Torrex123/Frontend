@@ -14,6 +14,7 @@ import {
     FiCode
 } from 'react-icons/fi';
 import confetti from 'canvas-confetti';
+import CodeEditor from '../components/CodeEditor';
 
 // Types for our application
 type CipherType = 'caesar' | 'substitution' | 'vigenere' | 'transposition';
@@ -258,7 +259,7 @@ export default function ClassicalCryptography() {
 
     // Navigate to the quiz when all ciphers are reviewed
     const handleStartQuiz = () => {
-        setStage('quiz');
+        setStage('practical');
     };
 
     // Return to the main dashboard (this would be linked to your routing system)
@@ -1463,23 +1464,136 @@ export default function ClassicalCryptography() {
                     </div>
                 )}
 
-                {/* Challenge Stage */}
                 {stage === 'practical' && (
                     <div className="max-w-4xl mx-auto">
                         <div className="card bg-base-200 shadow-xl">
                             <div className="card-body">
-                                <h2 className="card-title text-2xl mb-6">Ejercicio Práctico: Implementación de Cifrado Simétrico</h2>
+                                <h2 className="card-title text-2xl mb-6">Ejercicio Práctico: Cifrado César</h2>
 
                                 {practicalCompleted ? (
                                     <div className="alert alert-success mb-6">
                                         <FiCheckCircle className="w-6 h-6" />
-                                        <span>¡Excelente trabajo! Tu implementación ha pasado todas las pruebas.</span>
+                                        <span>¡Excelente trabajo! Tu implementación del cifrado César ha pasado todas las pruebas.</span>
                                     </div>
                                 ) : (
-                                    <p className="mb-6">
-                                        En este ejercicio, implementarás un cifrador simétrico básico utilizando uno de los algoritmos que hemos estudiado.
-                                        Sigue las instrucciones y completa el código requerido.
-                                    </p>
+                                    <>
+                                        <div className="mb-6 space-y-4">
+                                            <p>
+                                                El cifrado César es uno de los métodos criptográficos más antiguos conocidos. Es un tipo de cifrado por
+                                                sustitución donde cada letra del texto original es reemplazada por otra letra que se encuentra un
+                                                número fijo de posiciones más adelante en el alfabeto.
+                                            </p>
+
+                                            <div className="bg-base-300 p-4 rounded-lg">
+                                                <h3 className="font-semibold mb-2">Cómo funciona:</h3>
+                                                <p>Por ejemplo, con un desplazamiento de 3:</p>
+                                                <ul className="list-disc ml-6 mt-2">
+                                                    <li>A se convierte en D</li>
+                                                    <li>B se convierte en E</li>
+                                                    <li>C se convierte en F</li>
+                                                    <li>...</li>
+                                                    <li>X se convierte en A</li>
+                                                    <li>Y se convierte en B</li>
+                                                    <li>Z se convierte en C</li>
+                                                </ul>
+                                            </div>
+
+                                            <div className="alert alert-info">
+                                                <div>
+                                                    <h3 className="font-bold">Tu tarea:</h3>
+                                                    <p>Implementar dos funciones en Python que permitan cifrar y descifrar mensajes usando el cifrado César.</p>
+                                                </div>
+                                            </div>
+
+                                            <p>
+                                                Deberás implementar:
+                                            </p>
+                                            <ol className="list-decimal ml-6 space-y-2">
+                                                <li>La función <code className="bg-base-100 px-1 rounded">cifrar_cesar(texto, desplazamiento)</code> que cifra un mensaje</li>
+                                                <li>La función <code className="bg-base-100 px-1 rounded">descifrar_cesar(texto_cifrado, desplazamiento)</code> que descifra un mensaje cifrado</li>
+                                            </ol>
+
+                                            <div className="alert alert-warning">
+                                                <div>
+                                                    <h3 className="font-bold">Requisitos:</h3>
+                                                    <ul className="list-disc ml-6 mt-1">
+                                                        <li>El código debe manejar correctamente letras mayúsculas y minúsculas</li>
+                                                        <li>Los caracteres no alfabéticos (espacios, puntuación, números) deben permanecer sin cambios</li>
+                                                        <li>El desplazamiento puede ser cualquier número entero (positivo o negativo)</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="mb-6">
+                                            <h3 className="text-lg font-semibold mb-2">Código:</h3>
+                                            <CodeEditor
+                                                value={`def cifrar_cesar(texto, desplazamiento):
+    """
+    Cifra un texto usando el cifrado César
+    
+    Args:
+        texto (str): El texto a cifrar
+        desplazamiento (int): El número de posiciones a desplazar cada letra
+        
+    Returns:
+        str: El texto cifrado
+    """
+    # Tu código aquí
+    pass
+
+def descifrar_cesar(texto_cifrado, desplazamiento):
+    """
+    Descifra un texto cifrado con el cifrado César
+    
+    Args:
+        texto_cifrado (str): El texto cifrado a descifrar
+        desplazamiento (int): El mismo desplazamiento usado para cifrar
+        
+    Returns:
+        str: El texto original descifrado
+    """
+    # Tu código aquí
+    pass
+
+# No modifiques este código de prueba
+def probar_cifrado():
+    mensaje = "Hola, Mundo!"
+    desplazamiento = 3
+    
+    # Cifrar el mensaje
+    mensaje_cifrado = cifrar_cesar(mensaje, desplazamiento)
+    print(f"Mensaje original: {mensaje}")
+    print(f"Cifrado (desplazamiento={desplazamiento}): {mensaje_cifrado}")
+    
+    # Descifrar el mensaje
+    mensaje_descifrado = descifrar_cesar(mensaje_cifrado, desplazamiento)
+    print(f"Descifrado: {mensaje_descifrado}")
+    
+    # Verificar que el proceso funciona correctamente
+    if mensaje == mensaje_descifrado:
+        print("¡Éxito! El mensaje se cifró y descifró correctamente.")
+    else:
+        print("Error: El mensaje descifrado no coincide con el original.")
+
+# Esta línea ejecutará la prueba cuando ejecutes tu código
+if __name__ == "__main__":
+    probar_cifrado()
+`}
+                                                isModule={true}
+                                            />
+                                        </div>
+
+                                        <div className="bg-base-100 p-4 rounded-lg mb-6">
+                                            <h3 className="font-semibold mb-2">Ejemplo de resultado esperado:</h3>
+                                            <div className="font-mono text-sm whitespace-pre bg-base-300 p-3 rounded">
+                                                {`Mensaje original: Hola, Mundo!
+Cifrado (desplazamiento=3): Krod, Pxqgr!
+Descifrado: Hola, Mundo!
+¡Éxito! El mensaje se cifró y descifró correctamente.`}
+                                            </div>
+                                        </div>
+                                    </>
                                 )}
 
                                 <div className="flex justify-between mt-8">
@@ -1490,7 +1604,10 @@ export default function ClassicalCryptography() {
                                     </div>
 
                                     <div className="flex gap-2">
-                                        <button className="btn btn-accent">
+                                        <button
+                                            className="btn btn-accent"
+                                            disabled={practicalCompleted}
+                                        >
                                             <FiCode className="mr-2" /> Ejecutar pruebas
                                         </button>
                                         <button
