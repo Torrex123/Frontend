@@ -2,8 +2,6 @@
 
 import styles from "../page.module.css";
 import Link from "next/link";
-import { useThemeStore } from "../store/themeStore";
-import { useState, useRef } from "react";
 import { GlobeLock } from "lucide-react";
 import { usePathname } from "next/navigation";
 import ThemeDropdown from "./ThemeDropDown";

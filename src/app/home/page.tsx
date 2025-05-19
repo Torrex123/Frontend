@@ -1,8 +1,6 @@
 "use client";
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, JSXElementConstructor, ReactElement, ReactNode, ReactPortal } from "react";
 import Navbar from "../components/Navbar";
-import { useThemeStore } from "../store/themeStore";
 import Link from "next/link";
 import {
     FiBook,
@@ -23,14 +21,24 @@ import {
     FiSettings,
     FiUser,
     FiCalendar,
-    FiActivity
 } from "react-icons/fi";
 import { motion } from "framer-motion";
 import { loadUserHome, fetchUserProfile } from "../../../api/api";
 import useAuth from "../hooks/UseAuth";
 
+type Module = {
+    id: string;
+    title: string;
+    description: string;
+    status: string;
+    level: string;
+    duration: string;
+    progress: number;
+    icon?: ReactNode;
+};
+
 export default function UserHome() {
-    const [modules, setModules] = useState([]);
+    const [modules, setModules] = useState<Module[]>([]);
     const [userData, setUserData] = useState({
         username: "",
         profileImage: "",
@@ -43,7 +51,6 @@ export default function UserHome() {
     const [isLoading, setIsLoading] = useState(true);
     const isAuthenticated = useAuth();
 
-    // Module icons mapping
     const moduleIcons = {
         fundamentals: <FiBook className="w-6 h-6" />,
         classical: <FiKey className="w-6 h-6" />,
@@ -54,18 +61,19 @@ export default function UserHome() {
         blockchain: <FiCpu className="w-6 h-6" />
     };
 
-    // Load user data from API
     useEffect(() => {
+        if (!isAuthenticated) {
+            return;
+        }
         const fetchModuleData = async () => {
             setIsLoading(true);
             try {
-                // Fetch modules
                 const modulesResponse = await loadUserHome();
                 console.log("Modules Response:", modulesResponse);
                 if (modulesResponse) {
-                    const modulesWithIcons = modulesResponse.data.data.map(module => ({
+                    const modulesWithIcons = modulesResponse.data.data.map((module: { id: string; }) => ({
                         ...module,
-                        icon: moduleIcons[module.id] || <FiBook className="w-6 h-6" />
+                        icon: moduleIcons[module.id as keyof typeof moduleIcons] || <FiBook className="w-6 h-6" />
                     }));
                     setModules(modulesWithIcons);
                 }
@@ -111,24 +119,7 @@ export default function UserHome() {
         else setGreeting("Buenas noches");
     }, []);
 
-    // Format last activity date
-    const formatLastActivity = (dateString) => {
-        if (!dateString) return "N/A";
-
-        const now = new Date();
-        const activityDate = new Date(dateString);
-        const diffInHours = Math.floor((now - activityDate) / (1000 * 60 * 60));
-
-        if (diffInHours < 24) {
-            return `hace ${diffInHours} ${diffInHours === 1 ? 'hora' : 'horas'}`;
-        } else {
-            const diffInDays = Math.floor(diffInHours / 24);
-            return `hace ${diffInDays} ${diffInDays === 1 ? 'día' : 'días'}`;
-        }
-    };
-
-    // Function to get status badge
-    const getStatusBadge = (status) => {
+    const getStatusBadge = (status: string) => {
         switch (status) {
             case "completado":
                 return <span className="badge badge-success">Completado</span>;
@@ -144,7 +135,7 @@ export default function UserHome() {
     };
 
     // Function to get level badge
-    const getLevelBadge = (level) => {
+    const getLevelBadge = (level: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined) => {
         switch (level) {
             case "Principiante":
                 return <span className="badge badge-primary badge-sm">Principiante</span>;
@@ -166,6 +157,18 @@ export default function UserHome() {
                 <div className="text-center">
                     <span className="loading loading-spinner loading-lg text-primary"></span>
                     <p className="mt-4">Cargando tu dashboard...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!isAuthenticated) {
+        return (
+            <div className="min-h-screen flex justify-center items-center bg-base-200">
+                <div className="text-center">
+                    <h1 className="text-2xl font-bold">Acceso Denegado</h1>
+                    <p className="mt-4">Por favor, inicia sesión para acceder a tu dashboard.</p>
+                    <Link href="/" className="btn btn-primary mt-4">Iniciar Sesión</Link>
                 </div>
             </div>
         );

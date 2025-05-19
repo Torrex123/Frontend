@@ -1,5 +1,5 @@
 import * as monaco from 'monaco-editor';
-import { useRef, useState, useEffect, use } from 'react';
+import { useRef, useState, useEffect} from 'react';
 import LanguageSelector from './LanguageSelector';
 import { runCode } from "../../../api/api";
 import { motion, AnimatePresence } from "framer-motion";
@@ -56,7 +56,7 @@ export default function CodeEditor({
     const [isOutputCopied, setIsOutputCopied] = useState(false);
     const [theme, setTheme] = useState('light');
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-    const [pendingLanguage, setPendingLanguage] = useState(null);
+    const [pendingLanguage, setPendingLanguage] = useState<string | null>(null);
     const [editorHeight, setEditorHeight] = useState(500);
     const [outputHeight, setOutputHeight] = useState(200);
     const [isResizing, setIsResizing] = useState(false);
@@ -146,7 +146,6 @@ export default function CodeEditor({
         e: MouseEvent | TouchEvent,
         direction: ResizeDirection,
         ref: HTMLElement,
-        d: { width: number; height: number }
     ) => {
         setIsResizing(false);
         const newHeight = ref.offsetHeight || parseInt(ref.style.height, 10);
@@ -168,12 +167,12 @@ export default function CodeEditor({
         setOutputHeight(newHeight);
     };
 
-    const selectLanguage = (newLang: any) => {
+    const selectLanguage = (newLang: string) => {
         if (code.trim() && code !== CODE_SNIPPETS[language]) {
             setPendingLanguage(newLang);
             setShowConfirmDialog(true);
         } else {
-            setLanguage(newLang);
+            setLanguage(newLang as keyof typeof CODE_SNIPPETS);
             setCode(CODE_SNIPPETS[newLang as keyof typeof CODE_SNIPPETS]);
             setOutput('');
             setOutputType('info');
@@ -182,8 +181,8 @@ export default function CodeEditor({
 
     const confirmLanguageChange = () => {
         if (pendingLanguage) {
-            setLanguage(pendingLanguage);
-            setCode(CODE_SNIPPETS[pendingLanguage]);
+            setLanguage(pendingLanguage as keyof typeof CODE_SNIPPETS);
+            setCode(CODE_SNIPPETS[pendingLanguage as keyof typeof CODE_SNIPPETS]);
             setOutput('');
             setOutputType('info');
             setPendingLanguage(null);
@@ -415,7 +414,7 @@ export default function CodeEditor({
                         value={code}
                         theme={editorTheme}
                         onMount={onMount}
-                        onChange={(code: any) => setCode(code || '')}
+                        onChange={(code) => setCode(code || '')}
                         options={{
                             minimap: { enabled: false },
                             fontSize: 14,

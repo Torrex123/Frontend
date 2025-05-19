@@ -783,7 +783,7 @@ digest = h0 concatenate h1 concatenate h2 concatenate h3 concatenate h4`}
                                                                 d7a8fbb307d7809469ca9abcb0082e4f8d5651e46d3cdb762d02d0bf37c9e592
                                                             </div>
                                                             <p className="text-xs mt-2 text-base-content/70">
-                                                                Este es el hash SHA-256 de la cadena "The quick brown fox jumps over the lazy dog"
+                                                                Este es el hash SHA-256 de la cadena &apos;The quick brown fox jumps over the lazy dog&apos;
                                                             </p>
                                                         </div>
                                                     </div>
@@ -839,8 +839,8 @@ digest = h0 concatenate h1 concatenate h2 concatenate h3 concatenate h4`}
                                                     <ol className="list-decimal list-inside space-y-1">
                                                         <li>Preprocesamiento del mensaje:
                                                             <ul className="list-disc list-inside ml-6 text-sm">
-                                                                <li>Agregar un bit '1' al final del mensaje</li>
-                                                                <li>Agregar bits '0' hasta que la longitud sea congruente con 448 módulo 512</li>
+                                                                <li>Agregar un bit &apos;1&apos; al final del mensaje</li>
+                                                                <li>Agregar bits &apos;0&apos; hasta que la longitud sea congruente con 448 módulo 512</li>
                                                                 <li>Agregar la longitud original del mensaje como un entero de 64 bits</li>
                                                             </ul>
                                                         </li>
@@ -1123,7 +1123,7 @@ digest = h0 concatenate h1 concatenate h2 concatenate h3 concatenate h4`}
                                                             <ul className="list-disc list-inside mt-1">
                                                                 <li>SHA-2 tiene mayor adopción y soporte en hardware y software</li>
                                                                 <li>SHA-3 utiliza una construcción esponja (Keccak) completamente diferente</li>
-                                                                <li>SHA-3 fue diseñado como "plan B" en caso de que SHA-2 fuera comprometido</li>
+                                                                <li>SHA-3 fue diseñado como &apos;plan B&apos; en caso de que SHA-2 fuera comprometido</li>
                                                                 <li>Para la mayoría de las aplicaciones actuales, SHA-256 sigue siendo una elección excelente</li>
                                                             </ul>
                                                         </div>
@@ -1399,7 +1399,7 @@ if __name__ == "__main__":
                                             <FiHelpCircle className="w-6 h-6" />
                                             <div>
                                                 <h3 className="font-bold">Próximos pasos</h3>
-                                                <p>Para ampliar tus conocimientos en criptografía, te recomendamos explorar el módulo "Funciones Hash Avanzadas" donde conocerás SHA-3, BLAKE2 y otras funciones modernas, o el módulo "Firmas Digitales" para profundizar en la aplicación de funciones hash en esquemas de firma y verificación.</p>
+                                                <p>Para ampliar tus conocimientos en criptografía, te recomendamos explorar el módulo &apos;Funciones Hash Avanzadas&apos; donde conocerás SHA-3, BLAKE2 y otras funciones modernas, o el módulo &apos;Firmas Digitales&apos; para profundizar en la aplicación de funciones hash en esquemas de firma y verificación.</p>
                                             </div>
                                         </div>
                                     </div>
