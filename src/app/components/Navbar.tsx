@@ -1,5 +1,4 @@
 "use client";
-
 import styles from "../page.module.css";
 import Link from "next/link";
 import { GlobeLock } from "lucide-react";
@@ -7,17 +6,10 @@ import { usePathname } from "next/navigation";
 import ThemeDropdown from "./ThemeDropDown";
 import UseUserStore from "../store/UserStore";
 
-
-interface ThemeStore {
-  theme: string;
-  setTheme: (theme: string) => void;
-}
-
 export default function Navbar() {
   const { isAuthenticated } = UseUserStore();
   const pathname = usePathname();
 
-  // Define navigation items based on routes
   const getNavigationItems = () => {
     if (pathname === "/" || pathname === "/signUp") {
       return [{ name: "Acerca de", href: "/about" }];

@@ -134,8 +134,7 @@ export default function UserHome() {
         }
     };
 
-    // Function to get level badge
-    const getLevelBadge = (level: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined) => {
+    const getLevelBadge = (level: string | number | bigint | boolean | ReactElement<unknown, string> | Iterable<ReactNode> | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string > | Iterable<ReactNode> | null | undefined> | null | undefined) => {
         switch (level) {
             case "Principiante":
                 return <span className="badge badge-primary badge-sm">Principiante</span>;
