@@ -32,7 +32,7 @@ export function hydrateThemeStore() {
         if (parsedState.state?.theme) {
           useThemeStore.setState({ theme: parsedState.state.theme });
         }
-      } catch (e) {
+      } catch{
         // Fallback if JSON parsing fails
         const legacyTheme = localStorage.getItem("chat-theme") || "light";
         useThemeStore.setState({ theme: legacyTheme });

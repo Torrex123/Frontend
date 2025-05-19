@@ -6,7 +6,6 @@ import { motion } from "framer-motion";
 import {
     FiBook,
     FiAward,
-    FiGlobe,
     FiGithub,
     FiMail,
     FiCalendar,

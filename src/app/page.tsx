@@ -1,5 +1,4 @@
 "use client"
-import styles from "./page.module.css";
 import Link from "next/link";
 import Navbar from "./components/Navbar";
 import {
@@ -17,7 +16,6 @@ import { useRouter } from "next/navigation";
 export default function Home() {
     const router = useRouter();
     const { login, isLoading, error, clearError, isAuthenticated } = UseUserStore();
-
     const [showPassword, setShowPassword] = useState(false);
     const [formData, setFormData] = useState({
         email: '',
@@ -25,7 +23,6 @@ export default function Home() {
     });
     const [loginError, setLoginError] = useState<string | null>(null);
 
-    // Clear error when form data changes
     useEffect(() => {
         if (error) {
             clearError();
@@ -39,7 +36,6 @@ export default function Home() {
         e.preventDefault();
         setLoginError(null);
 
-        //check if the user is already authenticated
         if (isAuthenticated) {
             router.push("/home");
             return;
@@ -56,8 +52,10 @@ export default function Home() {
             } else {
                 router.push("/home");
             }
-        } catch (err: any) {
-            setLoginError(err.message || "Error insesperado. Intenta nuevamente.");
+        } catch (err: unknown) {
+            // Handle unexpected errors
+            const errorMessage = err instanceof Error ? err.message : 'Error insesperado. Intenta nuevamente.';
+            setLoginError(errorMessage);
         }
     }
 

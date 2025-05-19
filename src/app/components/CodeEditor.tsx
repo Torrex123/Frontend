@@ -540,7 +540,7 @@ export default function CodeEditor({
                             ) : (
                                 <div className={`italic flex items-center justify-center h-full ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'
                                     }`}>
-                                    Clickea 'Ejecutar código' para ver la salida
+                                    Clickea &apos;Ejecutar código&apos; para ver la salida
                                 </div>
                             )}
                         </div>

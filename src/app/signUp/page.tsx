@@ -1,11 +1,8 @@
-
-
-
 "use client"
 import Link from "next/link";
 import Navbar from "../components/Navbar";
 import { FaUser, FaEnvelope, FaLock, FaRegSmileBeam, FaLockOpen } from "react-icons/fa";
-import { useState, useEffect, use } from "react";
+import { useState, useEffect } from "react";
 import {
     BiSolidChat, BiMessageRounded,
     BiMessageSquareCheck, BiSolidMessageRoundedDetail,
@@ -19,7 +16,6 @@ import { useRouter } from "next/navigation";
 export default function SignUp() {
     const router = useRouter();
     const { register, isLoading, error, clearError } = useUserStore();
-
     const [showPassword, setShowPassword] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
@@ -33,7 +29,6 @@ export default function SignUp() {
         message: ''
     });
 
-    // Clear errors when form data changes
     useEffect(() => {
         if (error) {
             clearError();
@@ -43,7 +38,6 @@ export default function SignUp() {
         }
     }, [formData, clearError, error]);
 
-    // Evaluate password strength as user types
     useEffect(() => {
         if (formData.password) {
             const score = evaluatePasswordStrength(formData.password);
@@ -60,7 +54,6 @@ export default function SignUp() {
     }, [formData.password]);
 
     const evaluatePasswordStrength = (password: string): number => {
-        // Simple password strength evaluation
         let score = 0;
 
         if (password.length >= 8) score += 2;
@@ -91,12 +84,12 @@ export default function SignUp() {
             if (!result.success) {
                 setRegistrationError(result.error || "Hubo un problema al crear tu cuenta.");
             } else {
-                // Redirect to the home page or dashboard after successful registration
                 router.push("/home");
             }
 
-        } catch (err: any) {
-            setRegistrationError(err.message || "Ha ocurrido un error inesperado");
+        } catch (err: unknown) {
+            const errorMessage = err instanceof Error ? err.message : 'Ha ocurrido un error inesperado';
+            setRegistrationError(errorMessage);
         }
     }
 
@@ -108,7 +101,6 @@ export default function SignUp() {
         }));
     }
 
-    // Function to render password strength indicator
     const renderPasswordStrengthIndicator = () => {
         if (!formData.password) return null;
 

@@ -1,4 +1,3 @@
-// src/store/userStore.ts
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { registerUser, loginUser, fetchUserProfile } from '../../../api/api';
@@ -7,7 +6,7 @@ interface User {
     id: string;
     name: string;
     email: string;
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 interface LoginCredentials {
@@ -20,7 +19,7 @@ interface RegisterData {
     name: string;
     email: string;
     password: string;
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 interface UserState {
@@ -74,12 +73,13 @@ const UseUserStore = create<UserState>()(
                     } else {
                         throw new Error(result.error || 'Inicio de sesión fallido');
                     }
-                } catch (error: any) {
+                } catch (error: unknown) {
+                    const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
                     set({
-                        error: error.message || 'Error al iniciar sesión',
+                        error: errorMessage,
                         isLoading: false
                     });
-                    return { success: false, error: error.message };
+                    return { success: false, error: errorMessage };
                 }
             },
 
@@ -115,16 +115,16 @@ const UseUserStore = create<UserState>()(
                     } else {
                         throw new Error(result.error || 'Registro fallido');
                     }
-                } catch (error: any) {
+                } catch (error: unknown) {
+                    const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
                     set({
-                        error: error.message || 'Error al registrar',
+                        error: errorMessage,
                         isLoading: false
                     });
-                    return { success: false, error: error.message };
+                    return { success: false, error: errorMessage };
                 }
             },
 
-            // Add a method to fetch user profile
             fetchProfile: async () => {
                 if (!get().token) return { success: false, error: 'No autenticado' };
 
@@ -141,16 +141,16 @@ const UseUserStore = create<UserState>()(
                     } else {
                         throw new Error(result.error || 'Error al obtener el perfil');
                     }
-                } catch (error: any) {
+                } catch (error: unknown) {
+                    const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
                     set({
-                        error: error.message,
+                        error: errorMessage,
                         isLoading: false
                     });
-                    return { success: false, error: error.message };
+                    return { success: false, error: errorMessage };
                 }
             },
 
-            // Existing methods remain the same
             updateUser: (userData) => {
                 const currentUser = get().user;
                 if (currentUser) {

@@ -1,10 +1,9 @@
 "use client";
-
 import { useState, useRef, useEffect } from "react";
 import Navbar from "../components/Navbar";
 import UseUserStore from "../store/UserStore";
 import {
-    FiUser, FiLock, FiMail, FiSettings, FiBell, FiEye, FiEyeOff,
+    FiUser, FiLock, FiMail, FiSettings, FiEye, FiEyeOff,
     FiUpload, FiTrash2, FiShield, FiCheck, FiX, FiSave, FiRefreshCw
 } from "react-icons/fi";
 import { FiLogOut } from "react-icons/fi";
@@ -45,7 +44,6 @@ export default function UserSettings() {
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
     const router = useRouter();
 
-    // Update form data when user changes
     useEffect(() => {
         if (user) {
             setFormData({
@@ -55,7 +53,6 @@ export default function UserSettings() {
         }
     }, [user]);
 
-    // Fetch user profile on mount
     useEffect(() => {
         const fetchProfile = async () => {
             setIsLoading(true);
@@ -80,7 +77,6 @@ export default function UserSettings() {
         fetchProfile();
     }, []);
 
-    // Password strength indicator
     const [passwordStrength, setPasswordStrength] = useState({
         score: 0,
         message: ""
@@ -122,20 +118,13 @@ export default function UserSettings() {
         }
     };
 
-    // Handle profile form changes
-    const handleInputChange = (e: { target: { name: any; value: any; }; }) => {
+    const handleInputChange = (e: { target: { name: string; value: string; }; }) => {
         const { name, value } = e.target;
         setFormData(prev => ({
             ...prev,
             [name]: value
         }));
     };
-
-    // Evaluate password strength
-    interface PasswordStrength {
-        score: number;
-        message: string;
-    }
 
     const evaluatePasswordStrength = (password: string): void => {
         if (!password) {
@@ -156,26 +145,22 @@ export default function UserSettings() {
         // Check for special characters
         if (/[^A-Za-z0-9]/.test(password)) score += 2;
 
-        // Set message based on score
-        let message = score < 3 ? "Debil" : score < 6 ? "Moderada" : "Fuerte";
+        const message = score < 3 ? "Debil" : score < 6 ? "Moderada" : "Fuerte";
         setPasswordStrength({ score, message });
     };
 
-    // Handle password form changes
-    const handlePasswordChange = (e: { target: { name: any; value: any; }; }) => {
+    const handlePasswordChange = (e: { target: { name: string; value: string; }; }) => {
         const { name, value } = e.target;
         setPasswordData(prev => ({
             ...prev,
             [name]: value
         }));
 
-        // Evaluate password strength if changing new password
         if (name === "newPassword") {
             evaluatePasswordStrength(value);
         }
     };
 
-    // Handle profile update
     const handleProfileUpdate = async (e: { preventDefault: () => void; }) => {
         e.preventDefault();
         setIsLoading(true);
@@ -183,7 +168,7 @@ export default function UserSettings() {
 
         try {
             const result = await updateUserProfile({
-                username: formData.username,
+                username: typeof formData.username === "string" ? formData.username : "",
                 email: formData.email,
                 password: ""
             });
@@ -216,7 +201,6 @@ export default function UserSettings() {
         }
     };
 
-    // Handle password update
     const handlePasswordUpdate = async (e: { preventDefault: () => void; }) => {
         e.preventDefault();
         setIsLoading(true);
@@ -254,7 +238,6 @@ export default function UserSettings() {
                     message: "¡Contraseña actualizada con éxito!"
                 });
 
-                // Reset password fields
                 setPasswordData({
                     currentPassword: "",
                     newPassword: "",
@@ -275,7 +258,6 @@ export default function UserSettings() {
         }
     };
 
-    // Handle avatar upload
     const handleAvatarClick = () => {
         if (fileInputRef.current) {
             fileInputRef.current.click();
@@ -294,11 +276,9 @@ export default function UserSettings() {
         };
         reader.readAsDataURL(file);
 
-        // Upload to server
         try {
             setIsUploading(true);
 
-            // Simulate upload progress
             const progressInterval = setInterval(() => {
                 setUploadProgress(prev => {
                     if (prev >= 90) {
@@ -314,7 +294,6 @@ export default function UserSettings() {
             setUploadProgress(100);
 
             if (result.success) {
-                // Update user profile with new image URL
                 updateUser({
                     ...user,
                     profileImage: result.data.profileImage
@@ -342,7 +321,6 @@ export default function UserSettings() {
         }
     };
 
-    // Status message component
     const StatusMessage = () => {
         if (!statusMessage.message) return null;
 
@@ -379,7 +357,6 @@ export default function UserSettings() {
         );
     }
 
-    // Function to render password strength indicator
     const renderPasswordStrengthIndicator = () => {
         if (!passwordData.newPassword) return null;
 
@@ -476,7 +453,7 @@ export default function UserSettings() {
                                             <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2 overflow-hidden bg-base-300">
                                                 {(previewImage || user?.avatar) ? (
                                                     <img
-                                                        src={previewImage || user?.avatar}
+                                                        src={previewImage || (user?.avatar as string | undefined)}
                                                         alt="User avatar"
                                                         className="object-cover w-full h-full"
                                                     />
@@ -509,7 +486,7 @@ export default function UserSettings() {
                                         </div>
 
                                         <h3 className="font-medium text-lg">{user?.name || "User"}</h3>
-                                        <p className="text-xs text-base-content/70">{user?.username || ""}</p>
+                                        <p className="text-xs text-base-content/70">{typeof user?.username === "string" ? user.username : ""}</p>
 
                                         <input
                                             type="file"
@@ -590,7 +567,7 @@ export default function UserSettings() {
                                                         <input
                                                             type="text"
                                                             name="username"
-                                                            value={formData.username}
+                                                            value={typeof formData.username === "string" ? formData.username : ""}
                                                             onChange={handleInputChange}
                                                             className={`input input-bordered w-full pl-10 py-2 sm:py-3 bg-base-200/50 focus:bg-base-200/80 rounded-md shadow-sm transition-all duration-300 ${!isEditing ? 'opacity-80 cursor-not-allowed' : 'hover:bg-base-200'}`}
                                                             disabled={!isEditing || isLoading}
