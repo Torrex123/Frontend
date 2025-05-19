@@ -25,7 +25,6 @@ const Toast = ({
         warning: 'alert-warning'
     };
 
-    // Icons based on toast type
     const icons = {
         error: (
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -53,7 +52,6 @@ const Toast = ({
         setIsVisible(show);
     }, [show]);
 
-    // Auto-dismiss after duration
     useEffect(() => {
         if (isVisible) {
             const timer = setTimeout(() => {
@@ -65,7 +63,6 @@ const Toast = ({
         }
     }, [isVisible, duration, setShow]);
 
-    // Handle manual dismiss
     const handleDismiss = () => {
         setIsVisible(false);
         setShow(false);

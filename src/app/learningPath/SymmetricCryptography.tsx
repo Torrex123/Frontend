@@ -411,7 +411,7 @@ export default function SymmetricCryptography() {
                                             <h3 className="text-xl font-bold mb-3">Estructura y Funcionamiento</h3>
                                             <p className="mb-4">
                                                 AES es un cifrado de bloque que utiliza una red de sustitución-permutación (SPN) y trabaja con bloques de 128 bits,
-                                                organizados como una matriz de 4×4 bytes llamada "estado" (state).
+                                                organizados como una matriz de 4×4 bytes llamada &quot;estado&quot;estado (state).
                                             </p>
 
                                             <div className="overflow-x-auto mb-6">
@@ -492,7 +492,7 @@ export default function SymmetricCryptography() {
 
                                             <h3 className="text-xl font-bold mb-3">Modos de Operación</h3>
                                             <p className="mb-4">
-                                                AES es un cifrado de bloque, pero para cifrar datos de longitud variable, se utilizan diferentes "modos de operación":
+                                                AES es un cifrado de bloque, pero para cifrar datos de longitud variable, se utilizan diferentes &quot;estadomodos de operación&quot;estado:
                                             </p>
 
                                             <div className="overflow-x-auto">

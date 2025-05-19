@@ -160,7 +160,6 @@ export default function CodeEditor({
         e: MouseEvent | TouchEvent,
         direction: ResizeDirection,
         ref: HTMLElement,
-        d: { width: number; height: number }
     ) => {
         setIsResizing(false);
         const newHeight = ref.offsetHeight || parseInt(ref.style.height, 10);

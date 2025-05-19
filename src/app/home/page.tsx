@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, JSXElementConstructor, ReactElement, ReactNode, ReactPortal } from "react";
+import { useState, useEffect, ReactElement, ReactNode, ReactPortal } from "react";
 import Navbar from "../components/Navbar";
 import Link from "next/link";
 import {
@@ -109,7 +109,6 @@ export default function UserHome() {
 
     }, []);
 
-    // Time-based greeting
     const [greeting, setGreeting] = useState("");
 
     useEffect(() => {
@@ -147,7 +146,6 @@ export default function UserHome() {
         }
     };
 
-    // Calculate completed modules
     const completedModules = modules.filter(module => module.status === "completado").length;
 
     if (isLoading) {

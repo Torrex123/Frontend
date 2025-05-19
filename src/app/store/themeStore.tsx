@@ -17,7 +17,7 @@ export const useThemeStore = create<ThemeStore>()(
     {
       name: "chat-theme",
       storage: createJSONStorage(() => localStorage),
-      skipHydration: true, // Important for Next.js
+      skipHydration: true, 
     }
   )
 );
