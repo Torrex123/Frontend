@@ -25,7 +25,6 @@ import { FaFingerprint } from 'react-icons/fa';
 import confetti from 'canvas-confetti';
 import CodeEditor from '../components/CodeEditor';
 
-// Types for our application
 type HashType = 'sha1' | 'sha2';
 type ProgressStage = 'learning' | 'quiz' | 'practical' | 'completed';
 
@@ -38,7 +37,6 @@ interface Question {
 }
 
 export default function HashFunctions() {
-    // State management
     const [currentHashFunction, setCurrentHashFunction] = useState<HashType>('sha1');
     const [progress, setProgress] = useState<number>(0);
     const [stage, setStage] = useState<ProgressStage>('learning');
@@ -49,8 +47,6 @@ export default function HashFunctions() {
     const [practicalCompleted, setPracticalCompleted] = useState<boolean>(false);
     const [testsPassed, setTestsPassed] = useState(false);
     const [testResults, setTestResults] = useState(null);
-
-    // Quiz state
     const [questions, setQuestions] = useState<Question[]>([
         {
             id: 1,

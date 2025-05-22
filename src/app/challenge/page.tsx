@@ -1,7 +1,5 @@
 "use client";
-
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
 import Navbar from '../components/Navbar';
 import CodeEditor from '../components/CodeEditor';
 import Link from 'next/link';
@@ -14,18 +12,41 @@ import {
     ChevronDownIcon,
     ChevronUpIcon,
     InformationCircleIcon,
-    BeakerIcon,
     LightBulbIcon,
-    XCircleIcon
 } from '@heroicons/react/24/solid';
 import { FiAward } from 'react-icons/fi';
 import Toast from '../components/Notification';
+import { useParams } from 'next/navigation';
+
+interface Challenge {
+    id: string;
+    title: string;
+    description: string;
+    difficulty: string;
+    category: string;
+    points: number;
+    timeEstimate: string;
+    hint: string;
+    examples: Array<{
+        input: string;
+        output: string;
+        explanation?: string;
+    }>;
+    constraints: string[];
+    expectedOutput: string;
+    inputData: string;
+    starterCode: {
+        [key: string]: string;
+    };
+    completions: number;
+    totalAttempts: number;
+}
 
 export default function ChallengePage() {
-    const searchParams = useSearchParams();
-    const challengeId = 'caesar-cipher'
+    const params = useParams();
+    const challengeId = params?.id as string || 'caesar-cipher';
 
-    const [challenge, setChallenge] = useState<any>(null);
+    const [challenge, setChallenge] = useState<Challenge | null>(null);
     const [loading, setLoading] = useState(true);
     const [code, setCode] = useState('');
     const [output, setOutput] = useState('');
@@ -39,18 +60,41 @@ export default function ChallengePage() {
     const [timerInterval, setTimerInterval] = useState<NodeJS.Timeout | null>(null);
     const [showCompletionScreen, setShowCompletionScreen] = useState(false);
     const [showError, setShowError] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('La respuesta no es correcta. Por favor, revisa tu código.');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Load the specific challenge based on the ID of the URL
+    // Load the specific challenge based on the ID from the backend
     useEffect(() => {
-        if (challengeId) {
-            const selectedChallenge = challengesData.find(c => c.id === challengeId);
-            if (selectedChallenge) {
-                setChallenge(selectedChallenge);
-                setCode(selectedChallenge.starterCode[language as keyof typeof selectedChallenge.starterCode] || '');
+        const fetchChallenge = async () => {
+            try {
+                setLoading(true);
+                // Fetch challenge data from your API
+                const response = await fetch(`/api/challenges/${challengeId}`);
+
+                if (!response.ok) {
+                    throw new Error('Challenge not found');
+                }
+
+                const data = await response.json();
+                setChallenge(data);
+                setCode(data.starterCode[language] || '');
+                setLoading(false);
+            } catch (error) {
+                console.error('Error loading challenge:', error);
+                setLoading(false);
             }
+        };
+
+        if (challengeId) {
+            fetchChallenge();
         }
-        setLoading(false);
+        // setChallenge(exampleChallenge);
+        // setCode(exampleChallenge.starterCode[language] || '');
     }, [challengeId]);
+
+    useEffect(() => {
+        setChallenge(vigenere);
+    } , []);
 
     // Start/stop timer
     useEffect(() => {
@@ -66,41 +110,18 @@ export default function ChallengePage() {
         };
     }, [challenge, isSolved]);
 
-    // Check solution when sending the code
-    useEffect(() => {
-        if (isSubmitted && challenge) {
-            // Check if the output contains the expected solution
-            const normalizedOutput = output.trim().toLowerCase();
-            const normalizedExpected = challenge.expectedOutput.trim().toLowerCase();
-
-            if (normalizedOutput.includes(normalizedExpected)) {
-                setIsSolved(true);
-                if (timerInterval) clearInterval(timerInterval);
-                setOutputType('success');
-                setShowError(false);
-
-
-                setTimeout(() => {
-                    setShowCompletionScreen(true);
-                }, 1500);
-            } else {
-                setOutputType('error');
-                setShowError(true);
-            }
-
-            setIsSubmitted(false);
-        }
-    }, [isSubmitted, output, challenge]);
-
+    // Handle code change
     const handleCodeChange = (newCode: string) => {
         setCode(newCode);
     };
 
+    // Handle output change from the code editor
     const handleOutputChange = (newOutput: string, newOutputType: string) => {
         setOutput(newOutput);
         setOutputType(newOutputType);
     };
 
+    // Handle language selection change
     const handleLanguageChange = (newLanguage: string) => {
         setLanguage(newLanguage);
 
@@ -110,14 +131,75 @@ export default function ChallengePage() {
         }
     };
 
-    const handleSubmit = () => {
-        setIsSubmitted(true);
+    // Submit solution to backend for verification
+    const handleSubmit = async () => {
+        if (!challenge || isSolved || isSubmitting) return;
+
+        setIsSubmitting(true);
+
+        try {
+            // Send the solution to the backend
+            const response = await fetch('/api/verify', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    challengeId: challenge.id,
+                    code: code,
+                    language: language,
+                    timeSpent: timeSpent
+                }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // If the solution is correct
+                if (data.correct) {
+                    setIsSolved(true);
+                    setOutputType('success');
+                    setOutput(data.output || 'Tu solución es correcta!');
+                    setShowError(false);
+
+                    // Stop the timer
+                    if (timerInterval) clearInterval(timerInterval);
+
+                    // Show completion screen after a delay
+                    setTimeout(() => {
+                        setShowCompletionScreen(true);
+                    }, 1500);
+                } else {
+                    // If the solution is incorrect
+                    setOutputType('error');
+                    setOutput(data.output || 'Tu solución no es correcta');
+                    setShowError(true);
+                    setErrorMessage(data.message || 'La respuesta no es correcta. Por favor, revisa tu código.');
+                }
+            } else {
+                // If there was a server error
+                setOutputType('error');
+                setOutput('Error al verificar la solución: ' + (data.message || 'Error del servidor'));
+                setShowError(true);
+                setErrorMessage('Error al verificar la solución. Por favor, intenta de nuevo más tarde.');
+            }
+        } catch (error) {
+            console.error('Error submitting solution:', error);
+            setOutputType('error');
+            setOutput('Error al enviar la solución');
+            setShowError(true);
+            setErrorMessage('Error de conexión. Por favor, verifica tu conexión a internet.');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
+    // Handle returning to dashboard
     const handleReturnToDashboard = () => {
         window.location.href = '/challenges';
     };
 
+    // Format time in minutes and seconds
     const formatTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
@@ -180,7 +262,7 @@ export default function ChallengePage() {
                                     </h2>
 
                                     <p className="text-lg text-base-content/80 mb-8 max-w-2xl mx-auto">
-                                        Has dominado este reto de programación y demostrado tus habilidades técnicas.
+                                        Has dominado este reto de criptografía y demostrado tus habilidades técnicas.
                                     </p>
 
                                     <div className="my-10 p-6 bg-base-200 rounded-xl shadow-lg max-w-lg mx-auto border border-base-300">
@@ -220,10 +302,10 @@ export default function ChallengePage() {
                         </Link>
                         <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
                             {challenge.title}
-                            <div className={`badge ${challenge.difficulty === 'Easy' ? 'badge-success' :
-                                challenge.difficulty === 'Medium' ? 'badge-warning' : 'badge-error'
+                            <div className={`badge ${challenge.difficulty === 'principiante' ? 'badge-success' :
+                                challenge.difficulty === 'intermedio' ? 'badge-warning' : 'badge-error'
                                 }`}>
-                                {challenge.difficulty}
+                                {challenge.difficulty.charAt(0).toUpperCase() + challenge.difficulty.slice(1)}
                             </div>
                         </h1>
                     </div>
@@ -242,11 +324,11 @@ export default function ChallengePage() {
                         )}
 
                         <button
-                            className="btn btn-primary"
+                            className={`btn btn-primary ${isSubmitting ? 'loading' : ''}`}
                             onClick={handleSubmit}
-                            disabled={isSolved}
+                            disabled={isSolved || isSubmitting}
                         >
-                            {isSolved ? 'Resuelto' : 'Verificar solución'}
+                            {isSolved ? 'Resuelto' : isSubmitting ? 'Verificando...' : 'Verificar solución'}
                         </button>
                     </div>
                 </div>
@@ -277,7 +359,7 @@ export default function ChallengePage() {
                                         {challenge.examples && challenge.examples.length > 0 && (
                                             <div className="mt-4">
                                                 <h3 className="font-bold text-lg mb-2">Ejemplos:</h3>
-                                                {challenge.examples.map((example: any, index: number) => (
+                                                {challenge.examples.map((example, index) => (
                                                     <div key={index} className="mb-3 bg-base-300 p-3 rounded-lg">
                                                         <p className="mb-1"><strong>Input:</strong> <code>{example.input}</code></p>
                                                         <p className="mb-1"><strong>Output:</strong> <code>{example.output}</code></p>
@@ -293,7 +375,7 @@ export default function ChallengePage() {
                                             <div className="mt-4">
                                                 <h3 className="font-bold text-lg mb-2">Restricciones:</h3>
                                                 <ul className="list-disc list-inside">
-                                                    {challenge.constraints.map((constraint: string, index: number) => (
+                                                    {challenge.constraints.map((constraint, index) => (
                                                         <li key={index} className="mb-1">{constraint}</li>
                                                     ))}
                                                 </ul>
@@ -304,7 +386,7 @@ export default function ChallengePage() {
                             </div>
                         </div>
 
-                        {/* Track for the challenge */}
+                        {/* Hint for the challenge */}
                         <div className="card bg-base-200 shadow-lg">
                             <div className="card-body p-4">
                                 <div className="flex justify-between items-center">
@@ -331,6 +413,38 @@ export default function ChallengePage() {
                                 )}
                             </div>
                         </div>
+
+                        {/* Challenge details */}
+                        <div className="card bg-base-200 shadow-lg">
+                            <div className="card-body p-4">
+                                <h2 className="card-title flex items-center gap-2 mb-4">
+                                    <InformationCircleIcon className="h-5 w-5 text-primary" />
+                                    Detalles del desafío
+                                </h2>
+
+                                <div className="space-y-3">
+                                    <div className="flex justify-between">
+                                        <span className="text-base-content/70">Categoría:</span>
+                                        <span className="badge">{challenge.category === 'clasica' ? 'Criptografía Clásica' : challenge.category}</span>
+                                    </div>
+
+                                    <div className="flex justify-between">
+                                        <span className="text-base-content/70">Tiempo estimado:</span>
+                                        <span>{challenge.timeEstimate}</span>
+                                    </div>
+
+                                    <div className="flex justify-between">
+                                        <span className="text-base-content/70">Puntos:</span>
+                                        <span className="font-semibold">{challenge.points}</span>
+                                    </div>
+
+                                    <div className="flex justify-between">
+                                        <span className="text-base-content/70">Completados:</span>
+                                        <span>{challenge.completions} de {challenge.totalAttempts} intentos</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Code editor panel */}
@@ -340,7 +454,7 @@ export default function ChallengePage() {
                             onCodeChange={handleCodeChange}
                             onOutputChange={handleOutputChange}
                             onLanguageChange={handleLanguageChange}
-                            initialCode={challenge.starterCode[language] || ''}
+                            initialCode={code}
                             initialLanguage={language}
                         />
 
@@ -363,133 +477,213 @@ export default function ChallengePage() {
                     show={showError}
                     setShow={setShowError}
                     type="error"
-                    message="La respuesta no es correcta. Por favor, revisa tu código."
+                    message={errorMessage}
                 />
             </main>
         </div>
     );
 }
 
-// /data/challengesData.ts
-
-const challengesData = [
-    {
-        id: "caesar-cipher",
-        title: "Caesar Cipher Breaker",
-        difficulty: "Easy",
-        category: "Classical Ciphers",
-        points: 500,
-        description: `
-      <p>El cifrado César es una de las técnicas de cifrado más simples y conocidas. Es un tipo de cifrado por sustitución en el que cada letra del texto plano es reemplazada por otra letra que se encuentra un número fijo de posiciones más adelante en el alfabeto.</p>
-      
-      <p>Por ejemplo, con un desplazamiento de 3 posiciones:</p>
-      <ul>
-        <li>La letra 'A' se cifra como 'D'</li>
-        <li>La letra 'B' se cifra como 'E'</li>
-        <li>La letra 'Z' se cifra como 'C'</li>
-      </ul>
-      
-      <p>En este desafío, debes implementar una función que descifre un mensaje cifrado con César, probando todos los posibles desplazamientos (1-25) y devolviendo el texto original más probable.</p>
-      
-      <p>Para simplificar, asumiremos que el mensaje está en inglés y que el texto descifrado contendrá palabras comunes en inglés como "THE", "AND", "THAT", etc.</p>
-    `,
-        examples: [
-            {
-                input: "KHOOR ZRUOG",
-                output: "HELLO WORLD",
-                explanation: "El mensaje está cifrado con un desplazamiento de 3 letras."
-            },
-            {
-                input: "YMFY NX HTWWJHY",
-                output: "THAT IS CORRECT",
-                explanation: "El mensaje está cifrado con un desplazamiento de 5 letras."
-            }
-        ],
-        constraints: [
-            "El mensaje sólo contiene letras mayúsculas (A-Z) y espacios.",
-            "La longitud del mensaje está entre 1 y 1000 caracteres."
-        ],
-        hint: "Puedes probar todos los 25 posibles desplazamientos y utilizar alguna heurística (como contar la frecuencia de letras comunes en inglés) para determinar cuál es la solución más probable.",
-        starterCode: {
-            python: `def break_caesar(encrypted_message):
-    """
-    Implementa la función para romper el cifrado César.
-    Args:
-        encrypted_message (str): El mensaje cifrado con César
-    Returns:
-        str: El mensaje descifrado más probable
-    """
-    # Tu código aquí
-    pass
-
-# Ejemplo de uso
-encrypted = "KHOOR ZRUOG"
-decrypted = break_caesar(encrypted)
-print(f"Mensaje cifrado: {encrypted}")
-print(f"Mensaje descifrado: {decrypted}")`
+const exampleChallenge = {
+    id: "caesar-cipher",
+    title: "Descifrando César",
+    description: "<p>El <strong>cifrado César</strong> es una de las técnicas de cifrado más simples y conocidas. Es un tipo de cifrado por sustitución en el que cada letra del texto plano es reemplazada por otra letra que se encuentra un número fijo de posiciones más adelante en el alfabeto.</p><p>Por ejemplo, con un desplazamiento de 3, la A sería sustituida por la D, la B se convertiría en E, y así sucesivamente.</p><p>En este desafío, recibirás un mensaje cifrado con el cifrado César. Tu tarea es implementar un algoritmo que pruebe todos los posibles desplazamientos (del 1 al 25) y encuentre el mensaje original.</p><p>El mensaje original estará en español y debe tener sentido.</p>",
+    difficulty: "principiante",
+    category: "clasica",
+    completions: 987,
+    totalAttempts: 1456,
+    points: 100,
+    timeEstimate: "30 min",
+    status: "disponible",
+    dateAdded: "2023-06-10",
+    icon: "FiKey",
+    examples: [
+        {
+            input: "HZ JYPWAVNYHmph LZ MHZJPUHUAL",
+            output: "LA CRIPTOGRAFía ES FASCINANTE",
+            explanation: "El mensaje estaba cifrado con un desplazamiento de 7 letras."
         },
-        expectedOutput: "HELLO WORLD"
-    },
-    {
-        id: "vigenere-cipher",
-        title: "Vigenère Cipher Decryptor",
-        difficulty: "Medium",
-        category: "Classical Ciphers",
-        description: `
-      <p>El cifrado Vigenère es un método de cifrado que utiliza una serie de diferentes cifrados César basados en las letras de una palabra clave. Es un cifrado por sustitución polialfabética simple.</p>
-      
-      <p>En este desafío, debes implementar una función que descifre un mensaje cifrado con Vigenère, conociendo la clave utilizada para cifrarlo.</p>
-      
-      <p>El cifrado Vigenère funciona de la siguiente manera:</p>
-      <ol>
-        <li>Se elige una palabra clave (por ejemplo, "KEY")</li>
-        <li>Para cifrar, se repite la clave hasta que tenga la longitud del mensaje</li>
-        <li>Cada letra del mensaje se desplaza según el valor numérico de la letra correspondiente de la clave (A=0, B=1, ..., Z=25)</li>
-      </ol>
-      
-      <p>Por ejemplo, para cifrar "HELLO" con la clave "KEY":</p>
-      <pre>Mensaje:  H E L L O
-Clave:    K E Y K E
-Valor num: 10 4 24 10 4
-Cifrado:  R I J V S</pre>
-      
-      <p>Tu tarea es implementar la función de descifrado, que realiza el proceso inverso.</p>
-    `,
-        examples: [
-            {
-                input: "Mensaje cifrado: 'RIJVS', Clave: 'KEY'",
-                output: "HELLO",
-                explanation: "Para descifrar, restamos el valor numérico de cada letra de la clave de la letra correspondiente del mensaje cifrado."
-            }
-        ],
-        constraints: [
-            "El mensaje sólo contiene letras mayúsculas (A-Z) y espacios.",
-            "La clave sólo contiene letras mayúsculas (A-Z).",
-            "Los espacios en el mensaje no están cifrados."
-        ],
-        hint: "Para descifrar, necesitas restar el valor de la letra de la clave del valor de la letra cifrada, y asegurarte de manejar correctamente el wrap-around del alfabeto.",
-        starterCode: {
-            python: `def decrypt_vigenere(encrypted_message, key):
+        {
+            input: "CEVR GP IV",
+            output: "HOLA MI PC",
+            explanation: "El mensaje estaba cifrado con un desplazamiento de 5 letras."
+        }
+    ],
+    constraints: [
+        "El mensaje cifrado solo contendrá letras (mayúsculas y minúsculas), espacios y signos de puntuación.",
+        "La solución debe probar todos los desplazamientos posibles (1-25).",
+        "El mensaje descifrado debe estar en español y tener sentido."
+    ],
+    hint: "Para cada posible desplazamiento (1-25), descifra el mensaje y verifica si parece español válido. Puedes detectar palabras comunes como 'el', 'la', 'es', 'en', etc. para identificar el mensaje correcto.",
+    expectedOutput: "la criptografía es fascinante",
+    inputData: "HZ JYPWAVNYHmph LZ MHZJPUHUAL",
+    starterCode: {
+        python: `def descifrar_cesar(mensaje_cifrado):
     """
-    Implementa la función para descifrar un mensaje cifrado con Vigenère.
+    Función que prueba todos los desplazamientos posibles (1-25) del cifrado César
+    y retorna el mensaje descifrado que tenga más sentido en español.
+    
     Args:
-        encrypted_message (str): El mensaje cifrado
-        key (str): La clave utilizada para cifrar el mensaje
+        mensaje_cifrado (str): El mensaje cifrado
+    
     Returns:
         str: El mensaje descifrado
     """
     # Tu código aquí
-    pass
+    
+    # Recuerda que debes probar todos los desplazamientos posibles
+    # e identificar cuál produce un mensaje con sentido en español
+    
+    # Ejemplo de cómo probar un desplazamiento específico (desplazamiento = 3)
+    # mensaje_descifrado = ""
+    # for caracter in mensaje_cifrado:
+    #     if caracter.isalpha():
+    #         ascii_offset = 65 if caracter.isupper() else 97
+    #         # Fórmula para descifrar: (c - k) % 26
+    #         descifrado = chr((ord(caracter) - ascii_offset - 3) % 26 + ascii_offset)
+    #         mensaje_descifrado += descifrado
+    #     else:
+    #         mensaje_descifrado += caracter
+    
+    # Puedes devolver el mensaje descifrado que consideres correcto
+    return "mensaje descifrado"
 
-# Ejemplo de uso
-encrypted = "RIJVS"
-key = "KEY"
-decrypted = decrypt_vigenere(encrypted, key)
-print(f"Mensaje cifrado: {encrypted}")
-print(f"Clave: {key}")
-print(f"Mensaje descifrado: {decrypted}")`
-        },
-        expectedOutput: "HELLO"
+# NO MODIFICAR ESTA PARTE
+mensaje_cifrado = "HZ JYPWAVNYHmph LZ MHZJPUHUAL"
+print(descifrar_cesar(mensaje_cifrado))`,
+        javascript: `function descifrarCesar(mensajeCifrado) {
+    /**
+     * Función que prueba todos los desplazamientos posibles (1-25) del cifrado César
+     * y retorna el mensaje descifrado que tenga más sentido en español.
+     * 
+     * @param {string} mensajeCifrado - El mensaje cifrado
+     * @return {string} El mensaje descifrado
+     */
+    // Tu código aquí
+    
+    // Recuerda que debes probar todos los desplazamientos posibles
+    // e identificar cuál produce un mensaje con sentido en español
+    
+    // Ejemplo de cómo probar un desplazamiento específico (desplazamiento = 3)
+    // let mensajeDescifrado = "";
+    // for (let i = 0; i < mensajeCifrado.length; i++) {
+    //     const caracter = mensajeCifrado[i];
+    //     if (/[a-zA-Z]/.test(caracter)) {
+    //         const esMayuscula = caracter === caracter.toUpperCase();
+    //         const asciiOffset = esMayuscula ? 65 : 97;
+    //         // Fórmula para descifrar: (c - k) % 26
+    //         const codigoDescifrado = (caracter.charCodeAt(0) - asciiOffset - 3 + 26) % 26 + asciiOffset;
+    //         mensajeDescifrado += String.fromCharCode(codigoDescifrado);
+    //     } else {
+    //         mensajeDescifrado += caracter;
+    //     }
+    // }
+    
+    // Puedes devolver el mensaje descifrado que consideres correcto
+    return "mensaje descifrado";
+}
+
+// NO MODIFICAR ESTA PARTE
+const mensajeCifrado = "HZ JYPWAVNYHmph LZ MHZJPUHUAL";
+console.log(descifrarCesar(mensajeCifrado));`
     }
-    // Agrega más desafíos aquí
-];
+}
+
+const vigenere = {
+    id: "integrity-verification",
+    title: "Verificación de Integridad",
+    description: "<p>La <strong>verificación de integridad</strong> es un proceso fundamental en ciberseguridad que permite determinar si un archivo o mensaje ha sido modificado.</p><p>Las funciones hash criptográficas como MD5, SHA-1 o SHA-256 crean una 'huella digital' única para cada archivo. Si incluso un bit del archivo cambia, el hash resultante será completamente diferente.</p><p>En este desafío, implementarás un verificador de integridad que:</p><ul><li>Calcule el hash MD5 de un archivo de texto</li><li>Compare el hash calculado con un valor de referencia</li><li>Determine si el archivo ha sido modificado</li></ul><p>Esto es esencial para detectar alteraciones en archivos críticos, verificar descargas de software, y asegurar que los mensajes no han sido manipulados durante la transmisión.</p>",
+    difficulty: "principiante",
+    category: "hash",
+    completions: 765,
+    totalAttempts: 1234,
+    points: 120,
+    timeEstimate: "45 min",
+    status: "disponible",
+    dateAdded: "2023-07-05",
+    icon: "FiFileText",
+    examples: [
+        {
+            input: "archivo: 'mensaje.txt' (contenido: 'Hola mundo!'), hash_esperado: '86fb269d190d2c85f6e0468ceca42a20'",
+            output: "INTEGRIDAD VERIFICADA - El hash coincide",
+            explanation: "El hash MD5 de 'Hola mundo!' es '86fb269d190d2c85f6e0468ceca42a20', por lo que la verificación es exitosa."
+        },
+        {
+            input: "archivo: 'datos.txt' (contenido: 'Información confidencial'), hash_esperado: 'd41d8cd98f00b204e9800998ecf8427e'",
+            output: "INTEGRIDAD COMPROMETIDA - El hash no coincide",
+            explanation: "El hash esperado corresponde a un archivo vacío, pero el archivo contiene texto, por lo que la verificación falla."
+        }
+    ],
+    constraints: [
+        "Debes usar el algoritmo MD5 para generar el hash (aunque en la práctica se recomienda SHA-256 o mejor).",
+        "El programa debe manejar archivos de texto y calcular su hash.",
+        "La salida debe indicar claramente si la integridad se mantiene o está comprometida.",
+        "Debes implementar el cálculo del hash sin usar funciones específicas que realicen toda la tarea automáticamente."
+    ],
+    hint: "Puedes calcular el hash MD5 byte a byte, pero la mayoría de lenguajes tienen bibliotecas para hacerlo. En Python, puedes usar la biblioteca 'hashlib', y en JavaScript puedes usar el objeto 'crypto' del entorno Node.js. Recuerda que MD5 procesa el archivo como una secuencia de bytes, no como texto, así que presta atención a la codificación.",
+    expectedOutput: "INTEGRIDAD VERIFICADA - El hash coincide",
+    inputData: {
+        fileContent: "Criptografía y seguridad informática son fundamentales para proteger datos sensibles.",
+        expectedHash: "5d8eb6980fa9f835d62a1e691ada46d6"
+    },
+    starterCode: {
+        python: `def verificar_integridad(contenido_archivo, hash_esperado):
+    """
+    Verifica la integridad de un archivo comparando su hash MD5 con un valor esperado.
+    
+    Args:
+        contenido_archivo (str): El contenido del archivo a verificar
+        hash_esperado (str): El hash MD5 esperado en formato hexadecimal
+    
+    Returns:
+        str: Mensaje indicando si la integridad está verificada o comprometida
+    """
+    # Tu código aquí
+    
+    # 1. Calcula el hash MD5 del contenido del archivo
+    # Pista: Puedes usar la biblioteca hashlib
+    # import hashlib
+    # md5_hash = hashlib.md5()
+    # md5_hash.update(contenido_archivo.encode('utf-8'))
+    # hash_calculado = md5_hash.hexdigest()
+    
+    # 2. Compara el hash calculado con el hash esperado
+    
+    # 3. Retorna el mensaje apropiado
+    return "Resultado de la verificación"
+
+# NO MODIFICAR ESTA PARTE
+contenido = "Criptografía y seguridad informática son fundamentales para proteger datos sensibles."
+hash_esperado = "5d8eb6980fa9f835d62a1e691ada46d6"
+print(verificar_integridad(contenido, hash_esperado))`,
+        javascript: `function verificarIntegridad(contenidoArchivo, hashEsperado) {
+    /**
+     * Verifica la integridad de un archivo comparando su hash MD5 con un valor esperado.
+     * 
+     * @param {string} contenidoArchivo - El contenido del archivo a verificar
+     * @param {string} hashEsperado - El hash MD5 esperado en formato hexadecimal
+     * @return {string} Mensaje indicando si la integridad está verificada o comprometida
+     */
+    // Tu código aquí
+    
+    // 1. Calcula el hash MD5 del contenido del archivo
+    // Pista: En Node.js puedes usar el módulo crypto
+    // const crypto = require('crypto');
+    // const md5Hash = crypto.createHash('md5');
+    // md5Hash.update(contenidoArchivo);
+    // const hashCalculado = md5Hash.digest('hex');
+    
+    // 2. Compara el hash calculado con el hash esperado
+    
+    // 3. Retorna el mensaje apropiado
+    return "Resultado de la verificación";
+}
+
+// NO MODIFICAR ESTA PARTE
+const contenido = "Criptografía y seguridad informática son fundamentales para proteger datos sensibles.";
+const hashEsperado = "5d8eb6980fa9f835d62a1e691ada46d6";
+console.log(verificarIntegridad(contenido, hashEsperado));`
+    }
+}
+
+

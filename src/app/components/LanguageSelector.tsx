@@ -12,11 +12,11 @@ import {
     SiSwift,
     SiGo
 } from "react-icons/si";
+import { usePathname } from "next/navigation";
 
 export const LANGUAGES: Record<string, string> = {
     "python": "3.10.0",
     "javascript": "18.15.0",
-    /*
     "java": "15.0.2",
     "ruby": "3.0.1",
     "c": "10.2.0",
@@ -24,7 +24,6 @@ export const LANGUAGES: Record<string, string> = {
     "php": "8.2.3",
     "swift": "5.3.3",
     "go": "1.16.2"
-    */
 };
 
 // Language icons mapping using react-icons
@@ -49,6 +48,8 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({ language, selectLan
     const [isOpen, setIsOpen] = useState(false);
     const [hoveredLang, setHoveredLang] = useState<string | null>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const currentPath = usePathname();
+    const isChallengeRoute = currentPath.includes("/challenge/") || currentPath.includes("/challenge");
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
@@ -59,6 +60,13 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({ language, selectLan
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
+
+    const filteredLanguages = Object.entries(LANGUAGES).filter(([lang]) => {
+        if (isChallengeRoute) {
+            return ["python", "javascript"].includes(lang);
+        }
+        return true;
+    });
 
     return (
         <div className="relative" ref={dropdownRef}>
@@ -96,50 +104,50 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({ language, selectLan
                         }}
                     >
                         <div className="py-1 max-h-[300px] overflow-y-auto custom-scrollbar overflow-x-hidden">
-                            {Object.entries(LANGUAGES).map(([lang, version]) => (
-                                <motion.div
-                                key={lang}
-                                className={`
+                            {
+                                filteredLanguages.map(([lang, version]) => (
+                                    <motion.div
+                                        key={lang}
+                                        className={`
                                     flex items-center justify-between px-4 py-3 rounded-lg cursor-pointer transition-all duration-200
                                     ${language === lang ? "bg-primary text-primary-content" : ""}
                                     ${hoveredLang === lang && language !== lang ? "bg-base-300" : ""}
                                 `}
-                                onMouseEnter={() => setHoveredLang(lang)}
-                                onMouseLeave={() => setHoveredLang(null)}
-                                onClick={() => {
-                                    selectLanguage(lang);
-                                    setIsOpen(false);
-                                }}
-                            >
-                                <div className="flex items-center gap-3">
-                                    <motion.span
-                                        className="text-xl"
-                                        animate={{
-                                            scale: hoveredLang === lang ? 1.2 : 1,
-                                            rotate: hoveredLang === lang ? [0, -10, 10, -5, 5, 0] : 0
-                                        }}
-                                        transition={{
-                                            scale: { duration: 0.2 },
-                                            rotate: { duration: 0.5, ease: "easeInOut" }
+                                        onMouseEnter={() => setHoveredLang(lang)}
+                                        onMouseLeave={() => setHoveredLang(null)}
+                                        onClick={() => {
+                                            selectLanguage(lang);
+                                            setIsOpen(false);
                                         }}
                                     >
-                                        {LANGUAGE_ICONS[lang]}
-                                    </motion.span>
-                                    <span className="text-sm font-medium capitalize">{lang}</span>
-                                </div>
-                                <span
-                                    className={`
+                                        <div className="flex items-center gap-3">
+                                            <motion.span
+                                                className="text-xl"
+                                                animate={{
+                                                    scale: hoveredLang === lang ? 1.2 : 1,
+                                                    rotate: hoveredLang === lang ? [0, -10, 10, -5, 5, 0] : 0
+                                                }}
+                                                transition={{
+                                                    scale: { duration: 0.2 },
+                                                    rotate: { duration: 0.5, ease: "easeInOut" }
+                                                }}
+                                            >
+                                                {LANGUAGE_ICONS[lang]}
+                                            </motion.span>
+                                            <span className="text-sm font-medium capitalize">{lang}</span>
+                                        </div>
+                                        <span
+                                            className={`
                                         text-xs font-mono px-2 py-1 rounded-full transition-all duration-200
                                         ${language === lang ? "bg-primary-content text-primary" : ""}
                                         ${hoveredLang === lang && language !== lang ? "bg-base-200 text-base-content" : ""}
                                         ${hoveredLang !== lang && language !== lang ? "opacity-70" : ""}
                                     `}
-                                >
-                                    v{version}
-                                </span>
-                            </motion.div>
-                            
-                            ))}
+                                        >
+                                            v{version}
+                                        </span>
+                                    </motion.div>
+                                ))}
                         </div>
                     </motion.div>
                 )}

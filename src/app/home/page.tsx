@@ -22,6 +22,7 @@ import {
     FiUser,
     FiCalendar,
 } from "react-icons/fi";
+import { GrAchievement } from "react-icons/gr";
 import { motion } from "framer-motion";
 import { loadUserHome, fetchUserProfile } from "../../../api/api";
 import useAuth from "../hooks/UseAuth";
@@ -47,6 +48,7 @@ export default function UserHome() {
         streaks: 0,
         globalProgress: 0,
         createdAt: "",
+        points: 0,
     });
     const [isLoading, setIsLoading] = useState(true);
     const isAuthenticated = useAuth();
@@ -97,6 +99,7 @@ export default function UserHome() {
                         streaks: userResponse.data.data.streaks,
                         globalProgress: userResponse.data.data.globalProgress,
                         createdAt: userResponse.data.data.createdAt,
+                        points: userResponse.data.data.points,
                     });
                 }
             } catch (error) {
@@ -147,6 +150,9 @@ export default function UserHome() {
     };
 
     const completedModules = modules.filter(module => module.status === "completado").length;
+    const handleModuleClick = (moduleId: string) => {
+        console.log(`Module clicked: ${moduleId}`);
+    }
 
     if (isLoading) {
         return (
@@ -278,6 +284,17 @@ export default function UserHome() {
                                 <div className="stat-value text-accent">{userData.globalProgress}%</div>
                                 <div className="stat-desc">
                                     {completedModules} de {modules.length} módulos completados
+                                </div>
+                            </div>
+
+                            <div className="stat">
+                                <div className="stat-figure ">
+                                    <GrAchievement  className="w-6 h-6" />
+                                </div>
+                                <div className="stat-title">Puntos</div>
+                                <div className="stat-value ">{userData.points} puntos </div>
+                                <div className="stat-desc">
+                                    ¡Completa módulos y desafíos para ganar más puntos!
                                 </div>
                             </div>
                         </div>

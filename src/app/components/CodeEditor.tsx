@@ -1,5 +1,5 @@
 import * as monaco from 'monaco-editor';
-import { useRef, useState, useEffect} from 'react';
+import { useRef, useState, useEffect } from 'react';
 import LanguageSelector from './LanguageSelector';
 import { runCode } from "../../../api/api";
 import { motion, AnimatePresence } from "framer-motion";
@@ -7,7 +7,6 @@ import ConfirmDialog from './alertDialog';
 import { Resizable, ResizeDirection } from 're-resizable';
 import 'react-resizable/css/styles.css';
 import { Editor } from '@monaco-editor/react';
-
 import {
     PlayIcon,
     ArrowsPointingOutIcon,
@@ -81,6 +80,14 @@ export default function CodeEditor({
             setIsOnPlaygroundRoute(false);
         }
     }, [pathname]);
+
+    useEffect(() => {
+        if (initialCode) {
+            setCode(initialCode);
+        } else {
+            setCode(CODE_SNIPPETS[language as keyof typeof CODE_SNIPPETS]);
+        }
+    }, [initialCode]);
 
     // Auto-scroll output when it changes
     useEffect(() => {

@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
 import {
@@ -15,19 +14,45 @@ import {
     FiChevronDown,
     FiChevronUp,
     FiArrowRight,
-    FiCpu,
     FiKey,
     FiShield,
     FiCode,
-    FiHash,
-    FiDatabase
+    FiGrid,
+    FiActivity,
+    FiFileText
 } from "react-icons/fi";
 import { FaTrophy } from "react-icons/fa";
-
 import { motion } from "framer-motion";
+import { ReactElement } from "react";
+
+// Function to render the icons dynamically from string representations
+interface IconMap {
+    [key: string]: ReactElement;
+}
+
+const renderIcon = (iconString: string): ReactElement => {
+    // This function converts icon strings like "<FiKey className='w-6 h-6' />" to actual JSX
+    // A simple approach for demo purposes - in production, you might use a different method
+    switch (iconString.replace(/<|className='w-6 h-6' \/>/g, '').trim()) {
+        case "FiKey":
+            return <FiKey className="w-6 h-6" />;
+        case "FiFileText":
+            return <FiFileText className="w-6 h-6" />;
+        case "FiCode":
+            return <FiCode className="w-6 h-6" />;
+        case "FiLock":
+            return <FiLock className="w-6 h-6" />;
+        case "FiGrid":
+            return <FiGrid className="w-6 h-6" />;
+        case "FiActivity":
+            return <FiActivity className="w-6 h-6" />;
+        default:
+            return <FiKey className="w-6 h-6" />;
+    }
+};
 
 export default function CryptographyChallenges() {
-    // Estado para los filtros
+    // State for filters
     const [filters, setFilters] = useState({
         difficulty: "all",
         category: "all",
@@ -35,315 +60,163 @@ export default function CryptographyChallenges() {
         search: ""
     });
 
-    // Estado para mostrar/ocultar filtros en móvil
+    // State for showing/hiding filters on mobile
     const [showFilters, setShowFilters] = useState(false);
 
-    // Estado para ordenar
+    // State for sorting
     const [sortBy, setSortBy] = useState("newest");
 
-    // Mock de datos de desafíos
-    const [challenges, setChallenges] = useState([
-        {
-            id: 1,
-            title: "Caesar Cipher Breaker",
-            description: "Break a message encrypted with the Caesar cipher without knowing the key.",
-            difficulty: "beginner",
-            category: "classical",
-            completions: 1245,
-            totalAttempts: 2890,
-            points: 100,
-            timeEstimate: "30 min",
-            status: "completed",
-            dateAdded: "2023-04-15",
-            icon: <FiKey className="w-6 h-6" />
-        },
-        {
-            id: 2,
-            title: "AES Key Recovery",
-            description: "Recover an AES encryption key from a series of plaintext-ciphertext pairs.",
-            difficulty: "advanced",
-            category: "symmetric",
-            completions: 342,
-            totalAttempts: 1567,
-            points: 350,
-            timeEstimate: "2 hours",
-            status: "available",
-            dateAdded: "2023-04-28",
-            icon: <FiLock className="w-6 h-6" />
-        },
-        {
-            id: 3,
-            title: "Hash Collision Finder",
-            description: "Find a collision in a simplified hash function to understand vulnerability concepts.",
-            difficulty: "intermediate",
-            category: "hashing",
-            completions: 567,
-            totalAttempts: 1298,
-            points: 200,
-            timeEstimate: "1 hour",
-            status: "available",
-            dateAdded: "2023-05-10",
-            icon: <FiHash className="w-6 h-6" />
-        },
-        {
-            id: 4,
-            title: "RSA Factorization Challenge",
-            description: "Factor a small RSA modulus to recover the private key and decrypt a message.",
-            difficulty: "advanced",
-            category: "asymmetric",
-            completions: 189,
-            totalAttempts: 876,
-            points: 400,
-            timeEstimate: "3 hours",
-            status: "available",
-            dateAdded: "2023-05-22",
-            icon: <FiShield className="w-6 h-6" />
-        },
-        {
-            id: 5,
-            title: "Vigenère Cipher Analysis",
-            description: "Determine the key length and break a Vigenère cipher using frequency analysis.",
-            difficulty: "intermediate",
-            category: "classical",
-            completions: 678,
-            totalAttempts: 1432,
-            points: 250,
-            timeEstimate: "1.5 hours",
-            status: "completed",
-            dateAdded: "2023-06-05",
-            icon: <FiKey className="w-6 h-6" />
-        },
-        {
-            id: 6,
-            title: "Secure Password Storage",
-            description: "Implement a secure password storage system using salting and hashing.",
-            difficulty: "intermediate",
-            category: "authentication",
-            completions: 432,
-            totalAttempts: 987,
-            points: 250,
-            timeEstimate: "1.5 hours",
-            status: "available",
-            dateAdded: "2023-06-18",
-            icon: <FiDatabase className="w-6 h-6" />
-        },
-        {
-            id: 7,
-            title: "Elliptic Curve Point Multiplication",
-            description: "Implement efficient point multiplication on an elliptic curve for cryptographic applications.",
-            difficulty: "expert",
-            category: "asymmetric",
-            completions: 98,
-            totalAttempts: 543,
-            points: 500,
-            timeEstimate: "4 hours",
-            status: "available",
-            dateAdded: "2023-07-01",
-            icon: <FiCpu className="w-6 h-6" />
-        },
-        {
-            id: 8,
-            title: "Padding Oracle Attack",
-            description: "Exploit a padding oracle vulnerability to decrypt a message without knowing the key.",
-            difficulty: "advanced",
-            category: "attacks",
-            completions: 156,
-            totalAttempts: 789,
-            points: 400,
-            timeEstimate: "3 hours",
-            status: "available",
-            dateAdded: "2023-07-14",
-            icon: <FiCode className="w-6 h-6" />
-        },
-        {
-            id: 9,
-            title: "One-Time Pad Implementation",
-            description: "Implement a secure one-time pad system and understand its perfect secrecy properties.",
-            difficulty: "beginner",
-            category: "symmetric",
-            completions: 876,
-            totalAttempts: 1345,
-            points: 150,
-            timeEstimate: "45 min",
-            status: "completed",
-            dateAdded: "2023-07-27",
-            icon: <FiLock className="w-6 h-6" />
-        },
-        {
-            id: 10,
-            title: "Digital Signature Verification",
-            description: "Implement and verify digital signatures using RSA and understand their security properties.",
-            difficulty: "intermediate",
-            category: "asymmetric",
-            completions: 345,
-            totalAttempts: 876,
-            points: 300,
-            timeEstimate: "2 hours",
-            status: "available",
-            dateAdded: "2023-08-09",
-            icon: <FiShield className="w-6 h-6" />
-        },
-        {
-            id: 11,
-            title: "Blockchain Proof-of-Work",
-            description: "Implement a simple proof-of-work algorithm similar to what Bitcoin uses.",
-            difficulty: "advanced",
-            category: "blockchain",
-            completions: 234,
-            totalAttempts: 678,
-            points: 350,
-            timeEstimate: "2.5 hours",
-            status: "available",
-            dateAdded: "2023-08-22",
-            icon: <FiDatabase className="w-6 h-6" />
-        },
-        {
-            id: 12,
-            title: "Homomorphic Encryption Basics",
-            description: "Implement a simple homomorphic encryption scheme and perform operations on encrypted data.",
-            difficulty: "expert",
-            category: "advanced-concepts",
-            completions: 87,
-            totalAttempts: 432,
-            points: 500,
-            timeEstimate: "4 hours",
-            status: "available",
-            dateAdded: "2023-09-04",
-            icon: <FiCpu className="w-6 h-6" />
-        },
-        {
-            id: 13,
-            title: "Substitution Cipher Solver",
-            description: "Create an algorithm to automatically solve simple substitution ciphers.",
-            difficulty: "intermediate",
-            category: "classical",
-            completions: 456,
-            totalAttempts: 987,
-            points: 250,
-            timeEstimate: "1.5 hours",
-            status: "available",
-            dateAdded: "2023-09-17",
-            icon: <FiKey className="w-6 h-6" />
-        },
-        {
-            id: 14,
-            title: "Side-Channel Attack Simulation",
-            description: "Simulate a timing attack against a naive implementation of RSA.",
-            difficulty: "advanced",
-            category: "attacks",
-            completions: 123,
-            totalAttempts: 567,
-            points: 400,
-            timeEstimate: "3 hours",
-            status: "available",
-            dateAdded: "2023-09-30",
-            icon: <FiCode className="w-6 h-6" />
-        },
-        {
-            id: 15,
-            title: "Zero-Knowledge Proof Implementation",
-            description: "Implement a simple zero-knowledge proof protocol to prove knowledge without revealing it.",
-            difficulty: "expert",
-            category: "advanced-concepts",
-            completions: 76,
-            totalAttempts: 345,
-            points: 500,
-            timeEstimate: "4 hours",
-            status: "available",
-            dateAdded: "2023-10-13",
-            icon: <FiShield className="w-6 h-6" />
-        },
-        {
-            id: 16,
-            title: "Secure Random Number Generation",
-            description: "Implement and test a cryptographically secure random number generator.",
-            difficulty: "intermediate",
-            category: "foundations",
-            completions: 345,
-            totalAttempts: 789,
-            points: 250,
-            timeEstimate: "1.5 hours",
-            status: "available",
-            dateAdded: "2023-10-26",
-            icon: <FiHash className="w-6 h-6" />
-        },
-        {
-            id: 17,
-            title: "TLS Handshake Analysis",
-            description: "Analyze a TLS handshake and identify the cryptographic operations involved.",
-            difficulty: "intermediate",
-            category: "protocols",
-            completions: 234,
-            totalAttempts: 654,
-            points: 300,
-            timeEstimate: "2 hours",
-            status: "available",
-            dateAdded: "2023-11-08",
-            icon: <FiLock className="w-6 h-6" />
-        },
-        {
-            id: 18,
-            title: "Quantum Key Distribution Simulation",
-            description: "Simulate the BB84 quantum key distribution protocol and understand its security properties.",
-            difficulty: "expert",
-            category: "quantum",
-            completions: 65,
-            totalAttempts: 321,
-            points: 500,
-            timeEstimate: "4 hours",
-            status: "available",
-            dateAdded: "2023-11-21",
-            icon: <FiCpu className="w-6 h-6" />
-        },
-        {
-            id: 19,
-            title: "Password Cracking Challenge",
-            description: "Crack a series of increasingly difficult password hashes using various techniques.",
-            difficulty: "intermediate",
-            category: "authentication",
-            completions: 432,
-            totalAttempts: 876,
-            points: 300,
-            timeEstimate: "2 hours",
-            status: "available",
-            dateAdded: "2023-12-04",
-            icon: <FiKey className="w-6 h-6" />
-        },
-        {
-            id: 20,
-            title: "Secure Multi-Party Computation",
-            description: "Implement a simple secure multi-party computation protocol for privacy-preserving calculations.",
-            difficulty: "expert",
-            category: "advanced-concepts",
-            completions: 54,
-            totalAttempts: 298,
-            points: 500,
-            timeEstimate: "4 hours",
-            status: "available",
-            dateAdded: "2023-12-17",
-            icon: <FiShield className="w-6 h-6" />
-        }
-    ]);
+    // Challenge type definition
+    interface Challenge {
+        id: number;
+        title: string;
+        description: string;
+        difficulty: string;
+        category: string;
+        completions: number;
+        totalAttempts: number;
+        points: number;
+        timeEstimate: string;
+        status: string;
+        dateAdded: string;
+        icon: string;
+    }
 
-    // Filtrar desafíos basados en los filtros seleccionados
+    // State for challenges
+    const [challenges, setChallenges] = useState<Challenge[]>([]);
+
+    // State for loading
+    const [loading, setLoading] = useState(true);
+
+    // Fetch challenges from the database
+    useEffect(() => {
+        // This would be replaced with actual API call in production
+        const fetchChallenges = async () => {
+            try {
+                setLoading(true);
+
+                // In a real application, you would fetch data from your database
+                // const response = await fetch('/api/challenges');
+                // const data = await response.json();
+
+                // For now, we'll use the mock data
+                const mockChallenges = [
+                    {
+                        id: 1,
+                        title: "Descifrando César",
+                        description: "Descifra un mensaje codificado con el cifrado César sin conocer la clave de desplazamiento.",
+                        difficulty: "principiante",
+                        category: "clasica",
+                        completions: 987,
+                        totalAttempts: 1456,
+                        points: 100,
+                        timeEstimate: "30 min",
+                        status: "disponible",
+                        dateAdded: "2023-06-10",
+                        icon: "FiKey",
+                    },
+                    {
+                        id: 2,
+                        title: "Verificación de Integridad",
+                        description: "Aprende a utilizar funciones hash básicas para verificar la integridad de archivos.",
+                        difficulty: "principiante",
+                        category: "hash",
+                        completions: 765,
+                        totalAttempts: 1234,
+                        points: 120,
+                        timeEstimate: "45 min",
+                        status: "disponible",
+                        dateAdded: "2023-07-05",
+                        icon: "FiFileText",
+                    },
+                    {
+                        id: 3,
+                        title: "Ataque al Cifrado Vigenère",
+                        description: "Realiza un ataque de frecuencia al cifrado Vigenère para recuperar la clave y el mensaje original.",
+                        difficulty: "intermedio",
+                        category: "clasica",
+                        completions: 432,
+                        totalAttempts: 987,
+                        points: 250,
+                        timeEstimate: "1.5 horas",
+                        status: "disponible",
+                        dateAdded: "2023-08-12",
+                        icon: "FiCode",
+                    },
+                    {
+                        id: 4,
+                        title: "Implementación de ChaCha20",
+                        description: "Implementa una versión simplificada del algoritmo de cifrado simétrico ChaCha20.",
+                        difficulty: "intermedio",
+                        category: "simetrica",
+                        completions: 289,
+                        totalAttempts: 876,
+                        points: 280,
+                        timeEstimate: "2 horas",
+                        status: "disponible",
+                        dateAdded: "2023-09-18",
+                        icon: "FiLock",
+                    },
+                    {
+                        id: 5,
+                        title: "Colisiones en Funciones Hash",
+                        description: "Genera colisiones en una función hash debilitada utilizando el ataque del cumpleaños.",
+                        difficulty: "experto",
+                        category: "hash",
+                        completions: 124,
+                        totalAttempts: 576,
+                        points: 450,
+                        timeEstimate: "3 horas",
+                        status: "disponible",
+                        dateAdded: "2023-10-25",
+                        icon: "FiGrid",
+                    },
+                    {
+                        id: 6,
+                        title: "Criptoanálisis de Salsa20",
+                        description: "Realiza un ataque de canal lateral contra una implementación vulnerable de Salsa20.",
+                        difficulty: "experto",
+                        category: "simetrica",
+                        completions: 78,
+                        totalAttempts: 435,
+                        points: 500,
+                        timeEstimate: "4 horas",
+                        status: "disponible",
+                        dateAdded: "2023-11-30",
+                        icon: "FiActivity",
+                    }
+                ];
+
+                setChallenges(mockChallenges);
+                setLoading(false);
+            } catch (error) {
+                console.error("Error fetching challenges:", error);
+                setLoading(false);
+            }
+        };
+
+        fetchChallenges();
+    }, []);
+
+    // Filter challenges based on selected filters
     const filteredChallenges = challenges.filter(challenge => {
-        // Filtro de búsqueda
+        // Search filter
         if (filters.search && !challenge.title.toLowerCase().includes(filters.search.toLowerCase()) &&
             !challenge.description.toLowerCase().includes(filters.search.toLowerCase())) {
             return false;
         }
 
-        // Filtro de dificultad
+        // Difficulty filter
         if (filters.difficulty !== "all" && challenge.difficulty !== filters.difficulty) {
             return false;
         }
 
-        // Filtro de categoría
+        // Category filter
         if (filters.category !== "all" && challenge.category !== filters.category) {
             return false;
         }
 
-        // Filtro de estado
+        // Status filter
         if (filters.status !== "all" && challenge.status !== filters.status) {
             return false;
         }
@@ -351,13 +224,13 @@ export default function CryptographyChallenges() {
         return true;
     });
 
-    // Ordenar desafíos
+    // Sort challenges
     const sortedChallenges = [...filteredChallenges].sort((a, b) => {
         switch (sortBy) {
             case "newest":
-                return new Date(b.dateAdded) - new Date(a.dateAdded);
+                return new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime();
             case "oldest":
-                return new Date(a.dateAdded) - new Date(b.dateAdded);
+                return new Date(a.dateAdded).getTime() - new Date(b.dateAdded).getTime();
             case "easiest":
                 return getDifficultyValue(a.difficulty) - getDifficultyValue(b.difficulty);
             case "hardest":
@@ -369,68 +242,74 @@ export default function CryptographyChallenges() {
         }
     });
 
-    // Función auxiliar para convertir dificultad a valor numérico para ordenar
-    function getDifficultyValue(difficulty) {
+    // Helper function to convert difficulty to numeric value for sorting
+    function getDifficultyValue(difficulty: string) {
         switch (difficulty) {
-            case "beginner": return 1;
-            case "intermediate": return 2;
-            case "advanced": return 3;
-            case "expert": return 4;
+            case "principiante": return 1;
+            case "intermedio": return 2;
+            case "experto": return 3;
             default: return 0;
         }
     }
 
-    // Función para obtener la etiqueta de dificultad
-    const getDifficultyBadge = (difficulty) => {
+    // Function to get difficulty badge
+    const getDifficultyBadge = (difficulty: string) => {
         switch (difficulty) {
-            case "beginner":
+            case "principiante":
                 return <span className="badge badge-success badge-sm">Principiante</span>;
-            case "intermediate":
+            case "intermedio":
                 return <span className="badge badge-info badge-sm">Intermedio</span>;
-            case "advanced":
-                return <span className="badge badge-warning badge-sm">Avanzado</span>;
-            case "expert":
+            case "experto":
                 return <span className="badge badge-error badge-sm">Experto</span>;
             default:
                 return null;
         }
     };
 
-    // Función para obtener el icono de estado
-    const getStatusIcon = (status) => {
+    // Function to get status icon
+    const getStatusIcon = (status: string) => {
         switch (status) {
-            case "completed":
+            case "completado":
                 return <FiCheckCircle className="text-success" />;
-            case "in-progress":
+            case "en-progreso":
                 return <FiClock className="text-warning" />;
             default:
                 return null;
         }
     };
 
-    // Manejar cambios en los filtros
-    const handleFilterChange = (e) => {
+    // Handle filter changes
+    interface FilterChangeEvent extends React.ChangeEvent<HTMLSelectElement> {}
+
+    interface Filters {
+        difficulty: string;
+        category: string;
+        status: string;
+        search: string;
+    }
+
+    const handleFilterChange = (e: FilterChangeEvent) => {
         const { name, value } = e.target;
-        setFilters(prev => ({
+        setFilters((prev: Filters) => ({
             ...prev,
             [name]: value
         }));
     };
 
-    // Manejar cambios en la búsqueda
-    const handleSearchChange = (e) => {
+    // Handle search changes
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setFilters(prev => ({
             ...prev,
             search: e.target.value
         }));
     };
 
-    // Manejar cambios en el ordenamiento
-    const handleSortChange = (e) => {
+    // Handle sort changes
+    const handleSortChange = (e: FilterChangeEvent) => {
         setSortBy(e.target.value);
     };
 
-    // Limpiar todos los filtros
+    // Clear all filters
     const clearFilters = () => {
         setFilters({
             difficulty: "all",
@@ -440,13 +319,23 @@ export default function CryptographyChallenges() {
         });
     };
 
+    // Get total participation count across all challenges
+    const getTotalParticipations = () => {
+        return challenges.reduce((total, challenge) => total + challenge.totalAttempts, 0);
+    };
+
+    // Get total completions across all challenges
+    const getTotalCompletions = () => {
+        return challenges.reduce((total, challenge) => total + challenge.completions, 0);
+    };
+
     return (
         <div className="min-h-screen flex flex-col bg-gradient-to-br from-base-300 to-base-200">
             <Navbar />
 
             <div className="container mx-auto px-4 py-8 flex-grow">
                 <div className="max-w-7xl mx-auto">
-                    {/* Encabezado */}
+                    {/* Header */}
                     <div className="text-center mb-8">
                         <h1 className="text-4xl font-bold mb-2">Desafíos de Criptografía</h1>
                         <p className="text-base-content/70 max-w-2xl mx-auto">
@@ -455,7 +344,7 @@ export default function CryptographyChallenges() {
                         </p>
                     </div>
 
-                    {/* Estadísticas */}
+                    {/* Statistics */}
                     <div className="stats shadow w-full mb-8">
                         <div className="stat">
                             <div className="stat-figure text-primary">
@@ -471,7 +360,7 @@ export default function CryptographyChallenges() {
                                 <FiUsers className="w-8 h-8" />
                             </div>
                             <div className="stat-title">Participantes</div>
-                            <div className="stat-value text-secondary">2,845</div>
+                            <div className="stat-value text-secondary">{loading ? "..." : getTotalParticipations()}</div>
                             <div className="stat-desc">↗︎ 14% más que el mes pasado</div>
                         </div>
 
@@ -480,12 +369,12 @@ export default function CryptographyChallenges() {
                                 <FaTrophy className="w-8 h-8" />
                             </div>
                             <div className="stat-title">Completados</div>
-                            <div className="stat-value text-accent">12,456</div>
+                            <div className="stat-value text-accent">{loading ? "..." : getTotalCompletions()}</div>
                             <div className="stat-desc">Soluciones enviadas</div>
                         </div>
                     </div>
 
-                    {/* Barra de búsqueda y filtros para móvil */}
+                    {/* Search bar and filters for mobile */}
                     <div className="flex flex-col md:hidden mb-6 gap-4">
                         <div className="form-control">
                             <div className="input-group w-full">
@@ -525,11 +414,9 @@ export default function CryptographyChallenges() {
                                         onChange={handleFilterChange}
                                     >
                                         <option value="all">Todas las dificultades</option>
-                                        <option value="all">Todas las dificultades</option>
-                                        <option value="beginner">Principiante</option>
-                                        <option value="intermediate">Intermedio</option>
-                                        <option value="advanced">Avanzado</option>
-                                        <option value="expert">Experto</option>
+                                        <option value="principiante">Principiante</option>
+                                        <option value="intermedio">Intermedio</option>
+                                        <option value="experto">Experto</option>
                                     </select>
                                 </div>
 
@@ -544,34 +431,9 @@ export default function CryptographyChallenges() {
                                         onChange={handleFilterChange}
                                     >
                                         <option value="all">Todas las categorías</option>
-                                        <option value="classical">Criptografía Clásica</option>
-                                        <option value="symmetric">Criptografía Simétrica</option>
-                                        <option value="asymmetric">Criptografía Asimétrica</option>
-                                        <option value="hashing">Funciones Hash</option>
-                                        <option value="authentication">Autenticación</option>
-                                        <option value="protocols">Protocolos</option>
-                                        <option value="blockchain">Blockchain</option>
-                                        <option value="quantum">Criptografía Cuántica</option>
-                                        <option value="attacks">Ataques Criptográficos</option>
-                                        <option value="advanced-concepts">Conceptos Avanzados</option>
-                                        <option value="foundations">Fundamentos</option>
-                                    </select>
-                                </div>
-
-                                <div className="form-control mb-4">
-                                    <label className="label">
-                                        <span className="label-text">Estado</span>
-                                    </label>
-                                    <select
-                                        className="select select-bordered w-full"
-                                        name="status"
-                                        value={filters.status}
-                                        onChange={handleFilterChange}
-                                    >
-                                        <option value="all">Todos los estados</option>
-                                        <option value="available">Disponible</option>
-                                        <option value="completed">Completado</option>
-                                        <option value="in-progress">En progreso</option>
+                                        <option value="clasica">Criptografía Clásica</option>
+                                        <option value="simetrica">Criptografía Simétrica</option>
+                                        <option value="hash">Funciones Hash</option>
                                     </select>
                                 </div>
 
@@ -603,7 +465,7 @@ export default function CryptographyChallenges() {
                     </div>
 
                     <div className="flex flex-col md:flex-row gap-6">
-                        {/* Filtros para escritorio */}
+                        {/* Filters for desktop */}
                         <div className="hidden md:block w-64 flex-shrink-0">
                             <div className="card bg-base-100 shadow-xl sticky top-4">
                                 <div className="card-body">
@@ -637,10 +499,9 @@ export default function CryptographyChallenges() {
                                             onChange={handleFilterChange}
                                         >
                                             <option value="all">Todas las dificultades</option>
-                                            <option value="beginner">Principiante</option>
-                                            <option value="intermediate">Intermedio</option>
-                                            <option value="advanced">Avanzado</option>
-                                            <option value="expert">Experto</option>
+                                            <option value="principiante">Principiante</option>
+                                            <option value="intermedio">Intermedio</option>
+                                            <option value="experto">Experto</option>
                                         </select>
                                     </div>
 
@@ -655,34 +516,9 @@ export default function CryptographyChallenges() {
                                             onChange={handleFilterChange}
                                         >
                                             <option value="all">Todas las categorías</option>
-                                            <option value="classical">Criptografía Clásica</option>
-                                            <option value="symmetric">Criptografía Simétrica</option>
-                                            <option value="asymmetric">Criptografía Asimétrica</option>
-                                            <option value="hashing">Funciones Hash</option>
-                                            <option value="authentication">Autenticación</option>
-                                            <option value="protocols">Protocolos</option>
-                                            <option value="blockchain">Blockchain</option>
-                                            <option value="quantum">Criptografía Cuántica</option>
-                                            <option value="attacks">Ataques Criptográficos</option>
-                                            <option value="advanced-concepts">Conceptos Avanzados</option>
-                                            <option value="foundations">Fundamentos</option>
-                                        </select>
-                                    </div>
-
-                                    <div className="form-control mb-4">
-                                        <label className="label">
-                                            <span className="label-text">Estado</span>
-                                        </label>
-                                        <select
-                                            className="select select-bordered w-full"
-                                            name="status"
-                                            value={filters.status}
-                                            onChange={handleFilterChange}
-                                        >
-                                            <option value="all">Todos los estados</option>
-                                            <option value="available">Disponible</option>
-                                            <option value="completed">Completado</option>
-                                            <option value="in-progress">En progreso</option>
+                                            <option value="clasica">Criptografía Clásica</option>
+                                            <option value="simetrica">Criptografía Simétrica</option>
+                                            <option value="hash">Funciones Hash</option>
                                         </select>
                                     </div>
 
@@ -715,7 +551,7 @@ export default function CryptographyChallenges() {
                             </div>
                         </div>
 
-                        {/* Lista de desafíos */}
+                        {/* Challenges list */}
                         <div className="flex-grow">
                             <div className="flex justify-between items-center mb-4">
                                 <h2 className="text-xl font-bold">
@@ -737,7 +573,13 @@ export default function CryptographyChallenges() {
                                 </div>
                             </div>
 
-                            {filteredChallenges.length === 0 ? (
+                            {loading ? (
+                                // Loading state
+                                <div className="flex justify-center items-center py-12">
+                                    <div className="loading loading-spinner loading-lg"></div>
+                                </div>
+                            ) : filteredChallenges.length === 0 ? (
+                                // No results state
                                 <div className="card bg-base-100 shadow-xl">
                                     <div className="card-body items-center text-center py-12">
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-base-content/30 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -756,6 +598,7 @@ export default function CryptographyChallenges() {
                                     </div>
                                 </div>
                             ) : (
+                                // Challenge cards
                                 <div className="grid grid-cols-1 gap-6">
                                     {sortedChallenges.map((challenge) => (
                                         <motion.div
@@ -768,24 +611,20 @@ export default function CryptographyChallenges() {
                                         >
                                             <div className="card-body p-0">
                                                 <div className="flex flex-col md:flex-row">
-                                                    {/* Icono y dificultad */}
-                                                    <div className={`p-6 flex flex-col items-center justify-center md:w-48 ${challenge.difficulty === "beginner"
+                                                    {/* Icon and difficulty */}
+                                                    <div className={`p-6 flex flex-col items-center justify-center md:w-48 ${challenge.difficulty === "principiante"
                                                             ? "bg-success/10"
-                                                            : challenge.difficulty === "intermediate"
+                                                            : challenge.difficulty === "intermedio"
                                                                 ? "bg-info/10"
-                                                                : challenge.difficulty === "advanced"
-                                                                    ? "bg-warning/10"
-                                                                    : "bg-error/10"
+                                                                : "bg-error/10"
                                                         }`}>
-                                                        <div className={`p-4 rounded-full mb-3 ${challenge.difficulty === "beginner"
+                                                        <div className={`p-4 rounded-full mb-3 ${challenge.difficulty === "principiante"
                                                                 ? "bg-success/20 text-success"
-                                                                : challenge.difficulty === "intermediate"
+                                                                : challenge.difficulty === "intermedio"
                                                                     ? "bg-info/20 text-info"
-                                                                    : challenge.difficulty === "advanced"
-                                                                        ? "bg-warning/20 text-warning"
-                                                                        : "bg-error/20 text-error"
+                                                                    : "bg-error/20 text-error"
                                                             }`}>
-                                                            {challenge.icon}
+                                                            {renderIcon(challenge.icon)}
                                                         </div>
                                                         {getDifficultyBadge(challenge.difficulty)}
                                                         <div className="mt-3 text-center">
@@ -794,12 +633,12 @@ export default function CryptographyChallenges() {
                                                         </div>
                                                     </div>
 
-                                                    {/* Contenido principal */}
+                                                    {/* Main content */}
                                                     <div className="flex-1 p-6">
                                                         <div className="flex justify-between items-start">
                                                             <h3 className="card-title text-xl mb-2 flex items-center">
                                                                 {challenge.title}
-                                                                {challenge.status === "completed" && (
+                                                                {challenge.status === "completado" && (
                                                                     <span className="ml-2 text-success">
                                                                         <FiCheckCircle />
                                                                     </span>
@@ -817,7 +656,11 @@ export default function CryptographyChallenges() {
 
                                                         <div className="flex flex-wrap gap-2 mb-4">
                                                             <span className="badge">
-                                                                {challenge.category.charAt(0).toUpperCase() + challenge.category.slice(1).replace('-', ' ')}
+                                                                {challenge.category === "clasica"
+                                                                    ? "Criptografía Clásica"
+                                                                    : challenge.category === "simetrica"
+                                                                        ? "Criptografía Simétrica"
+                                                                        : "Funciones Hash"}
                                                             </span>
                                                             <span className="badge badge-outline flex items-center gap-1">
                                                                 <FiUsers className="h-3 w-3" />
@@ -830,7 +673,7 @@ export default function CryptographyChallenges() {
                                                         </div>
 
                                                         <div className="card-actions justify-end mt-4">
-                                                            {challenge.status === "completed" ? (
+                                                            {challenge.status === "completado" ? (
                                                                 <button className="btn btn-outline">
                                                                     Ver solución
                                                                 </button>
@@ -849,20 +692,20 @@ export default function CryptographyChallenges() {
                                 </div>
                             )}
 
-                            {/* Paginación */}
-                            <div className="flex justify-center mt-8">
-                                <div className="btn-group">
-                                    <button className="btn btn-outline">«</button>
-                                    <button className="btn btn-outline btn-active">1</button>
-                                    <button className="btn btn-outline">2</button>
-                                    <button className="btn btn-outline">3</button>
-                                    <button className="btn btn-outline">»</button>
+                            {/* Pagination */}
+                            {!loading && filteredChallenges.length > 0 && (
+                                <div className="flex justify-center mt-8">
+                                    <div className="btn-group">
+                                        <button className="btn btn-outline">«</button>
+                                        <button className="btn btn-outline btn-active">1</button>
+                                        <button className="btn btn-outline">»</button>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
                     </div>
 
-                    {/* Sección de desafío destacado */}
+                    {/* Featured challenge section */}
                     <div className="mt-12 mb-8">
                         <h2 className="text-2xl font-bold mb-6 flex items-center">
                             <FiStar className="text-warning mr-2" /> Desafío Destacado
@@ -879,18 +722,20 @@ export default function CryptographyChallenges() {
                                 </div>
                             </figure>
                             <div className="card-body lg:w-2/3">
-                                <h2 className="card-title text-2xl">Quantum Key Distribution Simulation</h2>
+                                <h2 className="card-title text-2xl">Criptoanálisis de Salsa20</h2>
                                 <p className="mb-4">
-                                    Sumérgete en el fascinante mundo de la criptografía cuántica. En este desafío, simularás el protocolo BB84 para la distribución cuántica de claves y comprenderás por qué es teóricamente inmune a los ataques de interceptación.
+                                    Sumérgete en el fascinante mundo de la criptografía simétrica moderna. En este desafío, realizarás un ataque
+                                    de canal lateral contra una implementación vulnerable del algoritmo Salsa20.
                                 </p>
                                 <p className="mb-6">
-                                    Aprenderás sobre los principios de la mecánica cuántica que hacen posible este protocolo y cómo se puede utilizar para detectar la presencia de un espía en el canal de comunicación.
+                                    Aprenderás sobre los principios de los ataques de tiempo y cómo las implementaciones incorrectas pueden
+                                    comprometer incluso los algoritmos más seguros desde el punto de vista teórico.
                                 </p>
 
                                 <div className="flex flex-wrap gap-3 mb-6">
-                                    <div className="badge badge-outline">Criptografía Cuántica</div>
-                                    <div className="badge badge-outline">Seguridad Teórica</div>
-                                    <div className="badge badge-outline">Protocolo BB84</div>
+                                    <div className="badge badge-outline">Criptografía Simétrica</div>
+                                    <div className="badge badge-outline">Análisis de Seguridad</div>
+                                    <div className="badge badge-outline">Ataque de Canal Lateral</div>
                                 </div>
 
                                 <div className="flex items-center gap-4 mb-6">
@@ -900,7 +745,7 @@ export default function CryptographyChallenges() {
                                     </div>
                                     <div className="flex items-center">
                                         <FiUsers className="mr-1" />
-                                        <span>65 completados</span>
+                                        <span>78 completados</span>
                                     </div>
                                 </div>
 
@@ -915,7 +760,7 @@ export default function CryptographyChallenges() {
                         </div>
                     </div>
 
-                    {/* Sección de ayuda */}
+                    {/* Help section */}
                     <div className="alert shadow-lg mb-8">
                         <div>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-info flex-shrink-0 w-6 h-6">
