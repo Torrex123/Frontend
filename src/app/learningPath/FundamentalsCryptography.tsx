@@ -110,7 +110,7 @@ export default function FundamentalsCryptography() {
     status: string;
     place: number;
   }
-  
+
   const [submoduleList, setSubmoduleList] = useState<Submodule[]>([]);
 
   useEffect(() => {
@@ -179,7 +179,7 @@ export default function FundamentalsCryptography() {
       try {
         const moduleId = params.get('id');
         await completeModule(moduleId as string);
-      } catch (error) {
+      } catch {
         throw new Error('Error completing module');
       }
     }

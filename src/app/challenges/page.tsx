@@ -218,6 +218,7 @@ export default function CryptographyChallenges() {
     };
 
     // Function to get status icon
+    /*
     const getStatusIcon = (status: string) => {
         switch (status) {
             case "completado":
@@ -228,9 +229,7 @@ export default function CryptographyChallenges() {
                 return null;
         }
     };
-
-    // Handle filter changes
-    interface FilterChangeEvent extends React.ChangeEvent<HTMLSelectElement> { }
+    */
 
     interface Filters {
         difficulty: string;
@@ -239,7 +238,7 @@ export default function CryptographyChallenges() {
         search: string;
     }
 
-    const handleFilterChange = (e: FilterChangeEvent) => {
+    const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFilters((prev: Filters) => ({
             ...prev,
@@ -256,7 +255,7 @@ export default function CryptographyChallenges() {
     };
 
     // Handle sort changes
-    const handleSortChange = (e: FilterChangeEvent) => {
+    const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         setSortBy(e.target.value);
     };
 

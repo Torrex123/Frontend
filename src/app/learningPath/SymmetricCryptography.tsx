@@ -106,7 +106,13 @@ export default function SymmetricCryptography() {
             correctAnswer: "512 bits"
         }
     ]);
-    const [submoduleList, setSubmoduleList] = useState<any[]>([]);
+    interface Submodule {
+        id: string;
+        title: string;
+        status: string;
+        place: number;
+    }
+    const [submoduleList, setSubmoduleList] = useState<Submodule[]>([]);
     const params = useSearchParams();
     const router = useRouter();
 
@@ -191,7 +197,7 @@ export default function SymmetricCryptography() {
             try {
                 const moduleId = params.get('id');
                 await completeModule(moduleId as string);
-            } catch (error) {
+            } catch {
                 throw new Error('Error completing module');
             }
         }

@@ -47,8 +47,10 @@ export default function HashFunctions() {
     const [activeTab, setActiveTab] = useState<string>('info');
     const [questionsAnswered, setQuestionsAnswered] = useState<number[]>([]);
     const [practicalCompleted, setPracticalCompleted] = useState<boolean>(false);
+    /*
     const [testsPassed, setTestsPassed] = useState(false);
     const [testResults, setTestResults] = useState(null);
+    */
     const [questions, setQuestions] = useState<Question[]>([
         {
             id: 1,
@@ -106,7 +108,14 @@ export default function HashFunctions() {
             correctAnswer: "Almacenamiento seguro de contraseñas"
         }
     ]);
-    const [submoduleList, setSubmoduleList] = useState<any[]>([]);
+    interface Submodule {
+        id: string;
+        title: string;
+        status: string;
+        place: number;
+        // add other properties if needed
+    }
+    const [submoduleList, setSubmoduleList] = useState<Submodule[]>([]);
     const params = useSearchParams();
     const router = useRouter();
 
@@ -190,7 +199,7 @@ export default function HashFunctions() {
             try {
                 const moduleId = params.get('id');
                 await completeModule(moduleId as string);
-            } catch (error) {
+            } catch{
                 throw new Error('Error completing module');
             }
         }
