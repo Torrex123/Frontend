@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, ReactElement, ReactNode, ReactPortal } from "react";
+import { useState, useEffect, ReactElement, ReactNode, ReactPortal, use } from "react";
 import Navbar from "../components/Navbar";
 import Link from "next/link";
 import {
@@ -7,11 +7,6 @@ import {
     FiAward,
     FiClock,
     FiLock,
-    FiShield,
-    FiKey,
-    FiCode,
-    FiServer,
-    FiCpu,
     FiCheckCircle,
     FiPlayCircle,
     FiArrowRight,
@@ -24,8 +19,10 @@ import {
 } from "react-icons/fi";
 import { GrAchievement } from "react-icons/gr";
 import { motion } from "framer-motion";
-import { loadUserHome, fetchUserProfile } from "../../../api/api";
+import { loadUserHome, fetchUserProfile, startModule, startSubModule, getSubModule} from "../../../api/api";
 import useAuth from "../hooks/UseAuth";
+import { useRouter } from "next/navigation";
+import { error } from "console";
 
 type Module = {
     id: string;
@@ -35,7 +32,6 @@ type Module = {
     level: string;
     duration: string;
     progress: number;
-    icon?: ReactNode;
 };
 
 export default function UserHome() {
@@ -52,16 +48,7 @@ export default function UserHome() {
     });
     const [isLoading, setIsLoading] = useState(true);
     const isAuthenticated = useAuth();
-
-    const moduleIcons = {
-        fundamentals: <FiBook className="w-6 h-6" />,
-        classical: <FiKey className="w-6 h-6" />,
-        symmetric: <FiLock className="w-6 h-6" />,
-        asymmetric: <FiShield className="w-6 h-6" />,
-        hashing: <FiCode className="w-6 h-6" />,
-        protocols: <FiServer className="w-6 h-6" />,
-        blockchain: <FiCpu className="w-6 h-6" />
-    };
+    const router = useRouter();
 
     useEffect(() => {
         if (!isAuthenticated) {
@@ -71,14 +58,13 @@ export default function UserHome() {
             setIsLoading(true);
             try {
                 const modulesResponse = await loadUserHome();
-                console.log("Modules Response:", modulesResponse);
                 if (modulesResponse) {
-                    const modulesWithIcons = modulesResponse.data.data.map((module: { id: string; }) => ({
+                    const modules = modulesResponse.data.data.map((module: { id: string; }) => ({
                         ...module,
-                        icon: moduleIcons[module.id as keyof typeof moduleIcons] || <FiBook className="w-6 h-6" />
                     }));
-                    setModules(modulesWithIcons);
+                    setModules(modules);
                 }
+                console.log(modulesResponse);
             } catch (error) {
                 console.error("Error loading data:", error);
             } finally {
@@ -89,14 +75,13 @@ export default function UserHome() {
         const fetchUserData = async () => {
             try {
                 const userResponse = await fetchUserProfile();
-                console.log("User Response:", userResponse);
                 if (userResponse) {
                     setUserData({
                         username: userResponse.data.data.username,
                         profileImage: userResponse.data.data.profileImage,
                         level: userResponse.data.data.level,
                         achievements: userResponse.data.data.achievements,
-                        streaks: userResponse.data.data.streaks,
+                        streaks: userResponse.data.data.streak,
                         globalProgress: userResponse.data.data.globalProgress,
                         createdAt: userResponse.data.data.createdAt,
                         points: userResponse.data.data.points,
@@ -136,13 +121,13 @@ export default function UserHome() {
         }
     };
 
-    const getLevelBadge = (level: string | number | bigint | boolean | ReactElement<unknown, string> | Iterable<ReactNode> | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string > | Iterable<ReactNode> | null | undefined> | null | undefined) => {
+    const getLevelBadge = (level: string | number | bigint | boolean | ReactElement<unknown, string> | Iterable<ReactNode> | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string> | Iterable<ReactNode> | null | undefined> | null | undefined) => {
         switch (level) {
-            case "Principiante":
+            case "PRINCIPIANTE":
                 return <span className="badge badge-primary badge-sm">Principiante</span>;
-            case "Intermedio":
+            case "INTERMEDIO":
                 return <span className="badge badge-secondary badge-sm">Intermedio</span>;
-            case "Avanzado":
+            case "AVANZADO":
                 return <span className="badge badge-accent badge-sm">Avanzado</span>;
             default:
                 return <span className="badge badge-primary badge-sm">{level}</span>;
@@ -150,8 +135,16 @@ export default function UserHome() {
     };
 
     const completedModules = modules.filter(module => module.status === "completado").length;
-    const handleModuleClick = (moduleId: string) => {
-        console.log(`Module clicked: ${moduleId}`);
+
+    const handleModuleClick = (moduleName: string, moduleID: string) => {
+
+        router.push(`/module?name=${encodeURIComponent(moduleName)}&id=${encodeURIComponent(moduleID)}`);
+        
+        try {
+            startModule(moduleID);
+        } catch (error) {
+            console.error("Error loading module progress:", error);
+        }
     }
 
     if (isLoading) {
@@ -289,7 +282,7 @@ export default function UserHome() {
 
                             <div className="stat">
                                 <div className="stat-figure ">
-                                    <GrAchievement  className="w-6 h-6" />
+                                    <GrAchievement className="w-6 h-6" />
                                 </div>
                                 <div className="stat-title">Puntos</div>
                                 <div className="stat-value ">{userData.points} puntos </div>
@@ -391,7 +384,7 @@ export default function UserHome() {
                                                 ? "bg-info/10 text-info"
                                                 : "bg-base-200 text-base-content/70"
                                             }`}>
-                                            {module.icon}
+                                            <FiBook className="w-6 h-6" />
                                         </div>
                                         <div className="flex-1">
                                             <div className="flex justify-between items-start">
@@ -436,16 +429,17 @@ export default function UserHome() {
                                                 <FiLock className="mr-2" /> Bloqueado
                                             </button>
                                         ) : module.status === "completado" ? (
-                                            <button className="btn btn-outline">
+                                            <button className="btn btn-outline" onClick={() => handleModuleClick(module.title, module.id)}>
                                                 <FiBookmark className="mr-2" /> Repasar
                                             </button>
                                         ) : (
-                                            <button className="btn btn-primary">
+                                            <button className="btn btn-primary" onClick={() => handleModuleClick(module.title, module.id)}>
                                                 {module.progress > 0 ? (
                                                     <><FiPlayCircle className="mr-2" /> Continuar</>
                                                 ) : (
                                                     <><FiArrowRight className="mr-2" /> Comenzar</>
                                                 )}
+
                                             </button>
                                         )}
                                     </div>
@@ -457,19 +451,22 @@ export default function UserHome() {
                     {/* Community & Resources */}
                     <div className="card bg-base-100 shadow-xl mb-8">
                         <div className="card-body">
-                            <h2 className="card-title text-2xl mb-4">Community & Resources</h2>
+                            <h2 className="card-title text-2xl mb-4">Comunidad y recursos</h2>
 
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <div className="flex flex-col items-center text-center p-4 border border-base-300 rounded-box">
                                     <div className="bg-primary/10 p-4 rounded-full mb-4">
                                         <FiBook className="w-8 h-8 text-primary" />
                                     </div>
-                                    <h3 className="font-bold mb-2">Resource Library</h3>
+                                    <h3 className="font-bold mb-2">Biblioteca de recursos</h3>
                                     <p className="text-base-content/70 mb-4">
-                                        Access our comprehensive collection of cryptography resources.
+                                        Acceda a nuestra completa colección de recursos sobre criptografía.
                                     </p>
-                                    <button className="btn btn-sm btn-outline mt-auto">
-                                        Browse Library
+                                    <button
+                                        className="btn btn-sm btn-outline mt-auto disabled-button"
+                                        disabled
+                                    >
+                                        Próximamente
                                     </button>
                                 </div>
 
@@ -479,12 +476,15 @@ export default function UserHome() {
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
                                         </svg>
                                     </div>
-                                    <h3 className="font-bold mb-2">Discussion Forum</h3>
+                                    <h3 className="font-bold mb-2">Foro de debate</h3>
                                     <p className="text-base-content/70 mb-4">
-                                        Join the conversation with fellow cryptography enthusiasts.
+                                        Únete a la conversación con otros entusiastas de la criptografía.
                                     </p>
-                                    <button className="btn btn-sm btn-outline mt-auto">
-                                        Join Discussion
+                                    <button
+                                        className="btn btn-sm btn-outline mt-auto disabled-button"
+                                        disabled
+                                    >
+                                        Próximamente
                                     </button>
                                 </div>
 
@@ -494,12 +494,12 @@ export default function UserHome() {
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                                         </svg>
                                     </div>
-                                    <h3 className="font-bold mb-2">Weekly Challenges</h3>
+                                    <h3 className="font-bold mb-2">Desafios para pensar</h3>
                                     <p className="text-base-content/70 mb-4">
-                                        Test your skills with our weekly cryptography challenges.
+                                        ¡Pon a prueba tus habilidades con nuestros desafíos y gana puntos!
                                     </p>
-                                    <button className="btn btn-sm btn-outline mt-auto">
-                                        View Challenges
+                                    <button className="btn btn-sm btn-outline mt-auto" onClick={() => router.push("/challenges")}>
+                                        Ver desafios
                                     </button>
                                 </div>
                             </div>

@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
     FiLock,
-    FiCheck,
     FiArrowRight,
     FiAward,
     FiFileText,
@@ -27,8 +26,9 @@ import {
 } from 'react-icons/fi';
 import confetti from 'canvas-confetti';
 import CodeEditor from '../components/CodeEditor';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { startSubModule, getSubModule, completeSubModule, completeModule } from '../../../api/api';
 
-// Types for our application
 type CipherType = 'aes' | 'chacha' | 'salsa';
 type ProgressStage = 'learning' | 'quiz' | 'practical' | 'completed';
 
@@ -41,7 +41,6 @@ interface Question {
 }
 
 export default function SymmetricCryptography() {
-    // State management
     const [currentCipher, setCurrentCipher] = useState<CipherType>('aes');
     const [progress, setProgress] = useState<number>(0);
     const [stage, setStage] = useState<ProgressStage>('learning');
@@ -50,8 +49,6 @@ export default function SymmetricCryptography() {
     const [activeTab, setActiveTab] = useState<string>('info');
     const [questionsAnswered, setQuestionsAnswered] = useState<number[]>([]);
     const [practicalCompleted, setPracticalCompleted] = useState<boolean>(false);
-
-    // Quiz state
     const [questions, setQuestions] = useState<Question[]>([
         {
             id: 1,
@@ -109,15 +106,17 @@ export default function SymmetricCryptography() {
             correctAnswer: "512 bits"
         }
     ]);
+    const [submoduleList, setSubmoduleList] = useState<any[]>([]);
+    const params = useSearchParams();
+    const router = useRouter();
 
-    // Update progress based on current cipher and stage
     useEffect(() => {
         let newProgress = 0;
 
         // Base progress on current cipher
         if (currentCipher === 'aes') newProgress = 0;
-        else if (currentCipher === 'chacha') newProgress = 25;
-        else if (currentCipher === 'salsa') newProgress = 50;
+        else if (currentCipher === 'chacha') newProgress = 33;
+        else if (currentCipher === 'salsa') newProgress = 67;
 
         // Adjust based on stage
         if (stage === 'quiz') newProgress = 75;
@@ -127,7 +126,32 @@ export default function SymmetricCryptography() {
         setProgress(newProgress);
     }, [currentCipher, stage]);
 
-    // Answer a question in the quiz
+    useEffect(() => {
+        const moduleId = params.get('id');
+        const fetchSubModule = async () => {
+            try {
+                const response = await getSubModule(moduleId as string);
+                const submodules = response.data.data;
+                setSubmoduleList(submodules);
+                const validTitles: CipherType[] = ['aes', 'chacha', 'salsa'];
+                const sorted = [...submodules].sort((a, b) => a.place - b.place);
+                let targetSubmodule = sorted.findLast((sub) => sub.status === 'en-progreso');
+                if (!targetSubmodule) {
+                    targetSubmodule = sorted.find((sub) => sub.status === 'no-iniciado');
+                }
+                if (targetSubmodule && validTitles.includes(targetSubmodule.title)) {
+                    setCurrentCipher(targetSubmodule.title as CipherType);
+                } else {
+                    setCurrentCipher('aes');
+                }
+            } catch (error) {
+                console.error('Error fetching submodule data:', error);
+            }
+        };
+
+        fetchSubModule();
+    }, []);
+
     const handleAnswerQuestion = (questionId: number, answer: string) => {
         const updatedQuestions = questions.map(q =>
             q.id === questionId ? { ...q, userAnswer: answer } : q
@@ -139,7 +163,6 @@ export default function SymmetricCryptography() {
         }
     };
 
-    // Submit the quiz for evaluation
     const handleSubmitQuiz = () => {
         setQuizSubmitted(true);
 
@@ -154,7 +177,6 @@ export default function SymmetricCryptography() {
         }
     };
 
-    // Reset the quiz to try again
     const handleResetQuiz = () => {
         const resetQuestions = questions.map(q => ({ ...q, userAnswer: undefined }));
         setQuestions(resetQuestions);
@@ -162,37 +184,58 @@ export default function SymmetricCryptography() {
         setQuizSubmitted(false);
     };
 
-    // Complete the practical exercise (this would be implemented with actual coding challenges)
     const handleSubmitPractical = () => {
-        // In a real implementation, you would verify the code submission here
         setPracticalCompleted(true);
 
-        setTimeout(() => {
-            setStage('completed');
-            // Here you would send the achievement to the database
-            confetti({
-                particleCount: 250,
-                spread: 80,
-                origin: { y: 0.6 },
-            });
-        }, 1500);
+        const completed = async () => {
+            try {
+                const moduleId = params.get('id');
+                await completeModule(moduleId as string);
+            } catch (error) {
+                throw new Error('Error completing module');
+            }
+        }
+        setStage('completed');
+        completed();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        confetti({
+            particleCount: 250,
+            spread: 80,
+            origin: { y: 0.6 },
+        });
     };
 
-    // Navigate between different ciphers
     const handleCipherChange = (cipher: CipherType) => {
+        const previousSection = currentCipher;
+
         setCurrentCipher(cipher);
         setActiveTab('info');
+
+        try {
+            const previousSubmodule = submoduleList.find((s) => s.title === previousSection);
+            if (previousSubmodule?.id) {
+                completeSubModule(previousSubmodule.id);
+            } else {
+                console.warn('Previous submodule not found for section:', previousSection);
+            }
+
+            const currentSubmodule = submoduleList.find((s) => s.title === cipher);
+            if (currentSubmodule?.id) {
+                startSubModule(currentSubmodule.id);
+            } else {
+                console.warn('Current submodule not found for section:', cipher);
+            }
+        } catch (error) {
+            console.error('Error handling submodule transition:', error);
+        }
     };
 
-    // Navigate to the quiz when all ciphers are reviewed
     const handleStartQuiz = () => {
-        setStage('practical');
+        setStage('quiz');
     };
 
-    // Return to the main dashboard (this would be linked to your routing system)
     const handleReturnToDashboard = () => {
-        // Implement navigation to the dashboard
-        console.log("Return to dashboard");
+        router.push('/home');
     };
 
     return (
@@ -853,7 +896,7 @@ export default function SymmetricCryptography() {
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                                 <div>
                                                     <h3 className="text-xl font-bold mb-3">Redes Privadas Virtuales</h3>
-                                                    <div className="card bg-base-100 shadow-md h-full">
+                                                    <div className="card bg-base-100 shadow-md">
                                                         <div className="card-body">
                                                             <h4 className="card-title text-lg flex items-center">
                                                                 <FiShield className="mr-2 text-secondary" />
@@ -869,7 +912,7 @@ export default function SymmetricCryptography() {
 
                                                 <div>
                                                     <h3 className="text-xl font-bold mb-3">Comunicaciones Seguras</h3>
-                                                    <div className="card bg-base-100 shadow-md h-full">
+                                                    <div className="card bg-base-100 shadow-md ">
                                                         <div className="card-body">
                                                             <h4 className="card-title text-lg flex items-center">
                                                                 <FiLock className="mr-2 text-accent" />
@@ -1164,7 +1207,7 @@ export default function SymmetricCryptography() {
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                                 <div>
                                                     <h3 className="text-xl font-bold mb-3">Bibliotecas Criptográficas</h3>
-                                                    <div className="card bg-base-100 shadow-md h-full">
+                                                    <div className="card bg-base-100 shadow-md">
                                                         <div className="card-body">
                                                             <h4 className="card-title text-lg flex items-center">
                                                                 <FiCode className="mr-2 text-primary" />
@@ -1185,7 +1228,7 @@ export default function SymmetricCryptography() {
 
                                                 <div>
                                                     <h3 className="text-xl font-bold mb-3">Seguridad de Datos</h3>
-                                                    <div className="card bg-base-100 shadow-md h-full">
+                                                    <div className="card bg-base-100 shadow-md">
                                                         <div className="card-body">
                                                             <h4 className="card-title text-lg flex items-center">
                                                                 <FiDatabase className="mr-2 text-secondary" />
@@ -1386,6 +1429,13 @@ export default function SymmetricCryptography() {
                                 </div>
 
                                 <div className="card-actions justify-end mt-8">
+                                    <button className="btn btn-outline" onClick={() => {
+                                        setStage('learning');
+                                        setActiveTab('info');
+                                    }
+                                    }>
+                                        <FiArrowRight className="mr-2 rotate-180" /> Volver a la lección
+                                    </button>
                                     {quizSubmitted && !quizPassed ? (
                                         <button
                                             className="btn btn-outline"

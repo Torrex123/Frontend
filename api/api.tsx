@@ -1,14 +1,10 @@
 import axios from 'axios';
 import { LANGUAGES } from '@/app/components/LanguageSelector';
-import { MdPassword } from 'react-icons/md';
 
-
-// Create a separate instance for code execution
 const pistonApi = axios.create({
     baseURL: 'https://emkc.org/api/v2/piston',
 });
 
-// Create an instance for auth API
 const authApi = axios.create({
     baseURL: 'http://crypto-playground.eastus.cloudapp.azure.com:5000/api',
     headers: {
@@ -16,7 +12,6 @@ const authApi = axios.create({
     }
 });
 
-// Add interceptor to include auth token in requests
 authApi.interceptors.request.use(
     (config) => {
         if (typeof window !== 'undefined') {
@@ -38,7 +33,6 @@ authApi.interceptors.request.use(
     (error) => Promise.reject(error)
 );
 
-// Code execution function
 export const runCode = async (language: string, code: string) => {
     try {
         const response = await pistonApi.post('/execute', {
@@ -56,7 +50,6 @@ export const runCode = async (language: string, code: string) => {
     }
 };
 
-// Auth endpoints
 export const registerUser = async (userData: { username: string, email: string, password: string }) => {
     try {
         const response = await authApi.post('/auth/register', userData);
@@ -93,7 +86,6 @@ export const fetchUserProfile = async () => {
     }
 };
 
-// User endpoints
 export const updateUserProfile = async (userData: { username: string, email: string, password: string }) => {
     try {
         const payload: Partial<typeof userData> = {};
@@ -154,3 +146,68 @@ export const loadUserHome = async () => {
         };
     }
 }
+
+export const startModule = async (moduleId: string) => {
+    try {
+        const response = await authApi.post(`/modules/${moduleId}/start`);
+        return { success: true, data: response.data };
+    } catch (error: any) {
+        return {
+            success: false,
+            error: error.response?.data?.message || 'Error al iniciar el módulo',
+        };
+    }
+};
+
+export const completeModule = async (moduleId: string) => {
+    try {
+        const response = await authApi.post(`/modules/${moduleId}/complete`);
+        return { success: true, data: response.data };
+    } catch (error: any) {
+        return {
+            success: false,
+            error: error.response?.data?.message || 'Error al iniciar el módulo',
+        };
+    }
+};
+
+export const getSubModule = async (moduleId: string) => {
+    try {
+        const response = await authApi.get(`/submodules/${moduleId}`);
+        return { success: true, data: response.data };
+    }
+    catch (error: any) {
+        return {
+            success: false,
+            error: error.response?.data?.message || 'Error al obtener los submódulos',
+        };
+    }
+}
+
+export const startSubModule = async (moduleId: string) => {
+    try {
+        const response = await authApi.post(`/submodules/${moduleId}/start`);
+        return { success: true, data: response.data };
+    }
+    catch (error: any) {
+        return {
+            success: false,
+            error: error.response?.data?.message || 'Error al obtener los submódulos',
+        };
+    }
+}
+
+
+export const completeSubModule = async (moduleId: string) => {
+    try {
+        const response = await authApi.post(`/submodules/${moduleId}/complete`);
+        return { success: true, data: response.data };
+    }
+    catch (error: any) {
+        return {
+            success: false,
+            error: error.response?.data?.message || 'Error al obtener los submódulos',
+        };
+    }
+}
+

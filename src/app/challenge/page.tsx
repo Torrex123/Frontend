@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import Navbar from '../components/Navbar';
 import CodeEditor from '../components/CodeEditor';
 import Link from 'next/link';
@@ -66,6 +66,7 @@ export default function ChallengePage() {
     // Load the specific challenge based on the ID from the backend
     useEffect(() => {
         const fetchChallenge = async () => {
+            console.log('Challenge loaded:', exampleChallenge);
             try {
                 setLoading(true);
                 // Fetch challenge data from your API
@@ -85,16 +86,15 @@ export default function ChallengePage() {
             }
         };
 
-        if (challengeId) {
-            fetchChallenge();
-        }
-        // setChallenge(exampleChallenge);
-        // setCode(exampleChallenge.starterCode[language] || '');
-    }, [challengeId]);
+        fetchChallenge();
+    }, []);
 
     useEffect(() => {
-        setChallenge(vigenere);
+        setChallenge(exampleChallenge);
+        setCode(exampleChallenge.starterCode[language] || '');
+        setLoading(false);
     } , []);
+
 
     // Start/stop timer
     useEffect(() => {
@@ -589,101 +589,403 @@ console.log(descifrarCesar(mensajeCifrado));`
     }
 }
 
-const vigenere = {
-    id: "integrity-verification",
-    title: "Verificación de Integridad",
-    description: "<p>La <strong>verificación de integridad</strong> es un proceso fundamental en ciberseguridad que permite determinar si un archivo o mensaje ha sido modificado.</p><p>Las funciones hash criptográficas como MD5, SHA-1 o SHA-256 crean una 'huella digital' única para cada archivo. Si incluso un bit del archivo cambia, el hash resultante será completamente diferente.</p><p>En este desafío, implementarás un verificador de integridad que:</p><ul><li>Calcule el hash MD5 de un archivo de texto</li><li>Compare el hash calculado con un valor de referencia</li><li>Determine si el archivo ha sido modificado</li></ul><p>Esto es esencial para detectar alteraciones en archivos críticos, verificar descargas de software, y asegurar que los mensajes no han sido manipulados durante la transmisión.</p>",
-    difficulty: "principiante",
-    category: "hash",
-    completions: 765,
-    totalAttempts: 1234,
-    points: 120,
-    timeEstimate: "45 min",
+const Chacha20 = {
+    id: "chacha20-implementation",
+    title: "Implementación de ChaCha20",
+    description: "<p>El <strong>ChaCha20</strong> es un algoritmo de cifrado de flujo moderno diseñado por Daniel J. Bernstein en 2008. Es una evolución del algoritmo Salsa20 y se ha convertido en un estándar popular utilizado en TLS, SSH y otros protocolos de seguridad debido a su velocidad y seguridad.</p><p>A diferencia de los cifrados por bloques como AES, ChaCha20 es un cifrado de flujo que genera un flujo de bits pseudoaleatorio (keystream) que se combina con el texto plano mediante XOR para producir el texto cifrado.</p><p>En este desafío, implementarás una versión simplificada del algoritmo ChaCha20 que incluirá:</p><ul><li>La función quarterround, pieza fundamental del algoritmo</li><li>La generación del estado inicial usando clave, nonce y contador</li><li>La función principal de cifrado/descifrado</li></ul><p>Esta implementación te permitirá comprender los principios de los cifrados de flujo modernos y las operaciones ARX (Adición, Rotación, XOR) que son la base de muchos algoritmos criptográficos actuales.</p>",
+    difficulty: "intermedio",
+    category: "simetrica",
+    completions: 289,
+    totalAttempts: 876,
+    points: 280,
+    timeEstimate: "2 horas",
     status: "disponible",
-    dateAdded: "2023-07-05",
-    icon: "FiFileText",
+    dateAdded: "2023-09-18",
+    icon: "FiLock",
     examples: [
         {
-            input: "archivo: 'mensaje.txt' (contenido: 'Hola mundo!'), hash_esperado: '86fb269d190d2c85f6e0468ceca42a20'",
-            output: "INTEGRIDAD VERIFICADA - El hash coincide",
-            explanation: "El hash MD5 de 'Hola mundo!' es '86fb269d190d2c85f6e0468ceca42a20', por lo que la verificación es exitosa."
+            input: "Texto: 'Hola', Clave: '0123456789ABCDEF0123456789ABCDEF', Nonce: '0001020304050607', Contador: 1",
+            output: "Texto cifrado (hex): '6e9972c3c9fb34fe'",
+            explanation: "El algoritmo ChaCha20 genera un keystream basado en la clave, nonce y contador, que luego se combina con 'Hola' mediante XOR para producir el texto cifrado."
         },
         {
-            input: "archivo: 'datos.txt' (contenido: 'Información confidencial'), hash_esperado: 'd41d8cd98f00b204e9800998ecf8427e'",
-            output: "INTEGRIDAD COMPROMETIDA - El hash no coincide",
-            explanation: "El hash esperado corresponde a un archivo vacío, pero el archivo contiene texto, por lo que la verificación falla."
+            input: "Texto cifrado (hex): '6e9972c3c9fb34fe', Clave: '0123456789ABCDEF0123456789ABCDEF', Nonce: '0001020304050607', Contador: 1",
+            output: "Texto descifrado: 'Hola'",
+            explanation: "El proceso de descifrado es idéntico al cifrado: se genera el mismo keystream y se aplica XOR con el texto cifrado para recuperar el texto original."
         }
     ],
     constraints: [
-        "Debes usar el algoritmo MD5 para generar el hash (aunque en la práctica se recomienda SHA-256 o mejor).",
-        "El programa debe manejar archivos de texto y calcular su hash.",
-        "La salida debe indicar claramente si la integridad se mantiene o está comprometida.",
-        "Debes implementar el cálculo del hash sin usar funciones específicas que realicen toda la tarea automáticamente."
+        "Debes implementar la función quarterround tal como se define en el RFC 8439.",
+        "El estado ChaCha20 debe ser una matriz de 4x4 palabras de 32 bits.",
+        "La clave debe ser de 256 bits (32 bytes), el nonce de 64 bits (8 bytes) y el contador de 32 bits.",
+        "La implementación debe manejar correctamente la conversión entre bytes y palabras de 32 bits.",
+        "No está permitido usar bibliotecas de criptografía que implementen directamente ChaCha20."
     ],
-    hint: "Puedes calcular el hash MD5 byte a byte, pero la mayoría de lenguajes tienen bibliotecas para hacerlo. En Python, puedes usar la biblioteca 'hashlib', y en JavaScript puedes usar el objeto 'crypto' del entorno Node.js. Recuerda que MD5 procesa el archivo como una secuencia de bytes, no como texto, así que presta atención a la codificación.",
-    expectedOutput: "INTEGRIDAD VERIFICADA - El hash coincide",
+    hint: "La función quarterround aplica la operación ARX (Add, Rotate, XOR) a cuatro palabras de 32 bits. Se utiliza 20 veces (de ahí el nombre ChaCha20) en cada bloque. Recuerda que las operaciones son módulo 2^32 y que las rotaciones son circulares. Para probar tu implementación, puedes usar vectores de prueba disponibles en el RFC 8439.",
+    expectedOutput: {
+        encrypted: "8ad5a08fa32ced3c843965d125a7cef0fa5fa33c21c7b512",
+        decrypted: "Criptografia simetrica moderna"
+    },
     inputData: {
-        fileContent: "Criptografía y seguridad informática son fundamentales para proteger datos sensibles.",
-        expectedHash: "5d8eb6980fa9f835d62a1e691ada46d6"
+        text: "Criptografia simetrica moderna",
+        key: "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+        nonce: "0001020304050607",
+        counter: 1
     },
     starterCode: {
-        python: `def verificar_integridad(contenido_archivo, hash_esperado):
-    """
-    Verifica la integridad de un archivo comparando su hash MD5 con un valor esperado.
-    
-    Args:
-        contenido_archivo (str): El contenido del archivo a verificar
-        hash_esperado (str): El hash MD5 esperado en formato hexadecimal
-    
+        python: `def uint32(val):
+            """Asegura que un valor sea un entero de 32 bits sin signo (módulo 2^32)"""
+    return val & 0xFFFFFFFF
+
+def rotl32(v, c):
+            """Rotación circular a la izquierda de un entero de 32 bits"""
+    return uint32((v << c) | (v >> (32 - c)))
+
+def quarterround(a, b, c, d):
+            """
+    Aplica la función quarterround de ChaCha20 a cuatro valores enteros de 32 bits.
+
+            Args:
+        a, b, c, d: Enteros de 32 bits
+        
     Returns:
-        str: Mensaje indicando si la integridad está verificada o comprometida
+            Tupla con los cuatro valores después de aplicar quarterround
     """
-    # Tu código aquí
-    
-    # 1. Calcula el hash MD5 del contenido del archivo
-    # Pista: Puedes usar la biblioteca hashlib
-    # import hashlib
-    # md5_hash = hashlib.md5()
-    # md5_hash.update(contenido_archivo.encode('utf-8'))
-    # hash_calculado = md5_hash.hexdigest()
-    
-    # 2. Compara el hash calculado con el hash esperado
-    
-    # 3. Retorna el mensaje apropiado
-    return "Resultado de la verificación"
+    # Tu implementación aquí
+    # Recuerda seguir la definición del RFC 8439:
+    # a += b; d ^= a; d <<<= 16;
+    # c += d; b ^= c; b <<<= 12;
+    # a += b; d ^= a; d <<<= 8;
+    # c += d; b ^= c; b <<<= 7;
+return a, b, c, d
+
+def chacha20_block(key, counter, nonce):
+"""
+    Genera un bloque de keystream ChaCha20.
+
+    Args:
+key: Bytes - Clave de 32 bytes(256 bits)
+counter: Int - Contador de 32 bits
+nonce: Bytes - Nonce de 8 bytes(64 bits)
+
+Returns:
+Bytes - Un bloque de 64 bytes de keystream
+"""
+    # Tu implementación aquí
+    # 1. Inicializa el estado con las constantes, clave, contador y nonce
+    # 2. Crea una copia del estado inicial
+    # 3. Aplica las 20 rondas(10 rondas dobles) al estado
+    # 4. Suma el estado resultante con el estado inicial(módulo 2 ^ 32)
+    # 5. Convierte el resultado a bytes y devuélvelo
+return bytes(64)  # Reemplaza con tu implementación
+
+def chacha20_encrypt(texto, key, counter, nonce):
+"""
+    Cifra o descifra un texto usando ChaCha20.
+
+    Args:
+texto: String o Bytes - Texto a cifrar / descifrar
+key: Bytes o String hex - Clave de 32 bytes(256 bits)
+counter: Int - Contador inicial de 32 bits
+nonce: Bytes o String hex - Nonce de 8 bytes(64 bits)
+
+Returns:
+Bytes - Texto cifrado / descifrado como bytes
+"""
+    # Tu implementación aquí
+    # 1. Convierte los parámetros al formato adecuado si es necesario
+    # 2. Genera bloques de keystream según sea necesario
+    # 3. Aplica XOR entre el texto y el keystream
+    # 4. Devuelve el resultado
+return bytes(len(texto))  # Reemplaza con tu implementación
 
 # NO MODIFICAR ESTA PARTE
-contenido = "Criptografía y seguridad informática son fundamentales para proteger datos sensibles."
-hash_esperado = "5d8eb6980fa9f835d62a1e691ada46d6"
-print(verificar_integridad(contenido, hash_esperado))`,
-        javascript: `function verificarIntegridad(contenidoArchivo, hashEsperado) {
+def bytes_to_hex(b):
+"""Convierte bytes a una cadena hexadecimal"""
+return b.hex()
+
+def hex_to_bytes(h):
+"""Convierte una cadena hexadecimal a bytes"""
+return bytes.fromhex(h)
+
+# Prueba de cifrado y descifrado
+texto_plano = "Criptografia simetrica moderna"
+clave = hex_to_bytes("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f")
+nonce = hex_to_bytes("0001020304050607")
+contador = 1
+
+# Cifrado
+texto_bytes = texto_plano.encode('utf-8')
+cifrado = chacha20_encrypt(texto_bytes, clave, contador, nonce)
+print(f"Texto cifrado (hex): {bytes_to_hex(cifrado)}")
+
+# Descifrado(mismo proceso que cifrado debido a la naturaleza XOR)
+descifrado = chacha20_encrypt(cifrado, clave, contador, nonce)
+print(f"Texto descifrado: {descifrado.decode('utf-8')}")`
+    },
+    javascript: `function uint32(val) {
     /**
-     * Verifica la integridad de un archivo comparando su hash MD5 con un valor esperado.
-     * 
-     * @param {string} contenidoArchivo - El contenido del archivo a verificar
-     * @param {string} hashEsperado - El hash MD5 esperado en formato hexadecimal
-     * @return {string} Mensaje indicando si la integridad está verificada o comprometida
+     * Asegura que un valor sea un entero de 32 bits sin signo (módulo 2^32)
      */
-    // Tu código aquí
+    return val >>> 0;  // Operador >>> convierte a entero sin signo de 32 bits
+}
+
+function rotl32(v, c) {
+    /**
+     * Rotación circular a la izquierda de un entero de 32 bits
+     */
+    v = uint32(v);
+    return uint32((v << c) | (v >>> (32 - c)));
+}
+
+function quarterround(a, b, c, d) {
+    /**
+     * Aplica la función quarterround de ChaCha20 a cuatro valores enteros de 32 bits.
+     * 
+     * @param {number} a - Entero de 32 bits
+     * @param {number} b - Entero de 32 bits
+     * @param {number} c - Entero de 32 bits
+     * @param {number} d - Entero de 32 bits
+     * @returns {Array} - Array con los cuatro valores después de aplicar quarterround
+     */
+    // Tu implementación aquí
+    // Recuerda seguir la definición del RFC 8439:
+    // a += b; d ^= a; d <<<= 16;
+    // c += d; b ^= c; b <<<= 12;
+    // a += b; d ^= a; d <<<= 8;
+    // c += d; b ^= c; b <<<= 7;
+    return [a, b, c, d];
+}
+
+function chacha20Block(key, counter, nonce) {
+    /**
+     * Genera un bloque de keystream ChaCha20.
+     * 
+     * @param {Uint8Array} key - Clave de 32 bytes (256 bits)
+     * @param {number} counter - Contador de 32 bits
+     * @param {Uint8Array} nonce - Nonce de 8 bytes (64 bits)
+     * @returns {Uint8Array} - Un bloque de 64 bytes de keystream
+     */
+    // Tu implementación aquí
+    // 1. Inicializa el estado con las constantes, clave, contador y nonce
+    // 2. Crea una copia del estado inicial
+    // 3. Aplica las 20 rondas (10 rondas dobles) al estado
+    // 4. Suma el estado resultante con el estado inicial (módulo 2^32)
+    // 5. Convierte el resultado a bytes y devuélvelo
+    return new Uint8Array(64);  // Reemplaza con tu implementación
+}
+
+function chacha20Encrypt(texto, key, counter, nonce) {
+    /**
+     * Cifra o descifra un texto usando ChaCha20.
+     * 
+     * @param {Uint8Array|string} texto - Texto a cifrar/descifrar
+     * @param {Uint8Array|string} key - Clave de 32 bytes (256 bits)
+     * @param {number} counter - Contador inicial de 32 bits
+     * @param {Uint8Array|string} nonce - Nonce de 8 bytes (64 bits)
+     * @returns {Uint8Array} - Texto cifrado/descifrado como bytes
+     */
+    // Tu implementación aquí
+    // 1. Convierte los parámetros al formato adecuado si es necesario
+    // 2. Genera bloques de keystream según sea necesario
+    // 3. Aplica XOR entre el texto y el keystream
+    // 4. Devuelve el resultado
     
-    // 1. Calcula el hash MD5 del contenido del archivo
-    // Pista: En Node.js puedes usar el módulo crypto
-    // const crypto = require('crypto');
-    // const md5Hash = crypto.createHash('md5');
-    // md5Hash.update(contenidoArchivo);
-    // const hashCalculado = md5Hash.digest('hex');
+    // Asegúrate de que 'texto' sea Uint8Array
+    if (typeof texto === 'string') {
+        texto = new TextEncoder().encode(texto);
+    }
     
-    // 2. Compara el hash calculado con el hash esperado
-    
-    // 3. Retorna el mensaje apropiado
-    return "Resultado de la verificación";
+    return new Uint8Array(texto.length);  // Reemplaza con tu implementación
 }
 
 // NO MODIFICAR ESTA PARTE
-const contenido = "Criptografía y seguridad informática son fundamentales para proteger datos sensibles.";
-const hashEsperado = "5d8eb6980fa9f835d62a1e691ada46d6";
-console.log(verificarIntegridad(contenido, hashEsperado));`
+function bytesToHex(bytes) {
+    /**
+     * Convierte Uint8Array a una cadena hexadecimal
+     */
+    return Array.from(bytes)
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+}
+
+function hexToBytes(hex) {
+    /**
+     * Convierte una cadena hexadecimal a Uint8Array
+     */
+    const bytes = new Uint8Array(hex.length / 2);
+    for (let i = 0; i < hex.length; i += 2) {
+        bytes[i/2] = parseInt(hex.substr(i, 2), 16);
     }
+    return bytes;
+}
+
+// Prueba de cifrado y descifrado
+const textoPlano = "Criptografia simetrica moderna";
+const clave = hexToBytes("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f");
+const nonce = hexToBytes("0001020304050607");
+const contador = 1;
+
+// Cifrado
+const textoBytes = new TextEncoder().encode(textoPlano);
+const cifrado = chacha20Encrypt(textoBytes, clave, contador, nonce);
+console.log("Texto cifrado (hex): " + bytesToHex(cifrado));
+
+// Descifrado (mismo proceso que cifrado debido a la naturaleza XOR)
+const descifrado = chacha20Encrypt(cifrado, clave, contador, nonce);
+console.log("Texto descifrado: " + new TextDecoder().decode(descifrado));`
 }
 
 
+const hash = {
+    id: "sha256-implementation",
+    title: "Implementación de SHA-256",
+    description: "<p>Las <strong>funciones hash criptográficas</strong> son componentes fundamentales en la seguridad informática. Transforman datos de entrada de cualquier tamaño en una huella digital de tamaño fijo, siendo prácticamente imposible encontrar dos entradas diferentes que produzcan la misma salida.</p><p>El algoritmo SHA-256 (Secure Hash Algorithm 256-bit) es una de las funciones hash más utilizadas actualmente en aplicaciones como firma digital, blockchain, almacenamiento seguro de contraseñas y verificación de integridad.</p><p>En este desafío, implementarás una versión de SHA-256 desde cero, lo que te permitirá:</p><ul><li>Comprender el funcionamiento interno de los algoritmos hash modernos</li><li>Familiarizarte con las operaciones bit a bit utilizadas en criptografía</li><li>Aplicar principios de difusión y confusión de Shannon</li></ul><p>Al finalizar, tendrás una comprensión más profunda de cómo las funciones hash proporcionan propiedades de seguridad como resistencia a colisiones y preimágenes.</p>",
+    difficulty: "intermedio",
+    category: "hash",
+    completions: 243,
+    totalAttempts: 615,
+    points: 300,
+    timeEstimate: "2.5 horas",
+    status: "disponible",
+    dateAdded: "2023-11-30",
+    icon: "FiHash",
+    examples: [
+        {
+            input: "Entrada: 'abc'",
+            output: "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
+            explanation: "SHA-256 procesa la entrada 'abc' y produce este valor hash de 256 bits (representado como 64 caracteres hexadecimales)."
+        },
+        {
+            input: "Entrada: '' (cadena vacía)",
+            output: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            explanation: "El hash SHA-256 de una cadena vacía es un ejemplo importante de valor inicial en muchas aplicaciones."
+        }
+    ],
+    constraints: [
+        "Debes implementar SHA-256 siguiendo la especificación del NIST FIPS 180-4.",
+        "No puedes usar bibliotecas que implementen directamente el algoritmo SHA-256.",
+        "Tu implementación debe manejar correctamente entradas de cualquier longitud.",
+        "El resultado debe ser presentado como una cadena hexadecimal de 64 caracteres."
+    ],
+    hint: "El algoritmo SHA-256 se puede dividir en varias etapas: preparación del mensaje (padding), división en bloques de 512 bits, inicialización de valores de hash, procesamiento de bloques con funciones de compresión, y producción del digest final. Las operaciones bit a bit clave son rotaciones, shifts, XOR, AND y OR. Es útil implementar primero las funciones auxiliares (Ch, Maj, Σ0, Σ1, σ0, σ1) y luego construir sobre ellas.",
+    expectedOutput: "593e91dab71b51969f3c6ea95bcac3ffc3b1aca9d91c966b0761a1c68be7f87f",
+    inputData: "Fundamentos de criptografia aplicada",
+    starterCode: {
+        python: `def rotr(x, n, size=32):
+    """Rotación circular a la derecha de x por n bits, asumiendo que x tiene 'size' bits."""
+    return ((x >> n) | (x << (size - n))) & ((1 << size) - 1)
+
+def sha256(message):
+    """
+    Implementa el algoritmo SHA-256 desde cero.
+    
+    Args:
+        message (str): El mensaje a hashear
+        
+    Returns:
+        str: El hash SHA-256 como string hexadecimal de 64 caracteres
+    """
+    # Constantes de SHA-256 (primeros 32 bits de las partes fraccionarias de las raíces cúbicas de los primeros 64 números primos)
+    K = [
+        0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+        0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+        0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+        0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+        0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+        0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+        0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+        0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
+    ]
+    
+    # Valores iniciales de hash (primeros 32 bits de las partes fraccionarias de las raíces cuadradas de los primeros 8 primos)
+    h0 = 0x6a09e667
+    h1 = 0xbb67ae85
+    h2 = 0x3c6ef372
+    h3 = 0xa54ff53a
+    h4 = 0x510e527f
+    h5 = 0x9b05688c
+    h6 = 0x1f83d9ab
+    h7 = 0x5be0cd19
+    
+    # Tu implementación aquí
+    # 1. Preprocesamiento del mensaje (padding)
+    # 2. Dividir el mensaje en bloques de 512 bits
+    # 3. Inicializar los valores del hash
+    # 4. Procesar cada bloque
+    # 5. Producir el hash final
+    
+    # Funciones auxiliares que puedes implementar:
+    # def ch(x, y, z): return (x & y) ^ (~x & z)
+    # def maj(x, y, z): return (x & y) ^ (x & z) ^ (y & z)
+    # def sigma0(x): return rotr(x, 2) ^ rotr(x, 13) ^ rotr(x, 22)
+    # def sigma1(x): return rotr(x, 6) ^ rotr(x, 11) ^ rotr(x, 25)
+    # def gamma0(x): return rotr(x, 7) ^ rotr(x, 18) ^ (x >> 3)
+    # def gamma1(x): return rotr(x, 17) ^ rotr(x, 19) ^ (x >> 10)
+    
+    # Resultado final como string hexadecimal
+    return "resultado_del_hash_en_hexadecimal"
+
+# NO MODIFICAR ESTA PARTE
+mensaje = "Fundamentos de criptografia aplicada"
+print(sha256(mensaje))`,
+        javascript: `function rotr(x, n, size = 32) {
+    /**
+     * Rotación circular a la derecha de x por n bits, asumiendo que x tiene 'size' bits.
+     */
+    return ((x >>> n) | (x << (size - n))) & ((1 << size) - 1);
+}
+
+function sha256(message) {
+    /**
+     * Implementa el algoritmo SHA-256 desde cero.
+     * 
+     * @param {string} message - El mensaje a hashear
+     * @return {string} El hash SHA-256 como string hexadecimal de 64 caracteres
+     */
+    // Constantes de SHA-256 (primeros 32 bits de las partes fraccionarias de las raíces cúbicas de los primeros 64 números primos)
+    const K = [
+        0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+        0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+        0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+        0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+        0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+        0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+        0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+        0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
+    ];
+    
+    // Valores iniciales de hash (primeros 32 bits de las partes fraccionarias de las raíces cuadradas de los primeros 8 primos)
+    let h0 = 0x6a09e667;
+    let h1 = 0xbb67ae85;
+    let h2 = 0x3c6ef372;
+    let h3 = 0xa54ff53a;
+    let h4 = 0x510e527f;
+    let h5 = 0x9b05688c;
+    let h6 = 0x1f83d9ab;
+    let h7 = 0x5be0cd19;
+    
+    // Tu implementación aquí
+    // 1. Preprocesamiento del mensaje (padding)
+    // 2. Dividir el mensaje en bloques de 512 bits
+    // 3. Inicializar los valores del hash
+    // 4. Procesar cada bloque
+    // 5. Producir el hash final
+    
+    // Funciones auxiliares que puedes implementar:
+    // function ch(x, y, z) { return (x & y) ^ (~x & z); }
+    // function maj(x, y, z) { return (x & y) ^ (x & z) ^ (y & z); }
+    // function sigma0(x) { return rotr(x, 2) ^ rotr(x, 13) ^ rotr(x, 22); }
+    // function sigma1(x) { return rotr(x, 6) ^ rotr(x, 11) ^ rotr(x, 25); }
+    // function gamma0(x) { return rotr(x, 7) ^ rotr(x, 18) ^ (x >>> 3); }
+    // function gamma1(x) { return rotr(x, 17) ^ rotr(x, 19) ^ (x >>> 10); }
+    
+    // Resultado final como string hexadecimal
+    return "resultado_del_hash_en_hexadecimal";
+}
+
+// NO MODIFICAR ESTA PARTE
+const mensaje = "Fundamentos de criptografia aplicada";
+console.log(sha256(mensaje));`
+    }
+}

@@ -21,14 +21,12 @@ import {
     FiActivity,
     FiFileText
 } from "react-icons/fi";
+import { IoMdArrowRoundBack } from "react-icons/io";
 import { FaTrophy } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { ReactElement } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 
-// Function to render the icons dynamically from string representations
-interface IconMap {
-    [key: string]: ReactElement;
-}
 
 const renderIcon = (iconString: string): ReactElement => {
     // This function converts icon strings like "<FiKey className='w-6 h-6' />" to actual JSX
@@ -60,6 +58,9 @@ export default function CryptographyChallenges() {
         search: ""
     });
 
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    useRouter
     // State for showing/hiding filters on mobile
     const [showFilters, setShowFilters] = useState(false);
 
@@ -117,37 +118,9 @@ export default function CryptographyChallenges() {
                     },
                     {
                         id: 2,
-                        title: "Verificación de Integridad",
-                        description: "Aprende a utilizar funciones hash básicas para verificar la integridad de archivos.",
-                        difficulty: "principiante",
-                        category: "hash",
-                        completions: 765,
-                        totalAttempts: 1234,
-                        points: 120,
-                        timeEstimate: "45 min",
-                        status: "disponible",
-                        dateAdded: "2023-07-05",
-                        icon: "FiFileText",
-                    },
-                    {
-                        id: 3,
-                        title: "Ataque al Cifrado Vigenère",
-                        description: "Realiza un ataque de frecuencia al cifrado Vigenère para recuperar la clave y el mensaje original.",
-                        difficulty: "intermedio",
-                        category: "clasica",
-                        completions: 432,
-                        totalAttempts: 987,
-                        points: 250,
-                        timeEstimate: "1.5 horas",
-                        status: "disponible",
-                        dateAdded: "2023-08-12",
-                        icon: "FiCode",
-                    },
-                    {
-                        id: 4,
                         title: "Implementación de ChaCha20",
                         description: "Implementa una versión simplificada del algoritmo de cifrado simétrico ChaCha20.",
-                        difficulty: "intermedio",
+                        difficulty: "experto",
                         category: "simetrica",
                         completions: 289,
                         totalAttempts: 876,
@@ -158,32 +131,18 @@ export default function CryptographyChallenges() {
                         icon: "FiLock",
                     },
                     {
-                        id: 5,
-                        title: "Colisiones en Funciones Hash",
-                        description: "Genera colisiones en una función hash debilitada utilizando el ataque del cumpleaños.",
-                        difficulty: "experto",
+                        id: "sha256-implementation",
+                        title: "Implementación de SHA-256",
+                        description: "Implementa el algoritmo SHA-256 desde cero y verifica su funcionamiento con diferentes entradas.",
+                        difficulty: "intermedio",
                         category: "hash",
-                        completions: 124,
-                        totalAttempts: 576,
-                        points: 450,
-                        timeEstimate: "3 horas",
-                        status: "disponible",
-                        dateAdded: "2023-10-25",
-                        icon: "FiGrid",
-                    },
-                    {
-                        id: 6,
-                        title: "Criptoanálisis de Salsa20",
-                        description: "Realiza un ataque de canal lateral contra una implementación vulnerable de Salsa20.",
-                        difficulty: "experto",
-                        category: "simetrica",
-                        completions: 78,
-                        totalAttempts: 435,
-                        points: 500,
-                        timeEstimate: "4 horas",
+                        completions: 243,
+                        totalAttempts: 615,
+                        points: 300,
+                        timeEstimate: "2.5 horas",
                         status: "disponible",
                         dateAdded: "2023-11-30",
-                        icon: "FiActivity",
+                        icon: "FiHash",
                     }
                 ];
 
@@ -223,6 +182,15 @@ export default function CryptographyChallenges() {
 
         return true;
     });
+
+    const handleClick = (challenge: string) => {
+        router.push(`/module?name=${encodeURIComponent(challenge)}`);
+    }
+
+    const handleBackHome = () => {
+        router.push("/home");
+    }
+
 
     // Sort challenges
     const sortedChallenges = [...filteredChallenges].sort((a, b) => {
@@ -279,7 +247,7 @@ export default function CryptographyChallenges() {
     };
 
     // Handle filter changes
-    interface FilterChangeEvent extends React.ChangeEvent<HTMLSelectElement> {}
+    interface FilterChangeEvent extends React.ChangeEvent<HTMLSelectElement> { }
 
     interface Filters {
         difficulty: string;
@@ -340,8 +308,16 @@ export default function CryptographyChallenges() {
                         <h1 className="text-4xl font-bold mb-2">Desafíos de Criptografía</h1>
                         <p className="text-base-content/70 max-w-2xl mx-auto">
                             Pon a prueba tus conocimientos con nuestra colección de desafíos criptográficos.
-                            Desde cifrados clásicos hasta criptografía cuántica, hay retos para todos los niveles.
+                            Hay retos para todos los niveles.
                         </p>
+                        {/* Back button*/}
+                        <button
+                            onClick={handleBackHome}
+                            className="flex gap-2 btn btn-primary btn-outline m-1 shadow-md text-left px-4 font-medium "
+                        >
+                            <IoMdArrowRoundBack className="h-5 w-5" />
+                            <span>Volver</span>
+                        </button>
                     </div>
 
                     {/* Statistics */}
@@ -613,16 +589,16 @@ export default function CryptographyChallenges() {
                                                 <div className="flex flex-col md:flex-row">
                                                     {/* Icon and difficulty */}
                                                     <div className={`p-6 flex flex-col items-center justify-center md:w-48 ${challenge.difficulty === "principiante"
-                                                            ? "bg-success/10"
-                                                            : challenge.difficulty === "intermedio"
-                                                                ? "bg-info/10"
-                                                                : "bg-error/10"
+                                                        ? "bg-success/10"
+                                                        : challenge.difficulty === "intermedio"
+                                                            ? "bg-info/10"
+                                                            : "bg-error/10"
                                                         }`}>
                                                         <div className={`p-4 rounded-full mb-3 ${challenge.difficulty === "principiante"
-                                                                ? "bg-success/20 text-success"
-                                                                : challenge.difficulty === "intermedio"
-                                                                    ? "bg-info/20 text-info"
-                                                                    : "bg-error/20 text-error"
+                                                            ? "bg-success/20 text-success"
+                                                            : challenge.difficulty === "intermedio"
+                                                                ? "bg-info/20 text-info"
+                                                                : "bg-error/20 text-error"
                                                             }`}>
                                                             {renderIcon(challenge.icon)}
                                                         </div>
@@ -678,7 +654,7 @@ export default function CryptographyChallenges() {
                                                                     Ver solución
                                                                 </button>
                                                             ) : (
-                                                                <button className="btn btn-primary">
+                                                                <button className="btn btn-primary" onClick={() => handleClick(challenge.title)}>
                                                                     Iniciar desafío
                                                                     <FiArrowRight className="ml-2" />
                                                                 </button>
@@ -717,42 +693,41 @@ export default function CryptographyChallenges() {
                                     <div className="p-6 rounded-full bg-primary/10 inline-block mb-4">
                                         <FiShield className="w-16 h-16 text-primary" />
                                     </div>
-                                    <h3 className="text-2xl font-bold mb-2">500 puntos</h3>
-                                    <div className="badge badge-lg badge-error">Experto</div>
+                                    <h3 className="text-2xl font-bold mb-2">450 puntos</h3>
+                                    <div className="badge badge-lg badge-warning">Experto</div>
                                 </div>
                             </figure>
                             <div className="card-body lg:w-2/3">
-                                <h2 className="card-title text-2xl">Criptoanálisis de Salsa20</h2>
+                                <h2 className="card-title text-2xl">Simulación de Man-in-the-Middle</h2>
                                 <p className="mb-4">
-                                    Sumérgete en el fascinante mundo de la criptografía simétrica moderna. En este desafío, realizarás un ataque
-                                    de canal lateral contra una implementación vulnerable del algoritmo Salsa20.
+                                    Aprende cómo funciona un ataque Man-in-the-Middle (MITM) en un entorno controlado. En este desafío práctico, observarás
+                                    cómo un atacante puede interceptar y modificar comunicaciones entre dos partes sin ser detectado.
                                 </p>
                                 <p className="mb-6">
-                                    Aprenderás sobre los principios de los ataques de tiempo y cómo las implementaciones incorrectas pueden
-                                    comprometer incluso los algoritmos más seguros desde el punto de vista teórico.
+                                    Entenderás los fundamentos de este tipo de ataque, su impacto en la seguridad de las comunicaciones y cómo prevenirlo
+                                    usando cifrado y autenticación adecuados.
                                 </p>
 
                                 <div className="flex flex-wrap gap-3 mb-6">
-                                    <div className="badge badge-outline">Criptografía Simétrica</div>
-                                    <div className="badge badge-outline">Análisis de Seguridad</div>
-                                    <div className="badge badge-outline">Ataque de Canal Lateral</div>
+                                    <div className="badge badge-outline">Criptografía Aplicada</div>
+                                    <div className="badge badge-outline">Seguridad de Red</div>
+                                    <div className="badge badge-outline">MITM</div>
                                 </div>
 
                                 <div className="flex items-center gap-4 mb-6">
                                     <div className="flex items-center">
                                         <FiClock className="mr-1" />
-                                        <span>4 horas estimadas</span>
+                                        <span>2 horas estimadas</span>
                                     </div>
                                     <div className="flex items-center">
                                         <FiUsers className="mr-1" />
-                                        <span>78 completados</span>
+                                        <span>0 completados</span>
                                     </div>
                                 </div>
 
                                 <div className="card-actions justify-end">
-                                    <button className="btn btn-outline">Más información</button>
-                                    <button className="btn btn-primary">
-                                        Aceptar desafío
+                                    <button className="btn btn-primary btn-disabled" disabled>
+                                        Próximamente
                                         <FiArrowRight className="ml-2" />
                                     </button>
                                 </div>
@@ -760,24 +735,6 @@ export default function CryptographyChallenges() {
                         </div>
                     </div>
 
-                    {/* Help section */}
-                    <div className="alert shadow-lg mb-8">
-                        <div>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-info flex-shrink-0 w-6 h-6">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            <div>
-                                <h3 className="font-bold">¿Necesitas ayuda?</h3>
-                                <div className="text-sm">
-                                    Si te quedas atascado en un desafío, puedes consultar las pistas o unirte a nuestro foro de discusión.
-                                </div>
-                            </div>
-                        </div>
-                        <div className="flex-none">
-                            <button className="btn btn-sm btn-ghost">Foro</button>
-                            <button className="btn btn-sm btn-primary">Recursos</button>
-                        </div>
-                    </div>
                 </div>
             </div>
 

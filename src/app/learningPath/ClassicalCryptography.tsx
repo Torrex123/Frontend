@@ -6,7 +6,6 @@ import {
     FiAward,
     FiBookOpen,
     FiKey,
-    FiRotateCw,
     FiShield,
     FiHelpCircle,
     FiCheckCircle,
@@ -15,9 +14,10 @@ import {
 } from 'react-icons/fi';
 import confetti from 'canvas-confetti';
 import CodeEditor from '../components/CodeEditor';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { startSubModule, getSubModule, completeSubModule, completeModule } from '../../../api/api';
 
-// Types for our application
-type CipherType = 'caesar' | 'substitution' | 'vigenere' | 'transposition';
+type CipherType = 'caesar' | 'substitution' | 'vigenere';
 type ProgressStage = 'learning' | 'quiz' | 'practical' | 'completed';
 
 interface Question {
@@ -38,8 +38,8 @@ export default function ClassicalCryptography() {
     const [activeTab, setActiveTab] = useState<string>('info');
     const [questionsAnswered, setQuestionsAnswered] = useState<number[]>([]);
     const [practicalCompleted, setPracticalCompleted] = useState<boolean>(false);
-
-    // Quiz state
+    const params = useSearchParams();
+    const [submoduleList, setSubmoduleList] = useState<any[]>([]);
     const [questions, setQuestions] = useState<Question[]>([
         {
             id: 1,
@@ -67,31 +67,28 @@ export default function ClassicalCryptography() {
         },
         {
             id: 5,
-            question: "En el cifrado de transposición, ¿qué sucede con las letras del mensaje original?",
-            options: ["Cambian de posición pero no de identidad", "Se reemplazan por otras letras", "Se convierten en números", "Se eliminan del mensaje"],
-            correctAnswer: "Cambian de posición pero no de identidad"
+            question: "¿Cuál de los siguientes cifrados utiliza una clave que se repite a lo largo del mensaje para determinar cómo cifrar cada letra?",
+            options: [
+                "Cifrado de César",
+                "Cifrado de sustitución simple",
+                "Cifrado de Vigenère",
+                "Cifrado de transposición"
+            ],
+            correctAnswer: "Cifrado de Vigenère"
         }
     ]);
-
-    // Caesar cipher interactive example state
     const [caesarText, setCaesarText] = useState<string>('');
     const [caesarShift, setCaesarShift] = useState<number>(3);
     const [caesarResult, setCaesarResult] = useState<string>('');
-
-    // Substitution cipher interactive example state
     const [substitutionText, setSubstitutionText] = useState<string>('');
-    const [substitutionKey, setSubstitutionKey] = useState<string>('ZEBRASCDFGHIJKLMNOPQTUVWXY');
+    const [substitutionKey, setSubstitutionKey] = useState<string>('ZEBRASCDFGHIJKLMNOPQTUVWXYA');
     const [substitutionResult, setSubstitutionResult] = useState<string>('');
-
-    // Vigenere cipher interactive example state
     const [vigenereText, setVigenereText] = useState<string>('');
     const [vigenereKey, setVigenereKey] = useState<string>('CLAVE');
     const [vigenereResult, setVigenereResult] = useState<string>('');
+    const router = useRouter();
 
-    // Transposition cipher interactive example state
-    const [transpositionText, setTranspositionText] = useState<string>('');
-    const [transpositionKey, setTranspositionKey] = useState<number>(3);
-    const [transpositionResult, setTranspositionResult] = useState<string>('');
+    const ALPHABET = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ";
 
     // Update progress based on current cipher and stage
     useEffect(() => {
@@ -99,9 +96,8 @@ export default function ClassicalCryptography() {
 
         // Base progress on current cipher
         if (currentCipher === 'caesar') newProgress = 0;
-        else if (currentCipher === 'substitution') newProgress = 25;
-        else if (currentCipher === 'vigenere') newProgress = 50;
-        else if (currentCipher === 'transposition') newProgress = 75;
+        else if (currentCipher === 'substitution') newProgress = 33;
+        else if (currentCipher === 'vigenere') newProgress = 67;
 
         // Adjust based on stage
         if (stage === 'quiz') newProgress += 20;
@@ -111,19 +107,47 @@ export default function ClassicalCryptography() {
         setProgress(newProgress);
     }, [currentCipher, stage]);
 
-    // Caesar cipher implementation
+    useEffect(() => {
+        const moduleId = params.get('id');
+        const fetchSubModule = async () => {
+            try {
+                const response = await getSubModule(moduleId as string);
+                const submodules = response.data.data;
+                setSubmoduleList(submodules);
+
+                const validTitles: CipherType[] = ['caesar', 'substitution', 'vigenere'];
+                const sorted = [...submodules].sort((a, b) => a.place - b.place);
+
+                let targetSubmodule = sorted.findLast((sub) => sub.status === 'en-progreso');
+                if (!targetSubmodule) {
+                    targetSubmodule = sorted.find((sub) => sub.status === 'no-iniciado');
+                }
+
+                if (targetSubmodule && validTitles.includes(targetSubmodule.title)) {
+                    setCurrentCipher(targetSubmodule.title as CipherType);
+                } else {
+                    setCurrentCipher('caesar');
+                }
+
+            } catch (error) {
+                console.error('Error fetching submodule data:', error);
+            }
+        };
+
+        fetchSubModule();
+    }, []);
+
     useEffect(() => {
         if (caesarText) {
             const result = caesarText
+                .toUpperCase()
                 .split('')
                 .map(char => {
-                    if (!/[A-Za-z]/.test(char)) return char;
+                    const index = ALPHABET.indexOf(char);
+                    if (index === -1) return char;
 
-                    const code = char.charCodeAt(0);
-                    const isUpperCase = code >= 65 && code <= 90;
-                    const shiftedCode = ((code - (isUpperCase ? 65 : 97) + caesarShift) % 26) + (isUpperCase ? 65 : 97);
-
-                    return String.fromCharCode(shiftedCode);
+                    const newIndex = (index + caesarShift + ALPHABET.length) % ALPHABET.length;
+                    return ALPHABET[newIndex];
                 })
                 .join('');
 
@@ -133,21 +157,16 @@ export default function ClassicalCryptography() {
         }
     }, [caesarText, caesarShift]);
 
-    // Substitution cipher implementation
     useEffect(() => {
-        if (substitutionText && substitutionKey.length === 26) {
+        if (substitutionText && substitutionKey.length === 27) {
             const result = substitutionText
                 .split('')
                 .map(char => {
-                    if (!/[A-Za-z]/.test(char)) return char;
-
-                    const code = char.toUpperCase().charCodeAt(0);
-                    if (code < 65 || code > 90) return char;
-
-                    const index = code - 65;
+                    const isUpper = char === char.toUpperCase();
+                    const index = ALPHABET.indexOf(char.toUpperCase());
+                    if (index === -1) return char;
                     const substitutedChar = substitutionKey[index];
-
-                    return char === char.toUpperCase() ? substitutedChar : substitutedChar.toLowerCase();
+                    return isUpper ? substitutedChar : substitutedChar.toLowerCase();
                 })
                 .join('');
 
@@ -157,65 +176,31 @@ export default function ClassicalCryptography() {
         }
     }, [substitutionText, substitutionKey]);
 
-    // Vigenere cipher implementation
+
     useEffect(() => {
         if (vigenereText && vigenereKey) {
+            let claveIndex = 0;
             const result = vigenereText
                 .split('')
-                .map((char, i) => {
-                    if (!/[A-Za-z]/.test(char)) return char;
-
-                    const isUpperCase = char === char.toUpperCase();
-                    const plainChar = char.toUpperCase().charCodeAt(0) - 65;
-                    const keyChar = vigenereKey[i % vigenereKey.length].toUpperCase().charCodeAt(0) - 65;
-                    const encryptedChar = String.fromCharCode(((plainChar + keyChar) % 26) + 65);
-
-                    return isUpperCase ? encryptedChar : encryptedChar.toLowerCase();
+                .map((char) => {
+                    const upperChar = char.toUpperCase();
+                    const indexChar = ALPHABET.indexOf(upperChar);
+                    if (indexChar === -1) return char;
+                    const keyChar = vigenereKey[claveIndex % vigenereKey.length].toUpperCase();
+                    const indexKeyChar = ALPHABET.indexOf(keyChar);
+                    if (indexKeyChar === -1) return char;
+                    const newIndex = (indexChar + indexKeyChar) % ALPHABET.length;
+                    const newChar = ALPHABET[newIndex];
+                    claveIndex++;
+                    return char === char.toUpperCase() ? newChar : newChar.toLowerCase();
                 })
                 .join('');
-
             setVigenereResult(result);
         } else {
             setVigenereResult('');
         }
     }, [vigenereText, vigenereKey]);
 
-    // Transposition cipher implementation
-    useEffect(() => {
-        if (transpositionText && transpositionKey > 0) {
-            // Remove spaces for simplicity
-            const cleanText = transpositionText.replace(/\s/g, '').toUpperCase();
-
-            // Create the transposition grid
-            const grid: string[][] = [];
-            let index = 0;
-
-            while (index < cleanText.length) {
-                const row: string[] = [];
-                for (let i = 0; i < transpositionKey && index < cleanText.length; i++) {
-                    row.push(cleanText[index]);
-                    index++;
-                }
-                grid.push(row);
-            }
-
-            // Read column by column
-            let result = '';
-            for (let col = 0; col < transpositionKey; col++) {
-                for (let row = 0; row < grid.length; row++) {
-                    if (col < grid[row].length) {
-                        result += grid[row][col];
-                    }
-                }
-            }
-
-            setTranspositionResult(result);
-        } else {
-            setTranspositionResult('');
-        }
-    }, [transpositionText, transpositionKey]);
-
-    // Answer a question in the quiz
     const handleAnswerQuestion = (questionId: number, answer: string) => {
         const updatedQuestions = questions.map(q =>
             q.id === questionId ? { ...q, userAnswer: answer } : q
@@ -227,7 +212,6 @@ export default function ClassicalCryptography() {
         }
     };
 
-    // Submit the quiz for evaluation
     const handleSubmitQuiz = () => {
         setQuizSubmitted(true);
 
@@ -237,7 +221,6 @@ export default function ClassicalCryptography() {
         if (allCorrect) {
             setTimeout(() => {
                 setStage('practical');
-                setQuizSubmitted(false);
             }, 2000);
         }
     };
@@ -250,38 +233,61 @@ export default function ClassicalCryptography() {
         setQuizSubmitted(false);
     };
 
-
-    // Navigate between different ciphers
     const handleCipherChange = (cipher: CipherType) => {
+        const previousSection = currentCipher;
+
         setCurrentCipher(cipher);
         setActiveTab('info');
+
+        try {
+            const previousSubmodule = submoduleList.find((s) => s.title === previousSection);
+            if (previousSubmodule?.id) {
+                completeSubModule(previousSubmodule.id);
+            } else {
+                console.warn('Previous submodule not found for section:', previousSection);
+            }
+
+            const currentSubmodule = submoduleList.find((s) => s.title === cipher);
+            if (currentSubmodule?.id) {
+                startSubModule(currentSubmodule.id);
+            } else {
+                console.warn('Current submodule not found for section:', cipher);
+            }
+        } catch (error) {
+            console.error('Error handling submodule transition:', error);
+        }
     };
 
-    // Navigate to the quiz when all ciphers are reviewed
     const handleStartQuiz = () => {
-        setStage('practical');
+        setStage('quiz');
     };
 
-    // Return to the main dashboard (this would be linked to your routing system)
     const handleReturnToDashboard = () => {
-        // Implement navigation to the dashboard
-        console.log("Return to dashboard");
+        router.push('/home');
     };
 
-    // Complete the practical exercise (this would be implemented with actual coding challenges)
     const handleSubmitPractical = () => {
-        // In a real implementation, you would verify the code submission here
+
         setPracticalCompleted(true);
 
-        setTimeout(() => {
-            setStage('completed');
-            // Here you would send the achievement to the database
-            confetti({
-                particleCount: 250,
-                spread: 80,
-                origin: { y: 0.6 },
-            });
-        }, 1500);
+        const completed = async () => {
+            try {
+                const moduleId = params.get('id');
+                await completeModule(moduleId as string);
+            } catch (error) {
+                throw new Error('Error completing module');
+            }
+        }
+
+        setStage('completed');
+        completed();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        confetti({
+            particleCount: 250,
+            spread: 80,
+            origin: { y: 0.6 },
+        });
+
     };
 
     return (
@@ -344,20 +350,6 @@ export default function ClassicalCryptography() {
                             <div className="flex-1 h-0.5 mx-2 bg-base-300 relative">
                                 <div
                                     className="absolute top-0 left-0 h-full bg-primary transition-all duration-500"
-                                    style={{ width: progress >= 75 ? '100%' : '0%' }}
-                                ></div>
-                            </div>
-
-                            <div className="flex flex-col items-center">
-                                <div className={`w-10 h-10 flex items-center justify-center rounded-full border-2 ${currentCipher === 'transposition' ? 'border-primary bg-primary text-primary-content' : progress >= 95 ? 'border-primary bg-primary-content text-primary' : 'border-base-300 bg-base-100'}`}>
-                                    <FiRotateCw className="w-5 h-5" />
-                                </div>
-                                <span className="text-xs mt-1">Transposición</span>
-                            </div>
-
-                            <div className="flex-1 h-0.5 mx-2 bg-base-300 relative">
-                                <div
-                                    className="absolute top-0 left-0 h-full bg-primary transition-all duration-500"
                                     style={{ width: progress >= 95 ? '100%' : '0%' }}
                                 ></div>
                             </div>
@@ -396,12 +388,6 @@ export default function ClassicalCryptography() {
                                 onClick={() => handleCipherChange('vigenere')}
                             >
                                 Cifrado Vigenère
-                            </button>
-                            <button
-                                className={`tab ${currentCipher === 'transposition' ? 'tab-active' : ''}`}
-                                onClick={() => handleCipherChange('transposition')}
-                            >
-                                Cifrado de Transposición
                             </button>
                         </div>
 
@@ -502,32 +488,31 @@ export default function ClassicalCryptography() {
                                             </div>
 
                                             <div className="form-control w-full mb-6">
-                                                <label className="label">
-                                                    <span className="label-text">Desplazamiento (1-25):</span>
-                                                    <span className="label-text-alt">Valor actual: {caesarShift}</span>
+                                                <label className="label justify-between">
+                                                    <span className="label-text font-medium">Desplazamiento (1–26):</span>
+                                                    <span className="label-text-alt text-sm">Valor actual: {caesarShift}</span>
                                                 </label>
+
                                                 <input
                                                     type="range"
                                                     min="1"
-                                                    max="25"
+                                                    max="26"
                                                     value={caesarShift}
                                                     onChange={(e) => setCaesarShift(Number(e.target.value))}
-                                                    className="range range-primary"
+                                                    className="ml-2 range range-primary h-4"
                                                 />
-                                                <div className="w-full flex justify-between text-xs px-2 mt-2">
-                                                    <span>1</span>
-                                                    <span>5</span>
-                                                    <span>10</span>
-                                                    <span>15</span>
-                                                    <span>20</span>
-                                                    <span>25</span>
-                                                </div>
+
                                             </div>
 
                                             <div className="bg-base-300 p-4 rounded-lg">
                                                 <h3 className="font-bold mb-2">Resultado cifrado:</h3>
                                                 <p className="font-mono text-lg">{caesarResult || 'Ingresa un texto para ver el resultado'}</p>
                                             </div>
+
+                                            <p className="ml-1 mt-4 text-sm italic text-gray-600">
+                                                Nota: En esta práctica el cifrado César utiliza el módulo 27 en lugar de 26, porque el alfabeto español incluye la letra <strong>Ñ</strong>,
+                                                sumando un total de 27 letras.
+                                            </p>
 
                                             <div className="mt-6 p-4 border border-base-300 rounded-lg">
                                                 <h3 className="font-bold mb-2">Reto:</h3>
@@ -718,21 +703,21 @@ export default function ClassicalCryptography() {
 
                                             <div className="form-control w-full mb-6">
                                                 <label className="label">
-                                                    <span className="label-text">Clave de sustitución (26 letras):</span>
+                                                    <span className="label-text">Clave de sustitución (27 letras):</span>
                                                     <span className="label-text-alt">Cada letra representa la sustitución de A-Z</span>
                                                 </label>
                                                 <input
                                                     type="text"
-                                                    placeholder="ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                                    placeholder="ABCDEFGHIJKLMNÑOPQRSTUVWXYZ"
                                                     className="input input-bordered w-full"
                                                     value={substitutionKey}
                                                     onChange={(e) => {
                                                         const value = e.target.value.toUpperCase().replace(/[^A-Z]/g, '');
-                                                        if (value.length <= 26) {
+                                                        if (value.length <= 27) {
                                                             setSubstitutionKey(value);
                                                         }
                                                     }}
-                                                    maxLength={26}
+                                                    maxLength={27}
                                                 />
                                                 <label className="label">
                                                     <span className="label-text-alt">Alfabeto original: ABCDEFGHIJKLMNOPQRSTUVWXYZ</span>
@@ -743,6 +728,11 @@ export default function ClassicalCryptography() {
                                                 <h3 className="font-bold mb-2">Resultado cifrado:</h3>
                                                 <p className="font-mono text-lg">{substitutionResult || 'Ingresa un texto para ver el resultado'}</p>
                                             </div>
+
+                                            <p className="ml-1 mt-4 text-sm italic text-gray-600">
+                                                Nota: En esta práctica, el cifrado de sustitución utiliza una clave de 27 letras, porque el alfabeto español incluye la letra <strong>Ñ</strong>,
+                                                sumando un total de 27 letras.
+                                            </p>
 
                                             <div className="alert alert-warning mt-6">
                                                 <FiHelpCircle className="h-6 w-6" />
@@ -984,6 +974,11 @@ export default function ClassicalCryptography() {
                                                 <p className="font-mono text-lg">{vigenereResult || 'Ingresa un texto para ver el resultado'}</p>
                                             </div>
 
+                                            <p className="ml-1 mt-4 text-sm italic text-gray-600">
+                                                Nota: En esta práctica, el cifrado Vigenère utiliza el módulo 27 en lugar de 26, porque el alfabeto español incluye la letra <strong>Ñ</strong>,
+                                                sumando un total de 27 letras.
+                                            </p>
+
                                             <div className="mt-6 p-4 border border-base-300 rounded-lg">
                                                 <h3 className="font-bold mb-2">Ejemplo visual del cifrado:</h3>
                                                 <div className="overflow-x-auto">
@@ -1104,268 +1099,6 @@ export default function ClassicalCryptography() {
                                         </button>
                                         <button
                                             className="btn btn-primary"
-                                            onClick={() => handleCipherChange('transposition')}
-                                        >
-                                            Siguiente: Transposición <FiArrowRight className="ml-2" />
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Transposition Cipher Content */}
-                        {currentCipher === 'transposition' && (
-                            <div className="card bg-base-200 shadow-xl">
-                                <div className="card-body">
-                                    {activeTab === 'info' && (
-                                        <div>
-                                            <h2 className="card-title text-2xl mb-4">Cifrado de Transposición</h2>
-                                            <p className="mb-4">
-                                                A diferencia de los cifrados de sustitución que reemplazan caracteres, los cifrados de transposición reorganizan los caracteres del mensaje original sin cambiar su identidad. Como resultado, todas las letras originales están presentes en el mensaje cifrado, pero en un orden diferente.
-                                            </p>
-                                            <h3 className="text-xl font-bold mt-6 mb-2">¿Cómo funciona?</h3>
-                                            <p className="mb-4">
-                                                En el cifrado de transposición por columnas (uno de los más comunes), el texto se escribe en filas de una longitud predeterminada y luego se lee por columnas, siguiendo un orden específico determinado por la clave:
-                                            </p>
-                                            <ol className="list-decimal list-inside mb-4 space-y-1">
-                                                <li>Se elige un número de columnas (la clave)</li>
-                                                <li>Se escribe el mensaje en filas de esa longitud</li>
-                                                <li>Se lee el texto columna por columna</li>
-                                            </ol>
-                                            <div className="overflow-x-auto mb-6">
-                                                <table className="table table-zebra w-full">
-                                                    <caption className="caption-top">Ejemplo: Mensaje "HOLA MUNDO SECRETO" con clave 4 (columnas)</caption>
-                                                    <tbody>
-                                                        <tr>
-                                                            <td className="border">H</td>
-                                                            <td className="border">O</td>
-                                                            <td className="border">L</td>
-                                                            <td className="border">A</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td className="border">M</td>
-                                                            <td className="border">U</td>
-                                                            <td className="border">N</td>
-                                                            <td className="border">D</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td className="border">O</td>
-                                                            <td className="border">S</td>
-                                                            <td className="border">E</td>
-                                                            <td className="border">C</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td className="border">R</td>
-                                                            <td className="border">E</td>
-                                                            <td className="border">T</td>
-                                                            <td className="border">O</td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                            <p className="mb-4">Leyendo por columnas, el mensaje cifrado sería: "HMOR OUSE LNET ADCO"</p>
-                                            <div className="alert alert-info shadow-lg mb-4">
-                                                <div>
-                                                    <FiHelpCircle className="w-6 h-6" />
-                                                    <span>
-                                                        El cifrado de transposición puede hacerse más complejo utilizando permutaciones de columnas según una palabra clave. Por ejemplo, clave "CAVE" = orden de lectura 1,4,3,2.
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <h3 className="text-xl font-bold mt-6 mb-2">Fortalezas y Debilidades</h3>
-                                            <div className="overflow-x-auto">
-                                                <table className="table w-full">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Fortalezas</th>
-                                                            <th>Debilidades</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        <tr>
-                                                            <td>Completamente inmune al análisis de frecuencia de letras individuales</td>
-                                                            <td>Vulnerable al análisis de pares de letras (bigramas) y trigramas</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td>Se puede aplicar varias veces para aumentar la seguridad</td>
-                                                            <td>Las palabras cortas pueden seguir siendo reconocibles</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td>Puede combinarse con cifrados de sustitución</td>
-                                                            <td>Si se conoce o se adivina el idioma y la longitud de la clave, puede ser atacado</td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {activeTab === 'interactive' && (
-                                        <div>
-                                            <h2 className="card-title text-2xl mb-4">Práctica con Cifrado de Transposición</h2>
-                                            <p className="mb-6">Ingresa un texto y el número de columnas para ver cómo funciona el cifrado de transposición:</p>
-
-                                            <div className="form-control w-full mb-4">
-                                                <label className="label">
-                                                    <span className="label-text">Texto a cifrar:</span>
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    placeholder="Escribe algo..."
-                                                    className="input input-bordered w-full"
-                                                    value={transpositionText}
-                                                    onChange={(e) => setTranspositionText(e.target.value)}
-                                                />
-                                            </div>
-
-                                            <div className="form-control w-full mb-6">
-                                                <label className="label">
-                                                    <span className="label-text">Número de columnas:</span>
-                                                    <span className="label-text-alt">Valor actual: {transpositionKey}</span>
-                                                </label>
-                                                <input
-                                                    type="range"
-                                                    min="2"
-                                                    max="10"
-                                                    value={transpositionKey}
-                                                    onChange={(e) => setTranspositionKey(Number(e.target.value))}
-                                                    className="range range-primary"
-                                                />
-                                                <div className="w-full flex justify-between text-xs px-2 mt-2">
-                                                    <span>2</span>
-                                                    <span>3</span>
-                                                    <span>4</span>
-                                                    <span>5</span>
-                                                    <span>6</span>
-                                                    <span>7</span>
-                                                    <span>8</span>
-                                                    <span>9</span>
-                                                    <span>10</span>
-                                                </div>
-                                            </div>
-
-                                            <div className="bg-base-300 p-4 rounded-lg">
-                                                <h3 className="font-bold mb-2">Resultado cifrado:</h3>
-                                                <p className="font-mono text-lg">{transpositionResult || 'Ingresa un texto para ver el resultado'}</p>
-                                            </div>
-
-                                            <div className="mt-6 p-4 border border-base-300 rounded-lg">
-                                                <h3 className="font-bold mb-2">Visualización de la transposición:</h3>
-
-                                                {transpositionText && (
-                                                    <div className="overflow-x-auto">
-                                                        <table className="table table-xs mt-2">
-                                                            <caption className="caption-top">Matriz de transposición</caption>
-                                                            <tbody>
-                                                                {(() => {
-                                                                    const cleanText = transpositionText.replace(/\s/g, '').toUpperCase();
-                                                                    const rows = [];
-                                                                    for (let i = 0; i < cleanText.length; i += transpositionKey) {
-                                                                        const row = [];
-                                                                        for (let j = 0; j < transpositionKey; j++) {
-                                                                            if (i + j < cleanText.length) {
-                                                                                row.push(cleanText[i + j]);
-                                                                            } else {
-                                                                                row.push('');
-                                                                            }
-                                                                        }
-                                                                        rows.push(row);
-                                                                    }
-
-                                                                    return rows.map((row, rowIndex) => (
-                                                                        <tr key={rowIndex}>
-                                                                            {row.map((cell, cellIndex) => (
-                                                                                <td key={cellIndex} className="border text-center">{cell}</td>
-                                                                            ))}
-                                                                        </tr>
-                                                                    ));
-                                                                })()}
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                )}
-
-                                                <p className="text-sm mt-4">
-                                                    Para descifrar, reconstruye la matriz colocando el texto cifrado en columnas, y luego lee por filas.
-                                                </p>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {activeTab === 'history' && (
-                                        <div>
-                                            <h2 className="card-title text-2xl mb-4">Historia del Cifrado de Transposición</h2>
-                                            <div className="flex flex-col md:flex-row gap-6">
-                                                <div className="md:w-2/3">
-                                                    <p className="mb-4">
-                                                        Los cifrados de transposición tienen una historia que se remonta a la antigua Grecia. Uno de los primeros dispositivos de este tipo fue la "Escítala", utilizada por los espartanos alrededor del siglo V a.C. para comunicaciones militares.
-                                                    </p>
-                                                    <p className="mb-4">
-                                                        La Escítala consistía en un bastón de un diámetro específico alrededor del cual se enrollaba una tira de pergamino. Se escribía el mensaje a lo largo del bastón y luego se desenrollaba. La tira de pergamino contenía letras aparentemente aleatorias que solo podían leerse correctamente al enrollarla alrededor de un bastón del mismo diámetro.
-                                                    </p>
-                                                    <h3 className="text-xl font-bold mt-6 mb-2">Tipos de Cifrados de Transposición</h3>
-                                                    <div className="overflow-x-auto">
-                                                        <table className="table w-full">
-                                                            <thead>
-                                                                <tr>
-                                                                    <th>Tipo</th>
-                                                                    <th>Descripción</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                <tr>
-                                                                    <td className="font-bold">Transposición por Columnas</td>
-                                                                    <td>El mensaje se escribe en filas y se lee por columnas, a veces reordenadas según una clave.</td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td className="font-bold">Rail Fence (Zig-zag)</td>
-                                                                    <td>El texto se escribe en patrón diagonal, formando "raíles" de una valla, y luego se lee por filas.</td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td className="font-bold">Transposición por Rutas</td>
-                                                                    <td>El texto se coloca en una cuadrícula y se lee siguiendo una ruta específica (espiral, etc.).</td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td className="font-bold">Rejilla Giratoria</td>
-                                                                    <td>Utiliza una plantilla con agujeros que se rota sobre el mensaje para revelar solo ciertas letras en cada posición.</td>
-                                                                </tr>
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                </div>
-                                                <div className="md:w-1/3">
-                                                    <div className="card bg-base-100 shadow-lg mb-6">
-                                                        <div className="card-body">
-                                                            <h3 className="card-title">La Escítala Espartana</h3>
-                                                            <figure className="my-4">
-                                                                <div className="h-32 bg-base-300 flex items-center justify-center rounded-lg">
-                                                                    {/* Aquí iría una imagen de la Escítala */}
-                                                                    <p className="text-center">Ilustración de la Escítala</p>
-                                                                </div>
-                                                            </figure>
-                                                            <p>Este simple dispositivo es considerado uno de los primeros sistemas criptográficos de transposición de la historia.</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="card bg-base-100 shadow-lg">
-                                                        <div className="card-body">
-                                                            <h3 className="card-title">¿Sabías que?</h3>
-                                                            <p>Durante la Primera Guerra Mundial, los alemanes utilizaron un cifrado de doble transposición que resultó muy difícil de romper sin conocer la clave exacta. Este sistema inspiró desarrollos posteriores en criptografía.</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    <div className="card-actions justify-between mt-6">
-                                        <button
-                                            className="btn btn-outline"
-                                            onClick={() => handleCipherChange('vigenere')}
-                                        >
-                                            <FiArrowRight className="mr-2 rotate-180" /> Anterior: Vigenère
-                                        </button>
-                                        <button
-                                            className="btn btn-primary"
                                             onClick={handleStartQuiz}
                                         >
                                             Comenzar Evaluación <FiArrowRight className="ml-2" />
@@ -1438,6 +1171,13 @@ export default function ClassicalCryptography() {
                                 </div>
 
                                 <div className="card-actions justify-end mt-8">
+                                    <button className="btn btn-outline" onClick={() => {
+                                        setStage('learning');
+                                        setActiveTab('info');
+                                    }
+                                    }>
+                                        <FiArrowRight className="mr-2 rotate-180" /> Volver a la lección
+                                    </button>
                                     {quizSubmitted && !quizPassed ? (
                                         <button
                                             className="btn btn-outline"
@@ -1588,7 +1328,7 @@ if __name__ == "__main__":
                                             <h3 className="font-semibold mb-2">Ejemplo de resultado esperado:</h3>
                                             <div className="font-mono text-sm whitespace-pre bg-base-300 p-3 rounded">
                                                 {`Mensaje original: Hola, Mundo!
-Cifrado (desplazamiento=3): Krod, Pxqgr!
+Cifrado (desplazamiento=3): KRÑD, OXPGR!
 Descifrado: Hola, Mundo!
 ¡Éxito! El mensaje se cifró y descifró correctamente.`}
                                             </div>

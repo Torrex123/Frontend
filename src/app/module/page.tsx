@@ -3,23 +3,23 @@ import ClassicalCryptography from "../learningPath/ClassicalCryptography";
 import FundamentalsCryptography from "../learningPath/FundamentalsCryptography";
 import SymmetricCryptography from "../learningPath/SymmetricCryptography";
 import HashFunctions from "../learningPath/HashFunctions";
-import { useParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 const moduleMap = {
-    classical: ClassicalCryptography,
-    fundamentals: FundamentalsCryptography,
-    symmetric: SymmetricCryptography,
-    hash: HashFunctions,
+    "Criptografía Clásica": ClassicalCryptography,
+    "Fundamentos de la Criptografía": FundamentalsCryptography,
+    "Criptografía Simétrica": SymmetricCryptography,
+    "Funciones Hash Criptográficas": HashFunctions,
 };
 
 export default function Module() {
-
-    const { module } = useParams();
+    const searchParams = useSearchParams();
+    const name = searchParams.get("name");
 
     const option =
-        typeof module === "string" && module in moduleMap
-            ? module
-            : "hash";
+        typeof name === "string" && name in moduleMap
+            ? name
+            : "Criptografía Simétrica";
     const SelectedModule = moduleMap[option as keyof typeof moduleMap];
 
     return (
@@ -28,3 +28,4 @@ export default function Module() {
         </div>
     );
 }
+

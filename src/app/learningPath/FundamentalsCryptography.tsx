@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { motion } from 'framer-motion';
 import {
   FiLock,
@@ -15,21 +15,18 @@ import {
   FiCheckCircle,
   FiX,
   FiUser,
-  FiServer,
   FiUserCheck,
   FiAlertTriangle,
-  FiCode,
   FiCalendar,
-  FiClock,
   FiDatabase,
-  FiEye,
-  FiFileText as FiDocument,
   FiHash
 } from 'react-icons/fi';
 import confetti from 'canvas-confetti';
+import { useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
+import { startSubModule, getSubModule, completeSubModule, completeModule } from '../../../api/api';
 
-// Types for our application
-type SectionType = 'intro' | 'history' | 'concepts' | 'applications' | 'ethics';
+type SectionType = 'intro' | 'history' | 'concepts' | 'applications';
 type ProgressStage = 'learning' | 'quiz' | 'completed';
 
 interface Question {
@@ -41,7 +38,6 @@ interface Question {
 }
 
 export default function FundamentalsCryptography() {
-  // State management
   const [currentSection, setCurrentSection] = useState<SectionType>('intro');
   const [progress, setProgress] = useState<number>(0);
   const [stage, setStage] = useState<ProgressStage>('learning');
@@ -49,8 +45,7 @@ export default function FundamentalsCryptography() {
   const [quizPassed, setQuizPassed] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>('content');
   const [questionsAnswered, setQuestionsAnswered] = useState<number[]>([]);
-
-  // Quiz state
+  const router = useRouter();
   const [questions, setQuestions] = useState<Question[]>([
     {
       id: 1,
@@ -108,18 +103,16 @@ export default function FundamentalsCryptography() {
       correctAnswer: "Complejidad"
     }
   ]);
+  const params = useSearchParams();
+  const [submoduleList, setSubmoduleList] = useState<any[]>([]);
 
-  // Update progress based on current section and stage
   useEffect(() => {
     let newProgress = 0;
 
-    // Base progress on current section
     if (currentSection === 'intro') newProgress = 0;
-    else if (currentSection === 'history') newProgress = 20;
-    else if (currentSection === 'concepts') newProgress = 40;
-    else if (currentSection === 'applications') newProgress = 60;
-    else if (currentSection === 'ethics') newProgress = 80;
-
+    else if (currentSection === 'history') newProgress = 25;
+    else if (currentSection === 'concepts') newProgress = 50;
+    else if (currentSection === 'applications') newProgress = 75;
     // Adjust based on stage
     if (stage === 'quiz') newProgress = 90;
     else if (stage === 'completed') newProgress = 100;
@@ -127,7 +120,37 @@ export default function FundamentalsCryptography() {
     setProgress(newProgress);
   }, [currentSection, stage]);
 
-  // Answer a question in the quiz
+  useEffect(() => {
+    const moduleId = params.get('id');
+    const fetchSubModule = async () => {
+      try {
+        const response = await getSubModule(moduleId as string);
+        const submodules = response.data.data;
+        setSubmoduleList(submodules);
+
+        const validTitles: SectionType[] = ['intro', 'history', 'concepts', 'applications'];
+        const sorted = [...submodules].sort((a, b) => a.place - b.place);
+
+        let targetSubmodule = sorted.findLast((sub) => sub.status === 'en-progreso');
+        if (!targetSubmodule) {
+          targetSubmodule = sorted.find((sub) => sub.status === 'no-iniciado');
+        }
+
+        if (targetSubmodule && validTitles.includes(targetSubmodule.title)) {
+          setCurrentSection(targetSubmodule.title as SectionType);
+        } else {
+          setCurrentSection('intro');
+        }
+
+      } catch (error) {
+        console.error('Error fetching submodule data:', error);
+      }
+    };
+
+    fetchSubModule();
+  }, []);
+
+
   const handleAnswerQuestion = (questionId: number, answer: string) => {
     const updatedQuestions = questions.map(q =>
       q.id === questionId ? { ...q, userAnswer: answer } : q
@@ -139,31 +162,34 @@ export default function FundamentalsCryptography() {
     }
   };
 
-  // Submit the quiz for evaluation
   const handleSubmitQuiz = () => {
     setQuizSubmitted(true);
 
     const allCorrect = questions.every(q => q.userAnswer === q.correctAnswer);
     setQuizPassed(allCorrect);
 
-    if (allCorrect) {
-      setTimeout(() => {
-        setStage('completed');
-        // Here you would send the achievement to the database
+    const completed = async () => {
+      try {
+        const moduleId = params.get('id');
+        await completeModule(moduleId as string);
+      } catch (error) {
+        throw new Error('Error completing module');
+      }
+    }
 
-        //add confetti effect
-        confetti({
-          particleCount: 200,
-          spread: 70,
-          origin: { y: 0.6 },
-          scalar: 1.2,
-        });
-        
-      }, 2000);
+    if (allCorrect) {
+      setStage('completed');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      completed();
+      confetti({
+        particleCount: 200,
+        spread: 70,
+        origin: { y: 0.6 },
+        scalar: 1.2,
+      });
     }
   };
 
-  // Reset the quiz to try again
   const handleResetQuiz = () => {
     const resetQuestions = questions.map(q => ({ ...q, userAnswer: undefined }));
     setQuestions(resetQuestions);
@@ -171,21 +197,39 @@ export default function FundamentalsCryptography() {
     setQuizSubmitted(false);
   };
 
-  // Navigate between different sections
   const handleSectionChange = (section: SectionType) => {
+
+    const previousSection = currentSection;
+
     setCurrentSection(section);
     setActiveTab('content');
+
+    try {
+      const previousSubmodule = submoduleList.find((s) => s.title === previousSection);
+      if (previousSubmodule?.id) {
+        completeSubModule(previousSubmodule.id);
+      } else {
+        console.warn('Previous submodule not found for section:', previousSection);
+      }
+
+      const currentSubmodule = submoduleList.find((s) => s.title === section);
+      if (currentSubmodule?.id) {
+        startSubModule(currentSubmodule.id);
+      } else {
+        console.warn('Current submodule not found for section:', section);
+      }
+    } catch (error) {
+      console.error('Error handling submodule transition:', error);
+    }
   };
 
-  // Navigate to the quiz when all sections are reviewed
+
   const handleStartQuiz = () => {
     setStage('quiz');
   };
 
-  // Return to the main dashboard (this would be linked to your routing system)
   const handleReturnToDashboard = () => {
-    // Implement navigation to the dashboard
-    console.log("Return to dashboard");
+    router.push('/home');
   };
 
   return (
@@ -262,20 +306,6 @@ export default function FundamentalsCryptography() {
               <div className="flex-1 h-0.5 mx-2 bg-base-300 relative">
                 <div
                   className="absolute top-0 left-0 h-full bg-primary transition-all duration-500"
-                  style={{ width: progress >= 80 ? '100%' : '0%' }}
-                ></div>
-              </div>
-
-              <div className="flex flex-col items-center">
-                <div className={`w-10 h-10 flex items-center justify-center rounded-full border-2 ${currentSection === 'ethics' ? 'border-primary bg-primary text-primary-content' : progress >= 90 ? 'border-primary bg-primary-content text-primary' : 'border-base-300 bg-base-100'}`}>
-                  <FiShield className="w-5 h-5" />
-                </div>
-                <span className="text-xs mt-1">Ética</span>
-              </div>
-
-              <div className="flex-1 h-0.5 mx-2 bg-base-300 relative">
-                <div
-                  className="absolute top-0 left-0 h-full bg-primary transition-all duration-500"
                   style={{ width: progress >= 90 ? '100%' : '0%' }}
                 ></div>
               </div>
@@ -321,12 +351,6 @@ export default function FundamentalsCryptography() {
               >
                 Aplicaciones
               </button>
-              <button
-                className={`tab ${currentSection === 'ethics' ? 'tab-active' : ''}`}
-                onClick={() => handleSectionChange('ethics')}
-              >
-                Ética y Legalidad
-              </button>
             </div>
 
             {/* Content Tabs for current section */}
@@ -336,12 +360,6 @@ export default function FundamentalsCryptography() {
                 onClick={() => setActiveTab('content')}
               >
                 Contenido
-              </button>
-              <button
-                className={`tab tab-bordered ${activeTab === 'resources' ? 'tab-active' : ''}`}
-                onClick={() => setActiveTab('resources')}
-              >
-                Recursos Adicionales
               </button>
               <button
                 className={`tab tab-bordered ${activeTab === 'summary' ? 'tab-active' : ''}`}
@@ -361,7 +379,7 @@ export default function FundamentalsCryptography() {
                       <div className="flex flex-col md:flex-row gap-6">
                         <div className="md:w-2/3">
                           <p className="mb-4">
-                            La criptografía es la ciencia y el arte de la comunicación segura en presencia de terceros. Su nombre proviene del griego <em>kryptós</em> (oculto) y <em>graphein</em> (escritura), literalmente "escritura oculta".
+                            La criptografía es la ciencia y el arte de la comunicación segura en presencia de terceros. Su nombre proviene del griego <em>kryptós</em> (oculto) y <em>graphé</em> (grafo o escritura), literalmente "escritura oculta".
                           </p>
                           <p className="mb-4">
                             En su forma más básica, la criptografía busca proteger la información mediante su transformación a un formato ilegible para aquellos que no posean la clave o el conocimiento necesario para revertir dicha transformación.
@@ -494,103 +512,6 @@ export default function FundamentalsCryptography() {
                     </div>
                   )}
 
-                  {activeTab === 'resources' && (
-                    <div>
-                      <h2 className="card-title text-2xl mb-4">Recursos Adicionales - Introducción</h2>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="card bg-base-100 shadow-md">
-                          <div className="card-body">
-                            <h3 className="card-title">
-                              <FiBookOpen className="text-primary mr-2" />
-                              Libros recomendados
-                            </h3>
-                            <ul className="mt-2 space-y-2">
-                              <li className="flex items-start gap-2">
-                                <div className="badge badge-primary mt-1">Básico</div>
-                                <span>"Criptografía para principiantes" - Simon Singh</span>
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <div className="badge badge-secondary mt-1">Intermedio</div>
-                                <span>"Serious Cryptography" - Jean-Philippe Aumasson</span>
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <div className="badge badge-accent mt-1">Avanzado</div>
-                                <span>"Handbook of Applied Cryptography" - A. Menezes, P. van Oorschot, S. Vanstone</span>
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-
-                        <div className="card bg-base-100 shadow-md">
-                          <div className="card-body">
-                            <h3 className="card-title">
-                              <FiGlobe className="text-secondary mr-2" />
-                              Recursos en línea
-                            </h3>
-                            <ul className="mt-2 space-y-2">
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>Cryptography I - Curso de Coursera por Dan Boneh</span>
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>Khan Academy - Criptografía básica</span>
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>CrypTool - Software educativo para criptografía</span>
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-
-                        <div className="card bg-base-100 shadow-md">
-                          <div className="card-body">
-                            <h3 className="card-title">
-                              <FiCode className="text-accent mr-2" />
-                              Herramientas prácticas
-                            </h3>
-                            <p className="mt-2">
-                              Si deseas experimentar con conceptos básicos de criptografía, puedes utilizar estas herramientas:
-                            </p>
-                            <ul className="mt-2 space-y-2">
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>CyberChef - "La navaja suiza de la ciberseguridad"</span>
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>Cryptii - Conversión y codificación online</span>
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-
-                        <div className="card bg-base-100 shadow-md">
-                          <div className="card-body">
-                            <h3 className="card-title">
-                              <FiDocument className="text-info mr-2" />
-                              Documentos históricos
-                            </h3>
-                            <p className="mt-2">
-                              Documentos históricos relevantes para entender el desarrollo de la criptografía:
-                            </p>
-                            <ul className="mt-2 space-y-2">
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>"The Codebreakers" - David Kahn (Historia comprensiva)</span>
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>"La cryptographie militaire" - Auguste Kerckhoffs (1883)</span>
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
 
                   {activeTab === 'summary' && (
                     <div>
@@ -846,105 +767,6 @@ export default function FundamentalsCryptography() {
                     </div>
                   )}
 
-                  {activeTab === 'resources' && (
-                    <div>
-                      <h2 className="card-title text-2xl mb-4">Recursos Adicionales - Historia de la Criptografía</h2>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="card bg-base-100 shadow-md">
-                          <div className="card-body">
-                            <h3 className="card-title">
-                              <FiBookOpen className="text-primary mr-2" />
-                              Lecturas recomendadas
-                            </h3>
-                            <ul className="mt-2 space-y-2">
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>"The Code Book" - Simon Singh (Historia accesible de la criptografía)</span>
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>"The Codebreakers" - David Kahn (La obra definitiva sobre la historia criptográfica)</span>
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>"Crypto" - Steven Levy (Sobre la revolución de la clave pública)</span>
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-
-                        <div className="card bg-base-100 shadow-md">
-                          <div className="card-body">
-                            <h3 className="card-title">
-                              <FiGlobe className="text-secondary mr-2" />
-                              Documentales y películas
-                            </h3>
-                            <ul className="mt-2 space-y-2">
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>"The Imitation Game" (2014) - Sobre Alan Turing y el descifrado de Enigma</span>
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>"Breaking the Code" - Documental de la BBC sobre Bletchley Park</span>
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>"Cryptography: The Key to Digital Security" - Khan Academy</span>
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-
-                        <div className="card bg-base-100 shadow-md">
-                          <div className="card-body">
-                            <h3 className="card-title">
-                              <FiCalendar className="text-accent mr-2" />
-                              Museos y sitios históricos
-                            </h3>
-                            <ul className="mt-2 space-y-2">
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>Museo de Bletchley Park (Reino Unido) - Centro de descifrado durante la Segunda Guerra Mundial</span>
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>Museo Nacional de Criptografía (Estados Unidos) - Historia de la criptografía americana</span>
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>Museo de la Guerra (Londres) - Exhibiciones sobre criptografía militar</span>
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-
-                        <div className="card bg-base-100 shadow-md">
-                          <div className="card-body">
-                            <h3 className="card-title">
-                              <FiServer className="text-info mr-2" />
-                              Recursos interactivos
-                            </h3>
-                            <ul className="mt-2 space-y-2">
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>Simulador de Enigma online - Experimenta con una máquina Enigma virtual</span>
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>Cryptii - Herramienta online para probar cifrados históricos</span>
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>Proyecto Gutenberg - Textos históricos sobre criptografía</span>
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
 
                   {activeTab === 'summary' && (
                     <div>
@@ -1211,10 +1033,12 @@ export default function FundamentalsCryptography() {
                               <div className="mt-4 bg-base-200 p-4 rounded-lg">
                                 <h4 className="font-bold mb-2">Ejemplo visual</h4>
                                 <p className="text-sm">
-                                  "Hola" → SHA-256 → 4f09daa9d95bcb166a302407a0e0babe6c3c891da4def77a...
+                                  {`"Hola" → SHA-256 → 
+                                  e633f4fc79badea1dc5db970c...`}
                                 </p>
                                 <p className="text-sm mt-2">
-                                  "Holi" → SHA-256 → cd6357efdd966de8c0cb2f876cc89ec74ce35f0968e1195...
+                                  {`"Holi" → SHA-256 → 
+                                  198676f9e8a91c1e6b81e7b37...`}
                                 </p>
                                 <p className="text-sm font-medium mt-2 text-info">
                                   ¡Un solo carácter cambiado produce un hash completamente diferente!
@@ -1322,118 +1146,6 @@ export default function FundamentalsCryptography() {
                                   Cuando ves el icono de candado en la barra de direcciones de tu navegador, estás interactuando con una PKI que verifica la autenticidad del sitio web mediante certificados.
                                 </p>
                               </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {activeTab === 'resources' && (
-                    <div>
-                      <h2 className="card-title text-2xl mb-4">Recursos Adicionales - Conceptos Básicos</h2>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="card bg-base-100 shadow-md">
-                          <div className="card-body">
-                            <h3 className="card-title">
-                              <FiBookOpen className="text-primary mr-2" />
-                              Material de estudio
-                            </h3>
-                            <ul className="mt-2 space-y-2">
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>"Cryptography Engineering" - Ferguson, Schneier & Kohno</span>
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>"Introduction to Modern Cryptography" - Katz & Lindell</span>
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>"Understanding Cryptography" - Paar & Pelzl</span>
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-
-                        <div className="card bg-base-100 shadow-md">
-                          <div className="card-body">
-                            <h3 className="card-title">
-                              <FiGlobe className="text-secondary mr-2" />
-                              Cursos en línea
-                            </h3>
-                            <ul className="mt-2 space-y-2">
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>Cryptography I & II - Coursera (Universidad de Stanford)</span>
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>Introduction to Cryptography - Udemy</span>
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>Cryptography and Information Theory - Codecademy</span>
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-
-                        <div className="card bg-base-100 shadow-md">
-                          <div className="card-body">
-                            <h3 className="card-title">
-                              <FiCode className="text-accent mr-2" />
-                              Bibliotecas y herramientas
-                            </h3>
-                            <ul className="mt-2 space-y-2">
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>OpenSSL - Conjunto de herramientas criptográficas de código abierto</span>
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>Libsodium - Biblioteca moderna con API sencilla</span>
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>CrypTool - Software educativo para criptografía</span>
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-
-                        <div className="card bg-base-100 shadow-md">
-                          <div className="card-body">
-                            <h3 className="card-title">
-                              <FiServer className="text-info mr-2" />
-                              Recursos interactivos
-                            </h3>
-                            <ul className="mt-2 space-y-2">
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>Cryptohack - Plataforma de desafíos criptográficos</span>
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>CryptoKait - Visualizaciones de algoritmos criptográficos</span>
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>Wolfram Demonstrations - Demostraciones interactivas de conceptos</span>
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="alert alert-info mt-6">
-                        <div>
-                          <FiHelpCircle className="w-6 h-6 mr-2" />
-                          <div>
-                            <h3 className="font-bold">Tip de aprendizaje</h3>
-                            <div className="text-sm">
-                              La mejor forma de entender los conceptos criptográficos es combinando la teoría con ejercicios prácticos. Intenta implementar algunos algoritmos básicos o utiliza herramientas interactivas para visualizar su funcionamiento.
                             </div>
                           </div>
                         </div>
@@ -1824,153 +1536,6 @@ export default function FundamentalsCryptography() {
                     </div>
                   )}
 
-                  {activeTab === 'resources' && (
-                    <div>
-                      <h2 className="card-title text-2xl mb-4">Recursos Adicionales - Aplicaciones Prácticas</h2>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="card bg-base-100 shadow-md">
-                          <div className="card-body">
-                            <h3 className="card-title">
-                              <FiGlobe className="text-primary mr-2" />
-                              Seguridad Web
-                            </h3>
-                            <ul className="mt-2 space-y-2">
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>OWASP - Organización de seguridad web</span>
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>"HTTPS Everywhere" - Extensión para navegadores</span>
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>SSL Labs - Herramienta para analizar implementaciones TLS</span>
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-
-                        <div className="card bg-base-100 shadow-md">
-                          <div className="card-body">
-                            <h3 className="card-title">
-                              <FiDatabase className="text-secondary mr-2" />
-                              Blockchain y Criptomonedas
-                            </h3>
-                            <ul className="mt-2 space-y-2">
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>"Mastering Bitcoin" - Andreas M. Antonopoulos</span>
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>Blockchain Demo - Demostración visual de blockchain</span>
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>Bitcoin Whitepaper - El documento original de Satoshi Nakamoto</span>
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-
-                        <div className="card bg-base-100 shadow-md">
-                          <div className="card-body">
-                            <h3 className="card-title">
-                              <FiLock className="text-accent mr-2" />
-                              Mensajería Segura
-                            </h3>
-                            <ul className="mt-2 space-y-2">
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>Signal - Aplicación de mensajería con E2EE</span>
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>Documentación técnica del protocolo Signal</span>
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>GnuPG - Implementación libre de OpenPGP</span>
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-
-                        <div className="card bg-base-100 shadow-md">
-                          <div className="card-body">
-                            <h3 className="card-title">
-                              <FiFileText className="text-info mr-2" />
-                              Firmas Digitales
-                            </h3>
-                            <ul className="mt-2 space-y-2">
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>DocuSign - Plataforma de firma electrónica</span>
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>Regulación eIDAS - Marco legal europeo para firmas electrónicas</span>
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>DigiCert - Autoridad de certificación para firmas digitales</span>
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="card bg-base-100 shadow-md mt-6">
-                        <div className="card-body">
-                          <h3 className="card-title">
-                            <FiCode className="text-primary mr-2" />
-                            Herramientas y bibliotecas para desarrolladores
-                          </h3>
-                          <div className="overflow-x-auto">
-                            <table className="table w-full">
-                              <thead>
-                                <tr>
-                                  <th>Nombre</th>
-                                  <th>Lenguaje/Plataforma</th>
-                                  <th>Descripción</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                <tr>
-                                  <td>OpenSSL</td>
-                                  <td>C, multiplataforma</td>
-                                  <td>Biblioteca criptográfica completa de código abierto</td>
-                                </tr>
-                                <tr>
-                                  <td>Libsodium</td>
-                                  <td>C, bindings múltiples</td>
-                                  <td>Biblioteca moderna con API fácil de usar</td>
-                                </tr>
-                                <tr>
-                                  <td>Web Crypto API</td>
-                                  <td>JavaScript</td>
-                                  <td>API criptográfica para navegadores web</td>
-                                </tr>
-                                <tr>
-                                  <td>Bouncy Castle</td>
-                                  <td>Java / C#</td>
-                                  <td>Implementación de algoritmos criptográficos</td>
-                                </tr>
-                                <tr>
-                                  <td>PyCA/cryptography</td>
-                                  <td>Python</td>
-                                  <td>Biblioteca criptográfica para Python</td>
-                                </tr>
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
                   {activeTab === 'summary' && (
                     <div>
                       <h2 className="card-title text-2xl mb-4">Resumen - Aplicaciones de la Criptografía</h2>
@@ -2068,492 +1633,6 @@ export default function FundamentalsCryptography() {
                     </button>
                     <button
                       className="btn btn-primary"
-                      onClick={() => handleSectionChange('ethics')}
-                    >
-                      Siguiente: Ética y Legalidad <FiArrowRight className="ml-2" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Ethics Section Content */}
-            {currentSection === 'ethics' && (
-              <div className="card bg-base-200 shadow-xl">
-                <div className="card-body">
-                  {activeTab === 'content' && (
-                    <div>
-                      <h2 className="card-title text-2xl mb-4">Ética y Legalidad en Criptografía</h2>
-
-                      <p className="mb-6">
-                        La criptografía plantea importantes cuestiones éticas y legales relacionadas con la privacidad, la seguridad nacional y el acceso a la información. En esta sección, exploraremos estos dilemas y los debates actuales.
-                      </p>
-
-                      <div className="space-y-8">
-                        <div className="bg-base-100 rounded-lg p-6 shadow-md">
-                          <h3 className="text-xl font-bold mb-3 flex items-center">
-                            <div className="bg-primary/10 p-2 rounded-full mr-2">
-                              <FiEye className="text-primary w-5 h-5" />
-                            </div>
-                            Privacidad vs. Seguridad Nacional
-                          </h3>
-
-                          <div className="flex flex-col md:flex-row gap-6">
-                            <div className="md:w-2/3">
-                              <p className="mb-3">
-                                Uno de los debates más intensos en torno a la criptografía se centra en el equilibrio entre la privacidad individual y la seguridad nacional.
-                              </p>
-                              <h4 className="font-bold mt-4 mb-2">El debate sobre las "puertas traseras":</h4>
-                              <p className="mb-3">
-                                Algunos gobiernos han propuesto que los sistemas criptográficos deberían incluir mecanismos de acceso especial para las autoridades, argumentando que es necesario para combatir el terrorismo y el crimen.
-                              </p>
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                <div className="bg-base-200 p-3 rounded-lg">
-                                  <h5 className="font-bold text-sm mb-1">Argumentos a favor:</h5>
-                                  <ul className="list-disc list-inside text-sm space-y-1">
-                                    <li>Ayuda a prevenir y resolver crímenes graves</li>
-                                    <li>Permite actuar contra amenazas terroristas</li>
-                                    <li>Facilita la recuperación de evidencia digital</li>
-                                  </ul>
-                                </div>
-                                <div className="bg-base-200 p-3 rounded-lg">
-                                  <h5 className="font-bold text-sm mb-1">Argumentos en contra:</h5>
-                                  <ul className="list-disc list-inside text-sm space-y-1">
-                                    <li>Debilita la seguridad para todos los usuarios</li>
-                                    <li>No puede garantizarse que solo las autoridades accedan</li>
-                                    <li>Puede ser explotado por actores maliciosos</li>
-                                  </ul>
-                                </div>
-                              </div>
-
-                              <h4 className="font-bold mt-4 mb-2">Casos emblemáticos:</h4>
-                              <ul className="list-disc list-inside space-y-1">
-                                <li><span className="font-medium">Apple vs. FBI (2016):</span> Disputa sobre el desbloqueo del iPhone de un terrorista</li>
-                                <li><span className="font-medium">Crypto Wars (años 90):</span> Batalla legal sobre la exportación de criptografía fuerte</li>
-                                <li><span className="font-medium">Snowden (2013):</span> Revelaciones sobre programas de vigilancia masiva</li>
-                              </ul>
-                            </div>
-                            <div className="md:w-1/3">
-                              <div className="bg-base-200 p-4 rounded-lg">
-                                <h4 className="font-bold mb-2">El consenso técnico</h4>
-                                <p className="text-sm">
-                                  La gran mayoría de expertos en seguridad y criptografía coinciden en que no es posible crear "puertas traseras" que solo puedan ser utilizadas por actores autorizados. Cualquier debilidad introducida intencionalmente podría ser descubierta y explotada por atacantes.
-                                </p>
-                              </div>
-
-                              <div className="mt-4 bg-base-200 p-4 rounded-lg">
-                                <h4 className="font-bold mb-2">Alternativas propuestas</h4>
-                                <p className="text-sm">
-                                  En lugar de debilitar la criptografía, algunos expertos proponen mejorar las capacidades de análisis forense, utilizar metadatos disponibles legalmente, y desarrollar mejores habilidades de inteligencia humana.
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="bg-base-100 rounded-lg p-6 shadow-md">
-                          <h3 className="text-xl font-bold mb-3 flex items-center">
-                            <div className="bg-secondary/10 p-2 rounded-full mr-2">
-                              <FiFileText className="text-secondary w-5 h-5" />
-                            </div>
-                            Marco Legal y Regulaciones
-                          </h3>
-
-                          <div className="flex flex-col md:flex-row gap-6">
-                            <div className="md:w-2/3">
-                              <p className="mb-3">
-                                Las leyes y regulaciones sobre criptografía varían significativamente entre países, reflejando diferentes posturas sobre privacidad, seguridad y control gubernamental.
-                              </p>
-                              <h4 className="font-bold mt-4 mb-2">Panorama regulatorio global:</h4>
-                              <div className="overflow-x-auto">
-                                <table className="table table-zebra w-full">
-                                  <thead>
-                                    <tr>
-                                      <th>Enfoque</th>
-                                      <th>Descripción</th>
-                                      <th>Ejemplos de países</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    <tr>
-                                      <td>Liberal</td>
-                                      <td>Uso libre de criptografía con pocas restricciones</td>
-                                      <td>EE.UU., Canadá, la mayoría de la UE</td>
-                                    </tr>
-                                    <tr>
-                                      <td>Moderado</td>
-                                      <td>Se permite su uso pero con ciertas limitaciones</td>
-                                      <td>Brasil, Israel, Japón</td>
-                                    </tr>
-                                    <tr>
-                                      <td>Restrictivo</td>
-                                      <td>Uso controlado, posible obligación de entregar claves</td>
-                                      <td>Rusia, China, algunos países de Oriente Medio</td>
-                                    </tr>
-                                    <tr>
-                                      <td>Muy restrictivo</td>
-                                      <td>Prohibición o control estricto del uso de criptografía</td>
-                                      <td>Corea del Norte, ciertos estados autoritarios</td>
-                                    </tr>
-                                  </tbody>
-                                </table>
-                              </div>
-
-                              <h4 className="font-bold mt-4 mb-2">Regulaciones específicas:</h4>
-                              <ul className="list-disc list-inside space-y-1">
-                                <li><span className="font-medium">Regulaciones de exportación:</span> Control sobre la exportación de tecnología criptográfica</li>
-                                <li><span className="font-medium">Leyes de entrega de claves:</span> Obligación legal de proporcionar claves de descifrado a las autoridades</li>
-                                <li><span className="font-medium">Estándares nacionales:</span> Algunos países imponen el uso de algoritmos específicos</li>
-                                <li><span className="font-medium">Protección de datos:</span> Regulaciones como GDPR que exigen cifrado para datos personales</li>
-                              </ul>
-                            </div>
-                            <div className="md:w-1/3">
-                              <div className="bg-base-200 p-4 rounded-lg">
-                                <h4 className="font-bold mb-2">El Acuerdo de Wassenaar</h4>
-                                <p className="text-sm">
-                                  Este acuerdo internacional controla la exportación de armas y bienes de doble uso, incluyendo tecnología criptográfica. Ha sido criticado por impedir el desarrollo de soluciones de seguridad globales y limitar la investigación.
-                                </p>
-                              </div>
-
-                              <div className="mt-4 bg-base-200 p-4 rounded-lg">
-                                <h4 className="font-bold mb-2">Leyes de entrega de claves</h4>
-                                <p className="text-sm">
-                                  En países como el Reino Unido (RIPA) y Australia, existen leyes que pueden obligar a las personas a entregar claves de descifrado bajo amenaza de prisión. Esto plantea preocupaciones sobre el derecho a no autoincriminarse.
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="bg-base-100 rounded-lg p-6 shadow-md">
-                          <h3 className="text-xl font-bold mb-3 flex items-center">
-                            <div className="bg-accent/10 p-2 rounded-full mr-2">
-                              <FiShield className="text-accent w-5 h-5" />
-                            </div>
-                            Responsabilidades Éticas en Criptografía
-                          </h3>
-
-                          <div className="flex flex-col md:flex-row gap-6">
-                            <div className="md:w-2/3">
-                              <p className="mb-3">
-                                Los profesionales e investigadores en criptografía enfrentan dilemas éticos únicos debido al potencial impacto social de su trabajo.
-                              </p>
-                              <h4 className="font-bold mt-4 mb-2">Dilemas éticos comunes:</h4>
-                              <ul className="list-disc list-inside space-y-1">
-                                <li><span className="font-medium">Divulgación de vulnerabilidades:</span> ¿Cuándo y cómo revelar fallos descubiertos en algoritmos o implementaciones?</li>
-                                <li><span className="font-medium">Desarrollo de herramientas de doble uso:</span> La misma tecnología puede proteger a disidentes o facilitar actividades ilícitas</li>
-                                <li><span className="font-medium">Investigación en criptoanálisis:</span> ¿Es ético trabajar en romper sistemas de seguridad?</li>
-                                <li><span className="font-medium">Equilibrio entre usabilidad y seguridad:</span> Sistemas extremadamente seguros pero difíciles de usar pueden terminar siendo menos seguros en la práctica</li>
-                              </ul>
-
-                              <h4 className="font-bold mt-4 mb-2">Principios éticos propuestos:</h4>
-                              <ol className="list-decimal list-inside space-y-1">
-                                <li><span className="font-medium">Transparencia:</span> Los sistemas criptográficos deberían ser abiertos al escrutinio público</li>
-                                <li><span className="font-medium">Divulgación responsable:</span> Informar a los desarrolladores antes de hacer públicas las vulnerabilidades</li>
-                                <li><span className="font-medium">Proporcionalidad:</span> Considerar si los beneficios de una tecnología superan sus posibles daños</li>
-                                <li><span className="font-medium">Accesibilidad:</span> La seguridad debe estar disponible para todos, no solo para quienes pueden pagarla</li>
-                                <li><span className="font-medium">Educación:</span> Promover la comprensión pública de la criptografía y sus implicaciones</li>
-                              </ol>
-                            </div>
-                            <div className="md:w-1/3">
-                              <div className="bg-base-200 p-4 rounded-lg">
-                                <h4 className="font-bold mb-2">El Principio de Kerckhoffs desde una perspectiva ética</h4>
-                                <p className="text-sm">
-                                  Este principio, que establece que la seguridad debe residir en la clave y no en el secreto del algoritmo, tiene también una dimensión ética: promueve la transparencia y permite el escrutinio público, lo que generalmente conduce a sistemas más seguros para todos.
-                                </p>
-                              </div>
-
-                              <div className="mt-4 bg-base-200 p-4 rounded-lg">
-                                <h4 className="font-bold mb-2">Criptografía para la justicia social</h4>
-                                <p className="text-sm">
-                                  En regímenes opresivos, la criptografía puede ser una herramienta esencial para defensores de derechos humanos, periodistas y activistas. Esto destaca su rol como tecnología de empoderamiento y no solo de protección de datos.
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="bg-base-100 rounded-lg p-6 shadow-md">
-                          <h3 className="text-xl font-bold mb-3 flex items-center">
-                            <div className="bg-info/10 p-2 rounded-full mr-2">
-                              <FiClock className="text-info w-5 h-5" />
-                            </div>
-                            Desafíos Futuros
-                          </h3>
-
-                          <div className="flex flex-col md:flex-row gap-6">
-                            <div className="md:w-2/3">
-                              <p className="mb-3">
-                                La criptografía enfrenta varios desafíos importantes en el horizonte que tendrán implicaciones éticas y legales significativas.
-                              </p>
-                              <h4 className="font-bold mt-4 mb-2">Computación cuántica:</h4>
-                              <p className="mb-3">
-                                Las computadoras cuánticas podrían romper muchos de los sistemas criptográficos actuales, creando un escenario donde:
-                              </p>
-                              <ul className="list-disc list-inside space-y-1">
-                                <li>Información cifrada hoy podría ser descifrada en el futuro ("harvest now, decrypt later")</li>
-                                <li>Se necesita una transición global a algoritmos post-cuánticos</li>
-                                <li>Existe un riesgo de desigualdad en el acceso a protección criptográfica segura</li>
-                                <li>Surgen preguntas sobre quién tendrá acceso a capacidades de descifrado cuántico</li>
-                              </ul>
-
-                              <h4 className="font-bold mt-4 mb-2">Regulaciones emergentes:</h4>
-                              <p className="mb-3">
-                                El panorama regulatorio continúa evolucionando, con tendencias como:
-                              </p>
-                              <ul className="list-disc list-inside space-y-1">
-                                <li>Mayor presión para regular criptomonedas y tecnologías blockchain</li>
-                                <li>Debates sobre la soberanía digital y el cifrado como parte de la seguridad nacional</li>
-                                <li>Posibles conflictos entre legislaciones nacionales en un mundo digital global</li>
-                                <li>Tensión entre regulaciones de privacidad (como GDPR) y demandas de acceso gubernamental</li>
-                              </ul>
-
-                              <h4 className="font-bold mt-4 mb-2">Inteligencia artificial y criptografía:</h4>
-                              <ul className="list-disc list-inside space-y-1">
-                                <li>IA aplicada al criptoanálisis podría descubrir nuevas vulnerabilidades</li>
-                                <li>Preocupaciones sobre el uso de IA para generar ataques personalizados</li>
-                                <li>Posibilidades de nuevos sistemas criptográficos diseñados o mejorados por IA</li>
-                              </ul>
-                            </div>
-                            <div className="md:w-1/3">
-                              <div className="bg-base-200 p-4 rounded-lg">
-                                <h4 className="font-bold mb-2">Criptografía post-cuántica</h4>
-                                <p className="text-sm">
-                                  El NIST está liderando esfuerzos para estandarizar algoritmos resistentes a ataques cuánticos. En 2022, seleccionó varios candidatos para la estandarización, incluyendo CRYSTALS-Kyber para cifrado y CRYSTALS-Dilithium para firmas digitales. La transición a estos algoritmos será un desafío técnico y logístico mundial.
-                                </p>
-                              </div>
-
-                              <div className="mt-4 bg-base-200 p-4 rounded-lg">
-                                <h4 className="font-bold mb-2">El dilema de la preservación histórica</h4>
-                                <p className="text-sm">
-                                  La criptografía plantea preguntas sobre la preservación de la historia digital. Si los datos cifrados se vuelven inaccesibles (por pérdida de claves o tecnologías obsoletas), podríamos perder partes significativas de nuestra historia digital. ¿Cómo balanceamos la privacidad con la preservación del conocimiento para futuras generaciones?
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {activeTab === 'resources' && (
-                    <div>
-                      <h2 className="card-title text-2xl mb-4">Recursos Adicionales - Ética y Legalidad</h2>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="card bg-base-100 shadow-md">
-                          <div className="card-body">
-                            <h3 className="card-title">
-                              <FiBookOpen className="text-primary mr-2" />
-                              Lecturas recomendadas
-                            </h3>
-                            <ul className="mt-2 space-y-2">
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>"Data and Goliath" - Bruce Schneier</span>
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>"Privacy in the Modern Age" - Marc Rotenberg et al.</span>
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>"Ethical and Social Issues in the Information Age" - Joseph Migga Kizza</span>
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-
-                        <div className="card bg-base-100 shadow-md">
-                          <div className="card-body">
-                            <h3 className="card-title">
-                              <FiGlobe className="text-secondary mr-2" />
-                              Organizaciones relevantes
-                            </h3>
-                            <ul className="mt-2 space-y-2">
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>Electronic Frontier Foundation (EFF) - Defiende libertades civiles en el mundo digital</span>
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>Privacy International - Organización global por el derecho a la privacidad</span>
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>Center for Democracy & Technology - Políticas tecnológicas con enfoque en derechos</span>
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-
-                        <div className="card bg-base-100 shadow-md">
-                          <div className="card-body">
-                            <h3 className="card-title">
-                              <FiDocument className="text-accent mr-2" />
-                              Documentos y casos importantes
-                            </h3>
-                            <ul className="mt-2 space-y-2">
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>Caso Apple vs. FBI (2016) - Documentos judiciales y análisis</span>
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>Bernstein v. Department of Justice - Caso sobre libertad de expresión y código criptográfico</span>
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>Declaración de derechos de cifrado - Propuesta de principios para proteger el cifrado</span>
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-
-                        <div className="card bg-base-100 shadow-md">
-                          <div className="card-body">
-                            <h3 className="card-title">
-                              <FiClock className="text-info mr-2" />
-                              Desafíos futuros y preparación
-                            </h3>
-                            <ul className="mt-2 space-y-2">
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>NIST Post-Quantum Cryptography Standardization - Estado del proceso</span>
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>Quantum Computing Report - Seguimiento de avances en computación cuántica</span>
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <FiArrowRight className="mt-1 text-primary flex-shrink-0" />
-                                <span>Center for Responsible AI - Investigación sobre ética en IA y seguridad</span>
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="card bg-base-100 shadow-md mt-6">
-                        <div className="card-body">
-                          <h3 className="card-title flex items-center">
-                            <FiAlertTriangle className="text-warning mr-2" />
-                            Recursos para debates éticos
-                          </h3>
-                          <p className="mt-2">
-                            Las siguientes preguntas pueden servir como punto de partida para debates sobre ética en criptografía:
-                          </p>
-                          <ul className="mt-4 space-y-3">
-                            <li className="p-3 bg-base-200 rounded-lg">
-                              <p className="font-medium">¿Deberían existir límites legales a la criptografía? Si es así, ¿quién debería determinarlos?</p>
-                            </li>
-                            <li className="p-3 bg-base-200 rounded-lg">
-                              <p className="font-medium">¿Tienen los ciudadanos un derecho fundamental al cifrado fuerte, o deben aceptarse compromisos por razones de seguridad nacional?</p>
-                            </li>
-                            <li className="p-3 bg-base-200 rounded-lg">
-                              <p className="font-medium">¿Cuál es la responsabilidad de los desarrolladores de tecnología criptográfica respecto a los posibles usos maliciosos de sus creaciones?</p>
-                            </li>
-                            <li className="p-3 bg-base-200 rounded-lg">
-                              <p className="font-medium">En un mundo con computación cuántica, ¿cómo podemos asegurar un acceso equitativo a protección criptográfica?</p>
-                            </li>
-                          </ul>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {activeTab === 'summary' && (
-                    <div>
-                      <h2 className="card-title text-2xl mb-4">Resumen - Ética y Legalidad en Criptografía</h2>
-
-                      <div className="alert bg-base-100 shadow-lg mb-6">
-                        <div>
-                          <FiCheckCircle className="text-success flex-shrink-0 w-6 h-6 mr-2" />
-                          <div>
-                            <h3 className="font-bold">Puntos clave aprendidos</h3>
-                            <div className="text-sm">
-                              Esta sección ha explorado las complejas dimensiones éticas, legales y sociales que rodean a la criptografía en el mundo moderno.
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="overflow-x-auto">
-                        <table className="table w-full">
-                          <thead>
-                            <tr>
-                              <th>Área</th>
-                              <th>Consideraciones principales</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <tr>
-                              <td className="font-medium">Privacidad vs. Seguridad</td>
-                              <td>
-                                <ul className="list-disc list-inside">
-                                  <li>Debate sobre "puertas traseras" y acceso gubernamental</li>
-                                  <li>Casos emblemáticos como Apple vs. FBI</li>
-                                  <li>Dilema entre derechos individuales y seguridad colectiva</li>
-                                </ul>
-                              </td>
-                            </tr>
-                            <tr>
-                              <td className="font-medium">Marco Legal</td>
-                              <td>
-                                <ul className="list-disc list-inside">
-                                  <li>Variación significativa entre enfoques regulatorios por países</li>
-                                  <li>Regulaciones de exportación y acuerdos internacionales</li>
-                                  <li>Leyes de entrega de claves y sus implicaciones</li>
-                                </ul>
-                              </td>
-                            </tr>
-                            <tr>
-                              <td className="font-medium">Responsabilidades Éticas</td>
-                              <td>
-                                <ul className="list-disc list-inside">
-                                  <li>Divulgación responsable de vulnerabilidades</li>
-                                  <li>Tecnologías de doble uso y sus implicaciones</li>
-                                  <li>Principios éticos propuestos para profesionales</li>
-                                </ul>
-                              </td>
-                            </tr>
-                            <tr>
-                              <td className="font-medium">Desafíos Futuros</td>
-                              <td>
-                                <ul className="list-disc list-inside">
-                                  <li>Impacto de la computación cuántica</li>
-                                  <li>Evolución de marcos regulatorios</li>
-                                  <li>Intersección entre IA y criptografía</li>
-                                </ul>
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
-
-                      <div className="alert alert-info mt-6">
-                        <div>
-                          <FiArrowRight className="w-6 h-6 mr-2" />
-                          <div>
-                            <h3 className="font-bold">Reflexión final</h3>
-                            <div className="text-sm">
-                              La criptografía no es solo una disciplina técnica, sino una tecnología con profundas implicaciones sociales y políticas. Como profesionales o usuarios, debemos considerar estas dimensiones más amplias y participar en los debates que darán forma a su futuro.
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="card-actions justify-between mt-6">
-                    <button
-                      className="btn btn-outline"
-                      onClick={() => handleSectionChange('applications')}
-                    >
-                      <FiArrowRight className="mr-2 rotate-180" /> Anterior: Aplicaciones
-                    </button>
-                    <button
-                      className="btn btn-primary"
                       onClick={handleStartQuiz}
                     >
                       Comenzar Evaluación <FiArrowRight className="ml-2" />
@@ -2562,6 +1641,7 @@ export default function FundamentalsCryptography() {
                 </div>
               </div>
             )}
+
           </div>
         )}
 
@@ -2626,6 +1706,16 @@ export default function FundamentalsCryptography() {
                 </div>
 
                 <div className="card-actions justify-end mt-8">
+                  <div>
+                    <button className="btn btn-outline" onClick={() => {
+                      setStage('learning');
+                      setActiveTab('content');
+
+                    }
+                    }>
+                      <FiArrowRight className="mr-2 rotate-180" /> Volver a la lección
+                    </button>
+                  </div>
                   {quizSubmitted && !quizPassed ? (
                     <button
                       className="btn btn-outline"
@@ -2650,80 +1740,83 @@ export default function FundamentalsCryptography() {
               </div>
             </div>
           </div>
-        )}
+        )
+        }
 
         {/* Completion Stage */}
-        {stage === 'completed' && (
-          <div className="max-w-4xl mx-auto">
-            <motion.div
-              className="card bg-base-200 shadow-xl"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <div className="card-body text-center">
-                <div className="py-6">
-                  <motion.div
-                    className="text-9xl mb-4 text-success mx-auto"
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1, rotate: 360 }}
-                    transition={{ duration: 0.5, delay: 0.2 }}
-                  >
-                    <FiAward className="mx-auto" />
-                  </motion.div>
-                  <h2 className="text-3xl font-bold mb-4">¡Felicidades! Has completado el módulo de Fundamentos de la Criptografía</h2>
-                  <p className="text-lg mb-6">Has adquirido una comprensión sólida de los conceptos fundamentales, la historia y las aplicaciones de la criptografía, así como sus implicaciones éticas y legales.</p>
-
-                  <div className="my-8 p-6 bg-base-100 rounded-lg max-w-md mx-auto">
-                    <h3 className="text-xl font-bold mb-4">Logro Desbloqueado</h3>
-                    <div className="flex items-center justify-center mb-4">
-                      <div className="badge badge-lg p-4 gap-2 bg-primary text-primary-content">
-                        <FiKey className="h-5 w-5" />
-                        Criptógrafo Iniciado
-                      </div>
-                    </div>
-                    <p>Has demostrado un conocimiento fundamental de los principios criptográficos y su aplicación en el mundo moderno.</p>
-                  </div>
-
-                  <h3 className="text-xl font-bold mb-4">¿Qué has aprendido?</h3>
-                  <ul className="list-disc list-inside text-left max-w-md mx-auto mb-6 space-y-2">
-                    <li>Principios fundamentales de la criptografía</li>
-                    <li>Evolución histórica de las técnicas criptográficas</li>
-                    <li>Diferencias entre cifrado simétrico y asimétrico</li>
-                    <li>Funciones hash y firmas digitales</li>
-                    <li>Aplicaciones prácticas en la vida cotidiana</li>
-                    <li>Desafíos éticos y legales en el uso de la criptografía</li>
-                  </ul>
-
-                  <div className="alert alert-info shadow-lg mb-6 text-left">
-                    <div>
-                      <FiHelpCircle className="w-6 h-6" />
-                      <div>
-                        <h3 className="font-bold">Próximos pasos</h3>
-                        <p>¿Interesado en profundizar más? Te recomendamos continuar con el módulo "Criptografía Clásica" para explorar técnicas históricas con enfoque práctico, o "Criptografía Moderna" para adentrarte en algoritmos contemporáneos.</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-8">
-                    <button
-                      className="btn btn-primary btn-lg"
-                      onClick={handleReturnToDashboard}
+        {
+          stage === 'completed' && (
+            <div className="max-w-4xl mx-auto">
+              <motion.div
+                className="card bg-base-200 shadow-xl"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <div className="card-body text-center">
+                  <div className="py-6">
+                    <motion.div
+                      className="text-9xl mb-4 text-success mx-auto"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1, rotate: 360 }}
+                      transition={{ duration: 0.5, delay: 0.2 }}
                     >
-                      Volver al Dashboard
-                    </button>
+                      <FiAward className="mx-auto" />
+                    </motion.div>
+                    <h2 className="text-3xl font-bold mb-4">¡Felicidades! Has completado el módulo de Fundamentos de la Criptografía</h2>
+                    <p className="text-lg mb-6">Has adquirido una comprensión sólida de los conceptos fundamentales, la historia y las aplicaciones de la criptografía, así como sus implicaciones éticas y legales.</p>
+
+                    <div className="my-8 p-6 bg-base-100 rounded-lg max-w-md mx-auto">
+                      <h3 className="text-xl font-bold mb-4">Logro Desbloqueado</h3>
+                      <div className="flex items-center justify-center mb-4">
+                        <div className="badge badge-lg p-4 gap-2 bg-primary text-primary-content">
+                          <FiKey className="h-5 w-5" />
+                          Criptógrafo Principiante
+                        </div>
+                      </div>
+                      <p>Has demostrado un conocimiento fundamental de los principios criptográficos y su aplicación en el mundo moderno.</p>
+                    </div>
+
+                    <h3 className="text-xl font-bold mb-4">¿Qué has aprendido?</h3>
+                    <ul className="list-disc list-inside text-left max-w-md mx-auto mb-6 space-y-2">
+                      <li>Principios fundamentales de la criptografía</li>
+                      <li>Evolución histórica de las técnicas criptográficas</li>
+                      <li>Diferencias entre cifrado simétrico y asimétrico</li>
+                      <li>Funciones hash y firmas digitales</li>
+                      <li>Aplicaciones prácticas en la vida cotidiana</li>
+                      <li>Desafíos éticos y legales en el uso de la criptografía</li>
+                    </ul>
+
+                    <div className="alert alert-info shadow-lg mb-6 text-left">
+                      <div>
+                        <FiHelpCircle className="w-6 h-6" />
+                        <div>
+                          <h3 className="font-bold">Próximos pasos</h3>
+                          <p>¿Interesado en profundizar más? Te recomendamos continuar con el módulo "Criptografía Clásica" para explorar técnicas históricas con enfoque práctico, o "Criptografía Moderna" para adentrarte en algoritmos contemporáneos.</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-8">
+                      <button
+                        className="btn btn-primary btn-lg"
+                        onClick={handleReturnToDashboard}
+                      >
+                        Volver al Dashboard
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </main>
+              </motion.div>
+            </div>
+          )
+        }
+      </main >
 
       {/* Footer */}
-      <footer className="bg-base-200 text-center py-4 border-t border-base-300">
+      < footer className="bg-base-200 text-center py-4 border-t border-base-300" >
         <p>© 2025 CryptoPlayground</p>
-      </footer>
-    </div>
+      </footer >
+    </div >
   );
 }

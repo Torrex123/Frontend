@@ -24,6 +24,8 @@ import {
 import { FaFingerprint } from 'react-icons/fa';
 import confetti from 'canvas-confetti';
 import CodeEditor from '../components/CodeEditor';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { startSubModule, getSubModule, completeSubModule, completeModule } from '../../../api/api';
 
 type HashType = 'sha1' | 'sha2';
 type ProgressStage = 'learning' | 'quiz' | 'practical' | 'completed';
@@ -104,16 +106,16 @@ export default function HashFunctions() {
             correctAnswer: "Almacenamiento seguro de contraseñas"
         }
     ]);
+    const [submoduleList, setSubmoduleList] = useState<any[]>([]);
+    const params = useSearchParams();
+    const router = useRouter();
 
-    // Update progress based on current hash function and stage
     useEffect(() => {
         let newProgress = 0;
 
-        // Base progress on current hash function
         if (currentHashFunction === 'sha1') newProgress = 0;
-        else if (currentHashFunction === 'sha2') newProgress = 40;
+        else if (currentHashFunction === 'sha2') newProgress = 50;
 
-        // Adjust based on stage
         if (stage === 'quiz') newProgress = 80;
         else if (stage === 'practical') newProgress = 90;
         else if (stage === 'completed') newProgress = 100;
@@ -121,19 +123,46 @@ export default function HashFunctions() {
         setProgress(newProgress);
     }, [currentHashFunction, stage]);
 
-    // Answer a question in the quiz
+    useEffect(() => {
+        const moduleId = params.get('id');
+        const fetchSubModule = async () => {
+            try {
+                const response = await getSubModule(moduleId as string);
+                const submodules = response.data.data;
+                setSubmoduleList(submodules);
+
+                const validTitles: HashType[] = ['sha1', 'sha2'];
+                const sorted = [...submodules].sort((a, b) => a.place - b.place);
+
+                let targetSubmodule = sorted.findLast((sub) => sub.status === 'en-progreso');
+                if (!targetSubmodule) {
+                    targetSubmodule = sorted.find((sub) => sub.status === 'no-iniciado');
+                }
+
+                if (targetSubmodule && validTitles.includes(targetSubmodule.title)) {
+                    setCurrentHashFunction(targetSubmodule.title as HashType);
+                } else {
+                    setCurrentHashFunction('sha1');
+                }
+            } catch (error) {
+                console.error('Error fetching submodule data:', error);
+            }
+        };
+
+        fetchSubModule();
+    }, []);
+
+
     const handleAnswerQuestion = (questionId: number, answer: string) => {
         const updatedQuestions = questions.map(q =>
             q.id === questionId ? { ...q, userAnswer: answer } : q
         );
         setQuestions(updatedQuestions);
-
         if (!questionsAnswered.includes(questionId)) {
             setQuestionsAnswered([...questionsAnswered, questionId]);
         }
     };
 
-    // Submit the quiz for evaluation
     const handleSubmitQuiz = () => {
         setQuizSubmitted(true);
 
@@ -148,7 +177,6 @@ export default function HashFunctions() {
         }
     };
 
-    // Reset the quiz to try again
     const handleResetQuiz = () => {
         const resetQuestions = questions.map(q => ({ ...q, userAnswer: undefined }));
         setQuestions(resetQuestions);
@@ -156,43 +184,60 @@ export default function HashFunctions() {
         setQuizSubmitted(false);
     };
 
-    // Complete the practical exercise (this would be implemented with actual coding challenges)
     const handleSubmitPractical = () => {
-        // In a real implementation, you would verify the code submission here
         setPracticalCompleted(true);
-
-        setTimeout(() => {
-            setStage('completed');
-
-            confetti({
-                particleCount: 250,
-                spread: 80,
-                origin: { y: 0.6 },
-            });
-
-            // Here you would send the achievement to the database
-        }, 1500);
+        const completed = async () => {
+            try {
+                const moduleId = params.get('id');
+                await completeModule(moduleId as string);
+            } catch (error) {
+                throw new Error('Error completing module');
+            }
+        }
+        setStage('completed');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        completed();
+        confetti({
+            particleCount: 250,
+            spread: 80,
+            origin: { y: 0.6 },
+        });
     };
 
-    // Navigate between different hash functions
     const handleHashFunctionChange = (hashFunction: HashType) => {
+        const previousSection = currentHashFunction;
+
         setCurrentHashFunction(hashFunction);
         setActiveTab('info');
+
+        try {
+            const previousSubmodule = submoduleList.find((s) => s.title === previousSection);
+            if (previousSubmodule?.id) {
+                completeSubModule(previousSubmodule.id);
+            } else {
+                console.warn('Previous submodule not found for section:', previousSection);
+            }
+
+            const currentSubmodule = submoduleList.find((s) => s.title === hashFunction);
+            if (currentSubmodule?.id) {
+                startSubModule(currentSubmodule.id);
+            } else {
+                console.warn('Current submodule not found for section:', hashFunction);
+            }
+        } catch (error) {
+            console.error('Error handling submodule transition:', error);
+        }
     };
 
-    // Navigate to the quiz when all hash functions are reviewed
     const handleStartQuiz = () => {
-        setStage('practical');
+        setStage('quiz');
     };
 
-    // Return to the main dashboard (this would be linked to your routing system)
     const handleReturnToDashboard = () => {
-        // Implement navigation to the dashboard
-        console.log("Return to dashboard");
+        router.push('/home');
     };
 
     const runTests = async () => { }
-
 
     return (
         <div className="min-h-screen flex flex-col bg-base-100">
@@ -946,7 +991,7 @@ digest = h0 concatenate h1 concatenate h2 concatenate h3 concatenate h4`}
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                                 <div>
                                                     <h3 className="text-xl font-bold mb-3">Seguridad Digital</h3>
-                                                    <div className="card bg-base-100 shadow-md h-full">
+                                                    <div className="card bg-base-100 shadow-md">
                                                         <div className="card-body">
                                                             <h4 className="card-title text-lg flex items-center">
                                                                 <FiLock className="mr-2 text-primary" />
@@ -964,7 +1009,7 @@ digest = h0 concatenate h1 concatenate h2 concatenate h3 concatenate h4`}
 
                                                 <div>
                                                     <h3 className="text-xl font-bold mb-3">Autenticación y Verificación</h3>
-                                                    <div className="card bg-base-100 shadow-md h-full">
+                                                    <div className="card bg-base-100 shadow-md">
                                                         <div className="card-body">
                                                             <h4 className="card-title text-lg flex items-center">
                                                                 <FiUserCheck className="mr-2 text-secondary" />
@@ -984,7 +1029,7 @@ digest = h0 concatenate h1 concatenate h2 concatenate h3 concatenate h4`}
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                                 <div>
                                                     <h3 className="text-xl font-bold mb-3">Tecnologías Blockchain</h3>
-                                                    <div className="card bg-base-100 shadow-md h-full">
+                                                    <div className="card bg-base-100 shadow-md">
                                                         <div className="card-body">
                                                             <h4 className="card-title text-lg flex items-center">
                                                                 <FiLink className="mr-2 text-accent" />
@@ -1005,7 +1050,7 @@ digest = h0 concatenate h1 concatenate h2 concatenate h3 concatenate h4`}
 
                                                 <div>
                                                     <h3 className="text-xl font-bold mb-3">Verificación de Integridad</h3>
-                                                    <div className="card bg-base-100 shadow-md h-full">
+                                                    <div className="card bg-base-100 shadow-md">
                                                         <div className="card-body">
                                                             <h4 className="card-title text-lg flex items-center">
                                                                 <FiFileText className="mr-2 text-info" />
@@ -1210,6 +1255,13 @@ digest = h0 concatenate h1 concatenate h2 concatenate h3 concatenate h4`}
                                 </div>
 
                                 <div className="card-actions justify-end mt-8">
+                                    <button className="btn btn-outline" onClick={() => {
+                                        setStage('learning');
+                                        setActiveTab('info');
+                                    }
+                                    }>
+                                        <FiArrowRight className="mr-2 rotate-180" /> Volver a la lección
+                                    </button>
                                     {quizSubmitted && !quizPassed ? (
                                         <button
                                             className="btn btn-outline"
@@ -1303,7 +1355,7 @@ def verificar_integridad(mensaje, hash_guardado):
 def prueba_sistema():
     mensaje1 = "Hola, este es un mensaje de prueba"
     mensaje2 = "Hola, este es un mensaje de prueba modificado"
-    hash_original = "2a4ad5f607b6594550ccbc9a94349c9f6a222def"
+    hash_original = "0e8ec52a4f2fd6676ff85ce8b972842b4951e4bd"
     
     print(f"Hash calculado para mensaje1: {calcular_sha1(mensaje1)}")
     print(f"¿Integridad del mensaje1 verificada?: {verificar_integridad(mensaje1, hash_original)}")
@@ -1337,7 +1389,6 @@ if __name__ == "__main__":
                                         <button
                                             className="btn btn-primary"
                                             onClick={handleSubmitPractical}
-                                            disabled={!testsPassed}
                                         >
                                             Enviar solución <FiArrowRight className="ml-2" />
                                         </button>

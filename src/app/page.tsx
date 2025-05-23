@@ -11,7 +11,7 @@ import { RiLock2Fill } from "react-icons/ri";
 import { MdLockOutline } from "react-icons/md";
 import { useState, useEffect } from "react";
 import UseUserStore from "./store/UserStore";
-import { useRouter } from "next/navigation"; 
+import { useRouter } from "next/navigation";
 
 export default function Home() {
     const router = useRouter();
@@ -36,27 +36,32 @@ export default function Home() {
         e.preventDefault();
         setLoginError(null);
 
-        if (isAuthenticated) {
-            router.push("/home");
-            return;
-        }
-
         try {
             const result = await login({
                 email: formData.email,
                 password: formData.password
             });
 
+            if (isAuthenticated) {
+                router.push("/home");
+                return;
+            }
+
             if (!result.success) {
                 setLoginError(result.error || "Error al iniciar sesión. Verifica tus credenciales.");
             } else {
                 router.push("/home");
             }
+
+            if (isAuthenticated) {
+                router.push("/home");
+                return;
+            }
         } catch (err: unknown) {
-            // Handle unexpected errors
             const errorMessage = err instanceof Error ? err.message : 'Error insesperado. Intenta nuevamente.';
             setLoginError(errorMessage);
         }
+
     }
 
     return (

@@ -11,8 +11,11 @@ export default function Navbar() {
   const pathname = usePathname();
 
   const getNavigationItems = () => {
-    if (pathname === "/" || pathname === "/signUp") {
-      return [{ name: "Acerca de", href: "/about" }];
+    if (pathname === "/") {
+      return [{ name: "Acerca de", href: "/about" },
+      { name: "Registrarse", href: "/signUp" },
+      ];
+
     }
 
     if (pathname === "/home") {
@@ -23,9 +26,23 @@ export default function Navbar() {
       ];
     }
 
+    if (pathname === "/playground") {
+      return [
+        { name: "Dashboard", href: "/home" },
+        { name: "Desafios", href: "/challenges" },
+      ];
+    }
+
+    if (pathname === "/challenges") {
+      return [
+        { name: "Dashboard", href: "/home" },
+        { name: "Playground", href: "/playground" },
+      ];
+    }
+
     return [
-      { name: "Playground", href: "/playground" },
-      { name: "Challenges", href: "/challenges" },
+      { name: "Acerca de", href: "/about" },
+      { name: "Ingresar", href: "/" },
     ];
   };
 
