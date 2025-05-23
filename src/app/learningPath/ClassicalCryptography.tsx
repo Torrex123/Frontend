@@ -39,7 +39,13 @@ export default function ClassicalCryptography() {
     const [questionsAnswered, setQuestionsAnswered] = useState<number[]>([]);
     const [practicalCompleted, setPracticalCompleted] = useState<boolean>(false);
     const params = useSearchParams();
-    const [submoduleList, setSubmoduleList] = useState<any[]>([]);
+    interface Submodule {
+        id: string;
+        title: string;
+        place: number;
+        status: string;
+    }
+    const [submoduleList, setSubmoduleList] = useState<Submodule[]>([]);
     const [questions, setQuestions] = useState<Question[]>([
         {
             id: 1,
@@ -274,7 +280,7 @@ export default function ClassicalCryptography() {
             try {
                 const moduleId = params.get('id');
                 await completeModule(moduleId as string);
-            } catch (error) {
+            } catch{
                 throw new Error('Error completing module');
             }
         }

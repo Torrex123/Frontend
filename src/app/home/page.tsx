@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, ReactElement, ReactNode, ReactPortal, use } from "react";
+import { useState, useEffect, ReactElement, ReactNode, ReactPortal} from "react";
 import Navbar from "../components/Navbar";
 import Link from "next/link";
 import {
@@ -19,10 +19,9 @@ import {
 } from "react-icons/fi";
 import { GrAchievement } from "react-icons/gr";
 import { motion } from "framer-motion";
-import { loadUserHome, fetchUserProfile, startModule, startSubModule, getSubModule} from "../../../api/api";
+import { loadUserHome, fetchUserProfile, startModule} from "../../../api/api";
 import useAuth from "../hooks/UseAuth";
 import { useRouter } from "next/navigation";
-import { error } from "console";
 
 type Module = {
     id: string;

@@ -25,12 +25,10 @@ import { IoMdArrowRoundBack } from "react-icons/io";
 import { FaTrophy } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { ReactElement } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 
 const renderIcon = (iconString: string): ReactElement => {
-    // This function converts icon strings like "<FiKey className='w-6 h-6' />" to actual JSX
-    // A simple approach for demo purposes - in production, you might use a different method
     switch (iconString.replace(/<|className='w-6 h-6' \/>/g, '').trim()) {
         case "FiKey":
             return <FiKey className="w-6 h-6" />;
@@ -57,17 +55,11 @@ export default function CryptographyChallenges() {
         status: "all",
         search: ""
     });
-
-    const searchParams = useSearchParams();
     const router = useRouter();
-    useRouter
-    // State for showing/hiding filters on mobile
     const [showFilters, setShowFilters] = useState(false);
 
-    // State for sorting
     const [sortBy, setSortBy] = useState("newest");
 
-    // Challenge type definition
     interface Challenge {
         id: number;
         title: string;
@@ -83,24 +75,15 @@ export default function CryptographyChallenges() {
         icon: string;
     }
 
-    // State for challenges
     const [challenges, setChallenges] = useState<Challenge[]>([]);
-
-    // State for loading
     const [loading, setLoading] = useState(true);
 
-    // Fetch challenges from the database
     useEffect(() => {
-        // This would be replaced with actual API call in production
         const fetchChallenges = async () => {
             try {
                 setLoading(true);
 
-                // In a real application, you would fetch data from your database
-                // const response = await fetch('/api/challenges');
-                // const data = await response.json();
-
-                // For now, we'll use the mock data
+                // call api
                 const mockChallenges = [
                     {
                         id: 1,
@@ -131,7 +114,7 @@ export default function CryptographyChallenges() {
                         icon: "FiLock",
                     },
                     {
-                        id: "sha256-implementation",
+                        id: 3,
                         title: "Implementación de SHA-256",
                         description: "Implementa el algoritmo SHA-256 desde cero y verifica su funcionamiento con diferentes entradas.",
                         difficulty: "intermedio",

@@ -211,3 +211,15 @@ export const completeSubModule = async (moduleId: string) => {
     }
 }
 
+export const getChallenges = async () => {
+    try {
+        const response = await authApi.get(`/challenges`);
+        return { success: true, data: response.data };
+    }
+    catch (error: any) {
+        return {
+            success: false,
+            error: error.response?.data?.message || 'Error al obtener los submódulos',
+        };
+    }
+}

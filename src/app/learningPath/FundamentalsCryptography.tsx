@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect} from 'react';
 import { motion } from 'framer-motion';
 import {
   FiLock,
@@ -104,7 +104,14 @@ export default function FundamentalsCryptography() {
     }
   ]);
   const params = useSearchParams();
-  const [submoduleList, setSubmoduleList] = useState<any[]>([]);
+  interface Submodule {
+    id: string;
+    title: string;
+    status: string;
+    place: number;
+  }
+  
+  const [submoduleList, setSubmoduleList] = useState<Submodule[]>([]);
 
   useEffect(() => {
     let newProgress = 0;
