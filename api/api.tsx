@@ -6,7 +6,7 @@ const pistonApi = axios.create({
 });
 
 const authApi = axios.create({
-    baseURL: 'http://crypto-playground.eastus.cloudapp.azure.com:5000/api',
+    baseURL: '/api', 
     headers: {
         'Content-Type': 'application/json',
     }
