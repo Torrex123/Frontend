@@ -255,16 +255,16 @@ export default function CryptographyChallenges() {
 
                         <div className="stat">
                             <div className="stat-figure text-secondary">
-                                <FiUsers className="w-8 h-8" />
-                            </div>
+                                <FaTrophy className="w-8 h-8" />
+                            </div>  
                             <div className="stat-title">Participantes</div>
                             <div className="stat-value text-secondary">{loading ? "..." : getTotalParticipations()}</div>
                             <div className="stat-desc">↗︎ 14% más que el mes pasado</div>
                         </div>
 
                         <div className="stat">
-                            <div className="stat-figure text-accent">
-                                <FaTrophy className="w-8 h-8" />
+                             <div className="stat-figure text-accent">
+                                <FiUsers className="w-8 h-8" />
                             </div>
                             <div className="stat-title">Completados</div>
                             <div className="stat-value text-accent">{loading ? "..." : getTotalCompletions()}</div>
