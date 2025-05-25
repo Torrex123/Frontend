@@ -1,12 +1,13 @@
 import axios from 'axios';
 import { LANGUAGES } from '@/app/components/LanguageSelector';
+import { cp } from 'fs';
 
 const pistonApi = axios.create({
     baseURL: 'https://emkc.org/api/v2/piston',
 });
 
 const authApi = axios.create({
-    baseURL: '/api', 
+    baseURL: '/api',
     headers: {
         'Content-Type': 'application/json',
     }
@@ -223,3 +224,44 @@ export const getChallenges = async () => {
         };
     }
 }
+
+export const getModuleChallenges = async (moduleId: string) => {
+    try {
+        const response = await authApi.get(`/modules/${moduleId}/challenge`);
+        return { success: true, data: response.data };
+    }
+    catch (error: any) {
+        return {
+            success: false,
+            error: error.response?.data?.message || 'Error al obtener los desafíos del módulo',
+        };
+    }
+}
+
+export const executeChallenge = async (challengeId: string, code: string, language: string) => {
+    try {
+        const response = await authApi.post(`/challenges/${challengeId}/submit`, {
+            code: code,
+            language: language,
+        });
+        return { success: true, data: response };
+    } catch (error: any) {
+        return {
+            success: false,
+            error: error.response
+        };
+    }
+}
+
+export const getChallengeInfo = async (challengeId: string) => {
+    try {
+        const response = await authApi.get(`/challenges/${challengeId}`);
+        return { success: true, data: response.data };
+    } catch (error: any) {
+        return {
+            success: false,
+            error: error.response?.data?.message || 'Error al obtener la información del desafío',
+        };
+    }
+}
+

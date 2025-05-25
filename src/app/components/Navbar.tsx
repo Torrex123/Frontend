@@ -22,7 +22,6 @@ export default function Navbar() {
       return [
         { name: "Playground", href: "/playground" },
         { name: "Desafios", href: "/challenges" },
-        { name: "Acerca de", href: "/about" },
       ];
     }
 
@@ -41,7 +40,6 @@ export default function Navbar() {
     }
 
     return [
-      { name: "Acerca de", href: "/about" },
       { name: "Ingresar", href: "/" },
     ];
   };

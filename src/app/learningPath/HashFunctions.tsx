@@ -25,7 +25,8 @@ import { FaFingerprint } from 'react-icons/fa';
 import confetti from 'canvas-confetti';
 import CodeEditor from '../components/CodeEditor';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { startSubModule, getSubModule, completeSubModule, completeModule } from '../../../api/api';
+import { startSubModule, getSubModule, completeSubModule, completeModule, getModuleChallenges, executeChallenge } from '../../../api/api';
+import Toast from '../components/Notification';
 
 type HashType = 'sha1' | 'sha2';
 type ProgressStage = 'learning' | 'quiz' | 'practical' | 'completed';
@@ -47,10 +48,6 @@ export default function HashFunctions() {
     const [activeTab, setActiveTab] = useState<string>('info');
     const [questionsAnswered, setQuestionsAnswered] = useState<number[]>([]);
     const [practicalCompleted, setPracticalCompleted] = useState<boolean>(false);
-    /*
-    const [testsPassed, setTestsPassed] = useState(false);
-    const [testResults, setTestResults] = useState(null);
-    */
     const [questions, setQuestions] = useState<Question[]>([
         {
             id: 1,
@@ -118,6 +115,12 @@ export default function HashFunctions() {
     const [submoduleList, setSubmoduleList] = useState<Submodule[]>([]);
     const params = useSearchParams();
     const router = useRouter();
+    const [challengeId, setChallengeId] = useState<string | null>(null);
+    const [userCode, setUserCode] = useState('');
+    const [testResults, setTestResults] = useState<boolean>(false);
+    const [showToast, setShowToast] = useState(false);
+    const [toastMessage, setToastMessage] = useState('');
+    const [toastType, setToastType] = useState<'error' | 'success' | 'info' | 'warning'>('info');
 
     useEffect(() => {
         let newProgress = 0;
@@ -131,6 +134,20 @@ export default function HashFunctions() {
 
         setProgress(newProgress);
     }, [currentHashFunction, stage]);
+
+    useEffect(() => {
+        const moduleId = params.get('id');
+        const fetchModuleChallenges = async () => {
+            try {
+                const response = await getModuleChallenges(moduleId as string);
+                const challenges = response.data.data;
+                setChallengeId(challenges._id || null);
+            } catch (error) {
+                console.error('Error fetching module challenges:', error);
+            }
+        }
+        fetchModuleChallenges();
+    }, []);
 
     useEffect(() => {
         const moduleId = params.get('id');
@@ -194,23 +211,51 @@ export default function HashFunctions() {
     };
 
     const handleSubmitPractical = () => {
+
         setPracticalCompleted(true);
+
         const completed = async () => {
             try {
                 const moduleId = params.get('id');
                 await completeModule(moduleId as string);
-            } catch{
+            } catch {
                 throw new Error('Error completing module');
             }
         }
+
         setStage('completed');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
         completed();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
         confetti({
             particleCount: 250,
             spread: 80,
             origin: { y: 0.6 },
         });
+    };
+
+    const handleRunTests = async () => {
+        if (challengeId === null) return;
+
+        try {
+            const result = await executeChallenge(challengeId, userCode, "python");
+            console.log('Execution result:', result);
+            if (result.success) {
+                console.log('Test results:', result.data);
+                setTestResults(true);
+                setToastMessage('¡Desafío exitoso!');
+                setToastType('success');
+                setShowToast(true);
+            } else {
+                setToastMessage(result.error?.data?.details?.output || 'No se pudo ejecutar el desafío.');
+                setToastType('error');
+                setShowToast(true);
+            }
+        } catch (error) {
+            console.error('Error running tests:', error);
+            setToastMessage('Ocurrió un error al ejecutar las pruebas.');
+            setToastType('error');
+            setShowToast(true);
+        }
     };
 
     const handleHashFunctionChange = (hashFunction: HashType) => {
@@ -220,11 +265,18 @@ export default function HashFunctions() {
         setActiveTab('info');
 
         try {
-            const previousSubmodule = submoduleList.find((s) => s.title === previousSection);
-            if (previousSubmodule?.id) {
-                completeSubModule(previousSubmodule.id);
-            } else {
-                console.warn('Previous submodule not found for section:', previousSection);
+            if (previousSection && previousSection !== hashFunction) {
+                const previousIndex = submoduleList.findIndex((s) => s.title === previousSection);
+                const newIndex = submoduleList.findIndex((s) => s.title === hashFunction);
+
+                if (previousIndex < newIndex) {
+                    const previousSubmodule = submoduleList[previousIndex];
+                    if (previousSubmodule?.id) {
+                        completeSubModule(previousSubmodule.id);
+                    } else {
+                        console.warn('Previous submodule not found for section:', previousSection);
+                    }
+                }
             }
 
             const currentSubmodule = submoduleList.find((s) => s.title === hashFunction);
@@ -245,8 +297,6 @@ export default function HashFunctions() {
     const handleReturnToDashboard = () => {
         router.push('/home');
     };
-
-    const runTests = async () => { }
 
     return (
         <div className="min-h-screen flex flex-col bg-base-100">
@@ -1374,7 +1424,7 @@ def prueba_sistema():
 if __name__ == "__main__":
     prueba_sistema()
 `}
-
+                                                onCodeChange={(code: string) => setUserCode(code)}
                                             />
                                         </div>
                                     </>
@@ -1390,14 +1440,14 @@ if __name__ == "__main__":
                                     <div className="flex gap-2">
                                         <button
                                             className="btn btn-accent"
-                                            onClick={runTests}
-                                            disabled={practicalCompleted}
+                                            onClick={handleRunTests}
                                         >
                                             <FiCode className="mr-2" /> Ejecutar pruebas
                                         </button>
                                         <button
                                             className="btn btn-primary"
                                             onClick={handleSubmitPractical}
+                                            disabled={!testResults}
                                         >
                                             Enviar solución <FiArrowRight className="ml-2" />
                                         </button>
@@ -1474,6 +1524,13 @@ if __name__ == "__main__":
                     </div>
                 )}
             </main>
+
+            <Toast
+                show={showToast}
+                setShow={setShowToast}
+                message={toastMessage}
+                type={toastType}
+            />
 
             {/* Footer */}
             <footer className="bg-base-200 text-center py-4 border-t border-base-300">

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { motion } from 'framer-motion';
 import {
     FiArrowRight,
@@ -15,7 +15,8 @@ import {
 import confetti from 'canvas-confetti';
 import CodeEditor from '../components/CodeEditor';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { startSubModule, getSubModule, completeSubModule, completeModule } from '../../../api/api';
+import { startSubModule, getSubModule, completeSubModule, completeModule, getModuleChallenges, executeChallenge } from '../../../api/api';
+import Toast from '../components/Notification';
 
 type CipherType = 'caesar' | 'substitution' | 'vigenere';
 type ProgressStage = 'learning' | 'quiz' | 'practical' | 'completed';
@@ -38,6 +39,7 @@ export default function ClassicalCryptography() {
     const [activeTab, setActiveTab] = useState<string>('info');
     const [questionsAnswered, setQuestionsAnswered] = useState<number[]>([]);
     const [practicalCompleted, setPracticalCompleted] = useState<boolean>(false);
+    const [testResults, setTestResults] = useState<boolean>(false);
     const params = useSearchParams();
     interface Submodule {
         id: string;
@@ -93,10 +95,13 @@ export default function ClassicalCryptography() {
     const [vigenereKey, setVigenereKey] = useState<string>('CLAVE');
     const [vigenereResult, setVigenereResult] = useState<string>('');
     const router = useRouter();
-
+    const [challengeId, setChallengeId] = useState<string | null>(null);
+    const [userCode, setUserCode] = useState('');
+    const [showToast, setShowToast] = useState(false);
+    const [toastMessage, setToastMessage] = useState('');
+    const [toastType, setToastType] = useState<'error' | 'success' | 'info' | 'warning'>('info');
     const ALPHABET = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ";
 
-    // Update progress based on current cipher and stage
     useEffect(() => {
         let newProgress = 0;
 
@@ -112,6 +117,20 @@ export default function ClassicalCryptography() {
 
         setProgress(newProgress);
     }, [currentCipher, stage]);
+
+    useEffect(() => {
+        const moduleId = params.get('id');
+        const fetchModuleChallenges = async () => {
+            try {
+                const response = await getModuleChallenges(moduleId as string);
+                const challenges = response.data.data;
+                setChallengeId(challenges._id || null);
+            } catch (error) {
+                console.error('Error fetching module challenges:', error);
+            }
+        }
+        fetchModuleChallenges();
+    }, []);
 
     useEffect(() => {
         const moduleId = params.get('id');
@@ -231,7 +250,6 @@ export default function ClassicalCryptography() {
         }
     };
 
-    // Reset the quiz to try again
     const handleResetQuiz = () => {
         const resetQuestions = questions.map(q => ({ ...q, userAnswer: undefined }));
         setQuestions(resetQuestions);
@@ -246,11 +264,18 @@ export default function ClassicalCryptography() {
         setActiveTab('info');
 
         try {
-            const previousSubmodule = submoduleList.find((s) => s.title === previousSection);
-            if (previousSubmodule?.id) {
-                completeSubModule(previousSubmodule.id);
-            } else {
-                console.warn('Previous submodule not found for section:', previousSection);
+            if (previousSection && previousSection !== cipher) {
+                const previousIndex = submoduleList.findIndex((s) => s.title === previousSection);
+                const newIndex = submoduleList.findIndex((s) => s.title === cipher);
+
+                if (previousIndex < newIndex) {
+                    const previousSubmodule = submoduleList[previousIndex];
+                    if (previousSubmodule?.id) {
+                        completeSubModule(previousSubmodule.id);
+                    } else {
+                        console.warn('Previous submodule not found for section:', previousSection);
+                    }
+                }
             }
 
             const currentSubmodule = submoduleList.find((s) => s.title === cipher);
@@ -280,7 +305,7 @@ export default function ClassicalCryptography() {
             try {
                 const moduleId = params.get('id');
                 await completeModule(moduleId as string);
-            } catch{
+            } catch {
                 throw new Error('Error completing module');
             }
         }
@@ -293,7 +318,33 @@ export default function ClassicalCryptography() {
             spread: 80,
             origin: { y: 0.6 },
         });
+    };
 
+    const handleRunTests = () => {
+        if (challengeId === null) return;
+
+        const runTests = async () => {
+            try {
+                const result = await executeChallenge(challengeId, userCode, "python");
+                console.log('Challenge result:', result);
+                if (result.success) {
+                    setTestResults(true);
+                    setToastMessage('¡Desafío exitoso!');
+                    setToastType('success');
+                    setShowToast(true);
+                } else {
+                    setToastMessage(result.error?.data?.details?.output || 'No se pudo ejecutar el desafío.');
+                    setToastType('error');
+                    setShowToast(true);
+                }
+            } catch (error) {
+                console.error('Error running tests:', error);
+                setToastMessage('Ocurrió un error al ejecutar las pruebas.');
+                setToastType('error');
+                setShowToast(true);
+            }
+        }
+        runTests();
     };
 
     return (
@@ -1326,6 +1377,7 @@ def probar_cifrado():
 if __name__ == "__main__":
     probar_cifrado()
 `}
+                                                onCodeChange={(code: string) => setUserCode(code)}
                                                 isModule={true}
                                             />
                                         </div>
@@ -1334,7 +1386,7 @@ if __name__ == "__main__":
                                             <h3 className="font-semibold mb-2">Ejemplo de resultado esperado:</h3>
                                             <div className="font-mono text-sm whitespace-pre bg-base-300 p-3 rounded">
                                                 {`Mensaje original: Hola, Mundo!
-Cifrado (desplazamiento=3): KRÑD, OXPGR!
+Cifrado (desplazamiento=3): Krod, Pxqgr!
 Descifrado: Hola, Mundo!
 ¡Éxito! El mensaje se cifró y descifró correctamente.`}
                                             </div>
@@ -1352,13 +1404,14 @@ Descifrado: Hola, Mundo!
                                     <div className="flex gap-2">
                                         <button
                                             className="btn btn-accent"
-                                            disabled={practicalCompleted}
+                                            onClick={handleRunTests}
                                         >
                                             <FiCode className="mr-2" /> Ejecutar pruebas
                                         </button>
                                         <button
                                             className="btn btn-primary"
                                             onClick={handleSubmitPractical}
+                                            disabled={!testResults}
                                         >
                                             Enviar solución <FiArrowRight className="ml-2" />
                                         </button>
@@ -1435,6 +1488,13 @@ Descifrado: Hola, Mundo!
                     </div>
                 )}
             </main>
+
+            <Toast
+                show={showToast}
+                setShow={setShowToast}
+                message={toastMessage}
+                type={toastType}
+            />
 
             {/* Footer */}
             <footer className="bg-base-200 text-center py-4 border-t border-base-300">

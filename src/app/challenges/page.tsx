@@ -21,11 +21,13 @@ import {
     FiActivity,
     FiFileText
 } from "react-icons/fi";
+import { FaCheckCircle } from "react-icons/fa";
 import { IoMdArrowRoundBack } from "react-icons/io";
 import { FaTrophy } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { ReactElement } from "react";
 import { useRouter } from "next/navigation";
+import { getChallenges } from "../../../api/api";
 
 
 const renderIcon = (iconString: string): ReactElement => {
@@ -48,7 +50,6 @@ const renderIcon = (iconString: string): ReactElement => {
 };
 
 export default function CryptographyChallenges() {
-    // State for filters
     const [filters, setFilters] = useState({
         difficulty: "all",
         category: "all",
@@ -57,7 +58,6 @@ export default function CryptographyChallenges() {
     });
     const router = useRouter();
     const [showFilters, setShowFilters] = useState(false);
-
     const [sortBy, setSortBy] = useState("newest");
 
     interface Challenge {
@@ -71,94 +71,50 @@ export default function CryptographyChallenges() {
         points: number;
         timeEstimate: string;
         status: string;
-        dateAdded: string;
+        createdAt: string;
         icon: string;
+        userStatus: string;
     }
-
     const [challenges, setChallenges] = useState<Challenge[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+
         const fetchChallenges = async () => {
+
             try {
-                setLoading(true);
+                const response = await getChallenges();
+                console.log("Challenges response:", response);
+                if (response.success) {
+                    setChallenges(response.data.data);
+                    setLoading(false);
+                } else {
+                    console.error("Error fetching challenges:", response.error);
+                }
 
-                // call api
-                const mockChallenges = [
-                    {
-                        id: 1,
-                        title: "Descifrando César",
-                        description: "Descifra un mensaje codificado con el cifrado César sin conocer la clave de desplazamiento.",
-                        difficulty: "principiante",
-                        category: "clasica",
-                        completions: 987,
-                        totalAttempts: 1456,
-                        points: 100,
-                        timeEstimate: "30 min",
-                        status: "disponible",
-                        dateAdded: "2023-06-10",
-                        icon: "FiKey",
-                    },
-                    {
-                        id: 2,
-                        title: "Implementación de ChaCha20",
-                        description: "Implementa una versión simplificada del algoritmo de cifrado simétrico ChaCha20.",
-                        difficulty: "experto",
-                        category: "simetrica",
-                        completions: 289,
-                        totalAttempts: 876,
-                        points: 280,
-                        timeEstimate: "2 horas",
-                        status: "disponible",
-                        dateAdded: "2023-09-18",
-                        icon: "FiLock",
-                    },
-                    {
-                        id: 3,
-                        title: "Implementación de SHA-256",
-                        description: "Implementa el algoritmo SHA-256 desde cero y verifica su funcionamiento con diferentes entradas.",
-                        difficulty: "intermedio",
-                        category: "hash",
-                        completions: 243,
-                        totalAttempts: 615,
-                        points: 300,
-                        timeEstimate: "2.5 horas",
-                        status: "disponible",
-                        dateAdded: "2023-11-30",
-                        icon: "FiHash",
-                    }
-                ];
-
-                setChallenges(mockChallenges);
-                setLoading(false);
             } catch (error) {
                 console.error("Error fetching challenges:", error);
-                setLoading(false);
             }
-        };
+        }
 
         fetchChallenges();
+
     }, []);
 
-    // Filter challenges based on selected filters
     const filteredChallenges = challenges.filter(challenge => {
-        // Search filter
         if (filters.search && !challenge.title.toLowerCase().includes(filters.search.toLowerCase()) &&
             !challenge.description.toLowerCase().includes(filters.search.toLowerCase())) {
             return false;
         }
 
-        // Difficulty filter
         if (filters.difficulty !== "all" && challenge.difficulty !== filters.difficulty) {
             return false;
         }
 
-        // Category filter
         if (filters.category !== "all" && challenge.category !== filters.category) {
             return false;
         }
 
-        // Status filter
         if (filters.status !== "all" && challenge.status !== filters.status) {
             return false;
         }
@@ -166,22 +122,17 @@ export default function CryptographyChallenges() {
         return true;
     });
 
-    const handleClick = (challenge: string) => {
-        router.push(`/module?name=${encodeURIComponent(challenge)}`);
-    }
-
     const handleBackHome = () => {
         router.push("/home");
     }
-
 
     // Sort challenges
     const sortedChallenges = [...filteredChallenges].sort((a, b) => {
         switch (sortBy) {
             case "newest":
-                return new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime();
+                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
             case "oldest":
-                return new Date(a.dateAdded).getTime() - new Date(b.dateAdded).getTime();
+                return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
             case "easiest":
                 return getDifficultyValue(a.difficulty) - getDifficultyValue(b.difficulty);
             case "hardest":
@@ -193,7 +144,6 @@ export default function CryptographyChallenges() {
         }
     });
 
-    // Helper function to convert difficulty to numeric value for sorting
     function getDifficultyValue(difficulty: string) {
         switch (difficulty) {
             case "principiante": return 1;
@@ -203,7 +153,6 @@ export default function CryptographyChallenges() {
         }
     }
 
-    // Function to get difficulty badge
     const getDifficultyBadge = (difficulty: string) => {
         switch (difficulty) {
             case "principiante":
@@ -216,20 +165,6 @@ export default function CryptographyChallenges() {
                 return null;
         }
     };
-
-    // Function to get status icon
-    /*
-    const getStatusIcon = (status: string) => {
-        switch (status) {
-            case "completado":
-                return <FiCheckCircle className="text-success" />;
-            case "en-progreso":
-                return <FiClock className="text-warning" />;
-            default:
-                return null;
-        }
-    };
-    */
 
     interface Filters {
         difficulty: string;
@@ -246,7 +181,6 @@ export default function CryptographyChallenges() {
         }));
     };
 
-    // Handle search changes
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setFilters(prev => ({
             ...prev,
@@ -254,12 +188,10 @@ export default function CryptographyChallenges() {
         }));
     };
 
-    // Handle sort changes
     const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         setSortBy(e.target.value);
     };
 
-    // Clear all filters
     const clearFilters = () => {
         setFilters({
             difficulty: "all",
@@ -269,15 +201,17 @@ export default function CryptographyChallenges() {
         });
     };
 
-    // Get total participation count across all challenges
     const getTotalParticipations = () => {
         return challenges.reduce((total, challenge) => total + challenge.totalAttempts, 0);
     };
 
-    // Get total completions across all challenges
     const getTotalCompletions = () => {
         return challenges.reduce((total, challenge) => total + challenge.completions, 0);
     };
+
+    const handleChallengeClick = (challengeID: number) => {
+        router.push(`/challenge?id=${encodeURIComponent(challengeID)}`);
+    }
 
     return (
         <div className="min-h-screen flex flex-col bg-gradient-to-br from-base-300 to-base-200">
@@ -626,21 +560,30 @@ export default function CryptographyChallenges() {
                                                             </span>
                                                             <span className="badge badge-outline flex items-center gap-1">
                                                                 <FiCalendar className="h-3 w-3" />
-                                                                {new Date(challenge.dateAdded).toLocaleDateString()}
+                                                                {new Date(challenge.createdAt).toLocaleDateString()}
+                                                            </span>
+                                                            <span
+                                                                className={`badge flex items-center gap-1 
+                                                                ${challenge.userStatus === "completado" ? "badge-success" : "badge-neutral"}`}
+                                                            >
+                                                                <FaCheckCircle className="h-3 w-3" />
+                                                                {challenge.userStatus === "completado" ? "Completado" : "No completado"}
                                                             </span>
                                                         </div>
 
                                                         <div className="card-actions justify-end mt-4">
-                                                            {challenge.status === "completado" ? (
-                                                                <button className="btn btn-outline">
-                                                                    Ver solución
-                                                                </button>
-                                                            ) : (
-                                                                <button className="btn btn-primary" onClick={() => handleClick(challenge.title)}>
-                                                                    Iniciar desafío
-                                                                    <FiArrowRight className="ml-2" />
-                                                                </button>
-                                                            )}
+                                                            <button
+                                                                className="btn btn-primary"
+                                                                onClick={() => handleChallengeClick(challenge.id)}
+                                                            >
+                                                                {challenge.userStatus === "no-iniciado"
+                                                                    ? "Iniciar desafío"
+                                                                    : challenge.userStatus === "en-progreso"
+                                                                        ? "Continuar desafío"
+                                                                        : "Volver a hacer"
+                                                                }
+                                                                <FiArrowRight className="ml-2" />
+                                                            </button>
                                                         </div>
                                                     </div>
                                                 </div>

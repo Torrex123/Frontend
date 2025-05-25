@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect} from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   FiLock,
@@ -110,8 +110,8 @@ export default function FundamentalsCryptography() {
     status: string;
     place: number;
   }
-
   const [submoduleList, setSubmoduleList] = useState<Submodule[]>([]);
+  const [completedIds, setCompletedIds] = useState<string[]>([]);
 
   useEffect(() => {
     let newProgress = 0;
@@ -204,32 +204,37 @@ export default function FundamentalsCryptography() {
     setQuizSubmitted(false);
   };
 
-  const handleSectionChange = (section: SectionType) => {
-
+  const handleSectionChange = (newSection: SectionType) => {
     const previousSection = currentSection;
 
-    setCurrentSection(section);
+    setCurrentSection(newSection);
     setActiveTab('content');
 
     try {
-      const previousSubmodule = submoduleList.find((s) => s.title === previousSection);
-      if (previousSubmodule?.id) {
-        completeSubModule(previousSubmodule.id);
-      } else {
-        console.warn('Previous submodule not found for section:', previousSection);
+      if (previousSection && previousSection !== newSection) {
+        const previousIndex = submoduleList.findIndex((s) => s.title === previousSection);
+        const newIndex = submoduleList.findIndex((s) => s.title === newSection);
+
+        if (previousIndex < newIndex) {
+          const previousSubmodule = submoduleList[previousIndex];
+          if (previousSubmodule?.id) {
+            completeSubModule(previousSubmodule.id);
+          } else {
+            console.warn('Previous submodule not found for section:', previousSection);
+          }
+        }
       }
 
-      const currentSubmodule = submoduleList.find((s) => s.title === section);
+      const currentSubmodule = submoduleList.find((s) => s.title === newSection);
       if (currentSubmodule?.id) {
         startSubModule(currentSubmodule.id);
       } else {
-        console.warn('Current submodule not found for section:', section);
+        console.warn('Current submodule not found for section:', newSection);
       }
     } catch (error) {
       console.error('Error handling submodule transition:', error);
     }
   };
-
 
   const handleStartQuiz = () => {
     setStage('quiz');

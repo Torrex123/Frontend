@@ -27,7 +27,8 @@ import {
 import confetti from 'canvas-confetti';
 import CodeEditor from '../components/CodeEditor';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { startSubModule, getSubModule, completeSubModule, completeModule } from '../../../api/api';
+import { startSubModule, getSubModule, completeSubModule, completeModule, getModuleChallenges, executeChallenge } from '../../../api/api';
+import Toast from '../components/Notification';
 
 type CipherType = 'aes' | 'chacha' | 'salsa';
 type ProgressStage = 'learning' | 'quiz' | 'practical' | 'completed';
@@ -115,22 +116,40 @@ export default function SymmetricCryptography() {
     const [submoduleList, setSubmoduleList] = useState<Submodule[]>([]);
     const params = useSearchParams();
     const router = useRouter();
+    const [challengeId, setChallengeId] = useState<string | null>(null);
+    const [userCode, setUserCode] = useState('');
+    const [testResults, setTestResults] = useState<boolean>(false);
+    const [showToast, setShowToast] = useState(false);
+    const [toastMessage, setToastMessage] = useState('');
+    const [toastType, setToastType] = useState<'error' | 'success' | 'info' | 'warning'>('info');
 
     useEffect(() => {
         let newProgress = 0;
 
-        // Base progress on current cipher
         if (currentCipher === 'aes') newProgress = 0;
         else if (currentCipher === 'chacha') newProgress = 33;
         else if (currentCipher === 'salsa') newProgress = 67;
 
-        // Adjust based on stage
         if (stage === 'quiz') newProgress = 75;
         else if (stage === 'practical') newProgress = 90;
         else if (stage === 'completed') newProgress = 100;
 
         setProgress(newProgress);
     }, [currentCipher, stage]);
+
+    useEffect(() => {
+        const moduleId = params.get('id');
+        const fetchModuleChallenges = async () => {
+            try {
+                const response = await getModuleChallenges(moduleId as string);
+                const challenges = response.data.data;
+                setChallengeId(challenges._id || null);
+            } catch (error) {
+                console.error('Error fetching module challenges:', error);
+            }
+        }
+        fetchModuleChallenges();
+    }, []);
 
     useEffect(() => {
         const moduleId = params.get('id');
@@ -191,6 +210,7 @@ export default function SymmetricCryptography() {
     };
 
     const handleSubmitPractical = () => {
+
         setPracticalCompleted(true);
 
         const completed = async () => {
@@ -201,6 +221,7 @@ export default function SymmetricCryptography() {
                 throw new Error('Error completing module');
             }
         }
+
         setStage('completed');
         completed();
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -218,11 +239,18 @@ export default function SymmetricCryptography() {
         setActiveTab('info');
 
         try {
-            const previousSubmodule = submoduleList.find((s) => s.title === previousSection);
-            if (previousSubmodule?.id) {
-                completeSubModule(previousSubmodule.id);
-            } else {
-                console.warn('Previous submodule not found for section:', previousSection);
+            if (previousSection && previousSection !== cipher) {
+                const previousIndex = submoduleList.findIndex((s) => s.title === previousSection);
+                const newIndex = submoduleList.findIndex((s) => s.title === cipher);
+
+                if (previousIndex < newIndex) {
+                    const previousSubmodule = submoduleList[previousIndex];
+                    if (previousSubmodule?.id) {
+                        completeSubModule(previousSubmodule.id);
+                    } else {
+                        console.warn('Previous submodule not found for section:', previousSection);
+                    }
+                }
             }
 
             const currentSubmodule = submoduleList.find((s) => s.title === cipher);
@@ -243,6 +271,34 @@ export default function SymmetricCryptography() {
     const handleReturnToDashboard = () => {
         router.push('/home');
     };
+
+    const handleRunTests = async () => {
+        if (challengeId === null) return;
+
+        try {
+            const result = await executeChallenge(challengeId, userCode, "python");
+            console.log('Execution result:', result);
+            console.log('challengeId:', challengeId);
+
+            if (result.success) {
+                console.log('Test results:', result.data);
+                setTestResults(true);
+                setToastMessage('¡Desafío exitoso!');
+                setToastType('success');
+                setShowToast(true);
+            } else {
+                setToastMessage(result.error?.data?.details?.output || 'No se pudo ejecutar el desafío.');
+                setToastType('error');
+                setShowToast(true);
+            }
+        } catch (error) {
+            console.error('Error running tests:', error);
+            setToastMessage('Ocurrió un error al ejecutar las pruebas.');
+            setToastType('error');
+            setShowToast(true);
+        }
+    };
+
 
     return (
         <div className="min-h-screen flex flex-col bg-base-100">
@@ -1618,6 +1674,7 @@ if __name__ == "__main__":
     probar_cifrado_salsa20()
 `}
                                                 isModule={true}
+                                                onCodeChange={(code: string) => setUserCode(code)}
                                             />
                                         </div>
 
@@ -1625,9 +1682,9 @@ if __name__ == "__main__":
                                             <h3 className="font-semibold mb-2">Salida esperada (ejemplo):</h3>
                                             <div className="font-mono text-sm whitespace-pre bg-base-300 p-3 rounded">
                                                 {`Mensaje original: Este es un mensaje secreto para cifrar con Salsa20
-Clave (Base64): 8j/Ru/XWuc3h8dVl9rAh1z5AtXWk/FL3oWy2YiXIYf0=
-Nonce (Base64): VU9VL3XrWt8=
-Mensaje cifrado (Base64): D1R3YMxXFdB6ZzSCHMGZSFbXhZIIChZsQ6Oai3I/pEGi35Pt9hf3ZFSmEFqZuWgaRqOyEg==
+Clave (Base64): 2m09PS9IeN7bTV1Y6X8yo+eHUIIBHBhKHpJQfkF1RzU=
+Nonce (Base64): he71eoBnCBeCunhQn5Cm/z12UiCMqSPw
+Mensaje cifrado (Base64): he71eoBnCBeCunhQn5Cm/z12UiCMqS...
 Mensaje descifrado: Este es un mensaje secreto para cifrar con Salsa20
 Éxito: El cifrado y descifrado funcionan correctamente`}
                                             </div>
@@ -1645,13 +1702,14 @@ Mensaje descifrado: Este es un mensaje secreto para cifrar con Salsa20
                                     <div className="flex gap-2">
                                         <button
                                             className="btn btn-accent"
-                                            disabled={practicalCompleted}
+                                            onClick={handleRunTests}
                                         >
                                             <FiCode className="mr-2" /> Ejecutar pruebas
                                         </button>
                                         <button
                                             className="btn btn-primary"
                                             onClick={handleSubmitPractical}
+                                            disabled={!testResults}
                                         >
                                             Enviar solución <FiArrowRight className="ml-2" />
                                         </button>
@@ -1728,6 +1786,13 @@ Mensaje descifrado: Este es un mensaje secreto para cifrar con Salsa20
                     </div>
                 )}
             </main>
+
+            <Toast
+                show={showToast}
+                setShow={setShowToast}
+                message={toastMessage}
+                type={toastType}
+            />
 
             {/* Footer */}
             <footer className="bg-base-200 text-center py-4 border-t border-base-300">

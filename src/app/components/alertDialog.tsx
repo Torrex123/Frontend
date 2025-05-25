@@ -55,13 +55,13 @@ export default function ConfirmDialog({ isOpen, title, description, onConfirm, o
                                         onClick={onCancel}
                                         className="px-4 py-2 rounded bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-sm"
                                     >
-                                        Cancel
+                                        Cancelar
                                     </button>
                                     <button
                                         onClick={onConfirm}
                                         className="px-4 py-2 rounded bg-red-500 text-white hover:bg-red-600 text-sm"
                                     >
-                                        Yes, I&apos;m sure
+                                        Sí, estoy seguro.
                                     </button>
                                 </div>
                             </Dialog.Panel>
