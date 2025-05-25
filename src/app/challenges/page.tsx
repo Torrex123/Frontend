@@ -28,6 +28,7 @@ import { motion } from "framer-motion";
 import { ReactElement } from "react";
 import { useRouter } from "next/navigation";
 import { getChallenges } from "../../../api/api";
+import useAuth from "../hooks/UseAuth";
 
 const renderIcon = (iconString: string): ReactElement => {
     switch (iconString.replace(/<|className='w-6 h-6' \/>/g, '').trim()) {
@@ -58,7 +59,7 @@ export default function CryptographyChallenges() {
     const router = useRouter();
     const [showFilters, setShowFilters] = useState(false);
     const [sortBy, setSortBy] = useState("newest");
-
+    const { isAuthenticated } = useAuth();
     interface Challenge {
         id: number;
         title: string;
@@ -76,6 +77,12 @@ export default function CryptographyChallenges() {
     }
     const [challenges, setChallenges] = useState<Challenge[]>([]);
     const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (!isAuthenticated) {
+            router.push("/");
+        }
+    }, [isAuthenticated, router]);
 
     useEffect(() => {
 
@@ -665,7 +672,7 @@ export default function CryptographyChallenges() {
             {/* Footer */}
             <footer className="footer footer-center p-4 bg-base-300 text-base-content">
                 <div>
-                    <p>© 2023 CryptoLearn - Desafíos actualizados mensualmente</p>
+                    <p>© 2025 CryptoPlayground - Todos los derechos reservados</p>
                 </div>
             </footer>
         </div>

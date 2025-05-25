@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect} from 'react';
-import Navbar from '../components/Navbar';
 import CodeEditor from '../components/CodeEditor';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -146,7 +145,6 @@ export default function ChallengePage() {
     if (loading) {
         return (
             <div className="min-h-screen">
-                <Navbar />
                 <div className="flex justify-center items-center h-[calc(100vh-64px)]">
                     <div className="loading loading-spinner loading-lg text-primary"></div>
                 </div>
@@ -157,7 +155,6 @@ export default function ChallengePage() {
     if (!challenge) {
         return (
             <div className="min-h-screen">
-                <Navbar />
                 <div className="flex flex-col justify-center items-center h-[calc(100vh-64px)] gap-4">
                     <InformationCircleIcon className="h-16 w-16 text-error" />
                     <h2 className="text-2xl font-bold">Desafío no encontrado</h2>
@@ -173,7 +170,6 @@ export default function ChallengePage() {
     if (showCompletionScreen) {
         return (
             <div className="min-h-screen">
-                <Navbar />
                 <div className="container mx-auto px-4 py-8">
                     <div className="max-w-4xl mx-auto">
                         <motion.div
@@ -227,8 +223,6 @@ export default function ChallengePage() {
 
     return (
         <div className="min-h-screen">
-            <Navbar />
-
             <main className="container mx-auto px-4 py-6 max-w-7xl">
                 {/* Header with navigation and title */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">

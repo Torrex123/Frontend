@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, ReactElement, ReactNode, ReactPortal} from "react";
+import { useState, useEffect, ReactElement, ReactNode, ReactPortal, use} from "react";
 import Navbar from "../components/Navbar";
 import Link from "next/link";
 import {
@@ -48,6 +48,13 @@ export default function UserHome() {
     const [isLoading, setIsLoading] = useState(true);
     const isAuthenticated = useAuth();
     const router = useRouter();
+
+    useEffect(() => {
+        if (!isAuthenticated) {
+            router.push("/");
+        }
+    }, [isAuthenticated, router]);
+
 
     useEffect(() => {
         if (!isAuthenticated) {
@@ -122,11 +129,11 @@ export default function UserHome() {
 
     const getLevelBadge = (level: string | number | bigint | boolean | ReactElement<unknown, string> | Iterable<ReactNode> | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string> | Iterable<ReactNode> | null | undefined> | null | undefined) => {
         switch (level) {
-            case "PRINCIPIANTE":
+            case "Principiante":
                 return <span className="badge badge-primary badge-sm">Principiante</span>;
-            case "INTERMEDIO":
+            case "Intermedio":
                 return <span className="badge badge-secondary badge-sm">Intermedio</span>;
-            case "AVANZADO":
+            case "Avanzado":
                 return <span className="badge badge-accent badge-sm">Avanzado</span>;
             default:
                 return <span className="badge badge-primary badge-sm">{level}</span>;
@@ -500,22 +507,6 @@ export default function UserHome() {
                                     <button className="btn btn-sm btn-outline mt-auto" onClick={() => router.push("/challenges")}>
                                         Ver desafios
                                     </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-
-                    {/* Learning Tips */}
-                    <div className="alert shadow-lg mb-8">
-                        <div>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-info flex-shrink-0 w-6 h-6">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            <div>
-                                <h3 className="font-bold">Tip de aprendizaje</h3>
-                                <div className="text-sm">
-                                    La práctica constante es clave para dominar la criptografía. Dedica tiempo cada día a repasar y practicar lo aprendido.
                                 </div>
                             </div>
                         </div>

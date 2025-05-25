@@ -12,8 +12,7 @@ export default function Navbar() {
 
   const getNavigationItems = () => {
     if (pathname === "/") {
-      return [{ name: "Acerca de", href: "/about" },
-      { name: "Registrarse", href: "/signUp" },
+      return [{ name: "Registrarse", href: "/signUp" },
       ];
 
     }
@@ -22,6 +21,7 @@ export default function Navbar() {
       return [
         { name: "Playground", href: "/playground" },
         { name: "Desafios", href: "/challenges" },
+        { name: "Perfil", href: "/settings" },
       ];
     }
 
