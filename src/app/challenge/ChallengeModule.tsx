@@ -17,6 +17,7 @@ import { FiAward } from 'react-icons/fi';
 import Toast from '../components/Notification';
 import { useSearchParams } from 'next/navigation';
 import { getChallengeInfo, executeChallenge } from '../../../api/api';
+import { useRouter } from 'next/navigation';
 
 interface Challenge {
     id: string;
@@ -57,7 +58,7 @@ export default function ChallengePage() {
     const [errorMessage, setErrorMessage] = useState('La respuesta no es correcta. Por favor, revisa tu código.');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const challengeId = params.get('id');
-
+    const router = useRouter();
     useEffect(() => {
         const fetchChallenge = async () => {
             try {
@@ -133,7 +134,7 @@ export default function ChallengePage() {
     };
 
     const handleReturnToDashboard = () => {
-        window.location.href = '/challenges';
+        router.push('/challenges');
     };
 
     const formatTime = (seconds: number) => {
