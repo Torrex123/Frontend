@@ -111,7 +111,6 @@ export default function FundamentalsCryptography() {
     place: number;
   }
   const [submoduleList, setSubmoduleList] = useState<Submodule[]>([]);
-  const [completedIds, setCompletedIds] = useState<string[]>([]);
 
   useEffect(() => {
     let newProgress = 0;
@@ -120,7 +119,6 @@ export default function FundamentalsCryptography() {
     else if (currentSection === 'history') newProgress = 25;
     else if (currentSection === 'concepts') newProgress = 50;
     else if (currentSection === 'applications') newProgress = 75;
-    // Adjust based on stage
     if (stage === 'quiz') newProgress = 90;
     else if (stage === 'completed') newProgress = 100;
 

@@ -29,7 +29,6 @@ import { ReactElement } from "react";
 import { useRouter } from "next/navigation";
 import { getChallenges } from "../../../api/api";
 
-
 const renderIcon = (iconString: string): ReactElement => {
     switch (iconString.replace(/<|className='w-6 h-6' \/>/g, '').trim()) {
         case "FiKey":

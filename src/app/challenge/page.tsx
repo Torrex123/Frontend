@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect} from 'react';
 import Navbar from '../components/Navbar';
 import CodeEditor from '../components/CodeEditor';
 import Link from 'next/link';
@@ -48,15 +48,11 @@ export default function ChallengePage() {
     const [challenge, setChallenge] = useState<Challenge | null>(null);
     const [loading, setLoading] = useState(true);
     const [code, setCode] = useState('');
-    const [output, setOutput] = useState('');
-    const [outputType, setOutputType] = useState('info');
     const [language, setLanguage] = useState('python');
     const [showHint, setShowHint] = useState(false);
     const [showDescription, setShowDescription] = useState(true);
-    const [isSubmitted, setIsSubmitted] = useState(false);
     const [isSolved, setIsSolved] = useState(false);
     const [timeSpent, setTimeSpent] = useState(0);
-    const [timerInterval, setTimerInterval] = useState<NodeJS.Timeout | null>(null);
     const [showCompletionScreen, setShowCompletionScreen] = useState(false);
     const [showError, setShowError] = useState(false);
     const [errorMessage, setErrorMessage] = useState('La respuesta no es correcta. Por favor, revisa tu código.');
@@ -113,8 +109,6 @@ export default function ChallengePage() {
         setIsSubmitting(true);
         try {
             if (!challengeId) {
-                setOutputType('error');
-                setOutput('No se encontró el ID del desafío.');
                 setShowError(true);
                 setErrorMessage('No se encontró el ID del desafío.');
                 setIsSubmitting(false);
@@ -124,28 +118,20 @@ export default function ChallengePage() {
             const response = await executeChallenge(challengeId as string, code, language);
             console.log('Response:', response);
             if (response.success) {
-                setOutputType('success');
-                setOutput(response.data?.data?.output ?? '');
-                setIsSubmitted(true);
                 setIsSolved(true);
                 setShowCompletionScreen(true);
             } else {
-                setOutputType('error');
-                setOutput(response.error?.data?.message || 'Error al ejecutar el desafío.');
                 setShowError(true);
                 setErrorMessage(response.error?.data?.details?.output);
                 setIsSubmitting(false);
             }
         } catch (error) {
             console.error('Error executing challenge:', error);
-            setOutputType('error');
-            setOutput('Error al ejecutar el desafío. Por favor, revisa tu código.');
             setShowError(true);
             setErrorMessage('Error al ejecutar el desafío. Por favor, revisa tu código.');
             setIsSubmitting(false);
         }
     };
-
 
     const handleReturnToDashboard = () => {
         window.location.href = '/challenges';
