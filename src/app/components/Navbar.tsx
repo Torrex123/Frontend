@@ -39,6 +39,14 @@ export default function Navbar() {
       ];
     }
 
+    if (pathname === "/settings") {
+      return [
+        { name: "Dashboard", href: "/home" },
+        { name: "Playground", href: "/playground" },
+        { name: "Desafios", href: "/challenges" },
+      ];
+    }
+
     return [
       { name: "Ingresar", href: "/" },
     ];
