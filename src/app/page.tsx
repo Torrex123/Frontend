@@ -32,6 +32,12 @@ export default function Home() {
         }
     }, [formData, clearError, error]);
 
+    useEffect(() => {
+        if (isAuthenticated) {
+            router.push("/home");
+        }
+    }, [isAuthenticated, router]);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoginError(null);
@@ -44,20 +50,13 @@ export default function Home() {
 
             if (!result.success) {
                 setLoginError(result.error || "Error al iniciar sesión. Verifica tus credenciales.");
-                return;
             } else {
                 router.push("/home");
-            }
-
-            if (isAuthenticated) {
-                router.push("/home");
-                return;
             }
         } catch (err: unknown) {
             const errorMessage = err instanceof Error ? err.message : 'Error insesperado. Intenta nuevamente.';
             setLoginError(errorMessage);
         }
-
     }
 
     return (
