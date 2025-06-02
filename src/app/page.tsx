@@ -42,13 +42,9 @@ export default function Home() {
                 password: formData.password
             });
 
-            if (isAuthenticated) {
-                router.push("/home");
-                return;
-            }
-
             if (!result.success) {
                 setLoginError(result.error || "Error al iniciar sesión. Verifica tus credenciales.");
+                return;
             } else {
                 router.push("/home");
             }
